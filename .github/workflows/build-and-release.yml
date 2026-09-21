@@ -60,5 +60,9 @@ jobs:
         if: ${{ env.OVSX_PAT != '' }}
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx ovsx publish *.vsix -p "$OVSX_PAT"
+        run: |
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          npx ovsx create-namespace "$PUBLISHER" -p "$OVSX_PAT" || true
+          npx ovsx publish *.vsix -p "$OVSX_PAT"
+
 
