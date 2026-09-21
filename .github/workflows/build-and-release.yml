@@ -55,3 +55,10 @@ jobs:
         with:
           files: '*.vsix'
           generate_release_notes: true
+
+      - name: Publish to Open VSX (Cursor)
+        if: ${{ env.OVSX_PAT != '' }}
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish *.vsix -p "$OVSX_PAT"
+
