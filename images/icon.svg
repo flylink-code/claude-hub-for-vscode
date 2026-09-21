@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- Hub Orbital Nodes -->
+  <circle cx="12" cy="1.5" r="1.5" fill="currentColor" />
+  <circle cx="12" cy="22.5" r="1.5" fill="currentColor" />
+  <circle cx="1.5" cy="12" r="1.5" fill="currentColor" />
+  <circle cx="22.5" cy="12" r="1.5" fill="currentColor" />
+
+  <!-- Corner Satellite Nodes -->
+  <circle cx="4.5" cy="4.5" r="1.2" fill="currentColor" />
+  <circle cx="19.5" cy="4.5" r="1.2" fill="currentColor" />
+  <circle cx="4.5" cy="19.5" r="1.2" fill="currentColor" />
+  <circle cx="19.5" cy="19.5" r="1.2" fill="currentColor" />
+
+  <!-- Connecting Micro-Lines -->
+  <path d="M12 3.5V6M12 18v2.5M3.5 12H6M18 12h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+
+  <!-- Central Claude Star with EvenOdd Diamond Core Cutout -->
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 4C12 8.418 8.418 12 4 12C8.418 12 12 15.582 12 20C12 15.582 15.582 12 20 12C15.582 12 12 8.418 12 4ZM12 9.5L14.5 12L12 14.5L9.5 12L12 9.5Z" fill="currentColor" />
+</svg>

@@ -1,0 +1,212 @@
+{
+  "name": "claude-hub",
+  "displayName": "Claude Hub for VS Code",
+  "description": "%extension.description%",
+  "version": "0.1.0",
+  "publisher": "claude-hub",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flylink-code/claude-hub-for-vscode.git"
+  },
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "statusline",
+    "hud",
+    "context-window",
+    "tokens",
+    "anthropic"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claude-hub-container",
+          "title": "%viewsContainers.title%",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claude-hub-container": [
+        {
+          "type": "webview",
+          "id": "claudeHub.dashboardView",
+          "name": "%views.dashboard%"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudeHub.refresh",
+        "title": "%command.refresh%",
+        "icon": "$(refresh)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.toggleFilter",
+        "title": "%command.toggleFilter%",
+        "icon": "$(filter)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.switchSession",
+        "title": "%command.switchSession%",
+        "icon": "$(list-selection)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.openSessionTranscript",
+        "title": "%command.openTranscript%",
+        "icon": "$(go-to-file)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.openSettings",
+        "title": "%command.openSettings%",
+        "icon": "$(gear)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.forkSession",
+        "title": "%command.forkSession%",
+        "icon": "$(git-branch)",
+        "category": "Claude Hub"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudeHub.refresh",
+          "when": "view == claudeHub.dashboardView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claudeHub.toggleFilter",
+          "when": "view == claudeHub.dashboardView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "claudeHub.openSettings",
+          "when": "view == claudeHub.dashboardView",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "%config.title%",
+      "properties": {
+        "claudeHub.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "zh-CN",
+            "en"
+          ],
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "%config.language.zhCN%",
+            "%config.language.en%"
+          ],
+          "default": "auto",
+          "description": "%config.language.desc%"
+        },
+        "claudeHub.filterMode": {
+          "type": "string",
+          "enum": [
+            "currentWorkspace",
+            "all"
+          ],
+          "enumDescriptions": [
+            "%config.filterMode.currentWorkspace%",
+            "%config.filterMode.all%"
+          ],
+          "default": "currentWorkspace",
+          "description": "%config.filterMode.desc%"
+        },
+        "claudeHub.showStatusBarItem": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.showStatusBarItem.desc%"
+        },
+        "claudeHub.idleTimeout": {
+          "type": "number",
+          "default": 180,
+          "minimum": 0,
+          "maximum": 86400,
+          "description": "%config.idleTimeout.desc%"
+        },
+        "claudeHub.refreshInterval": {
+          "type": "number",
+          "default": 15,
+          "minimum": 3,
+          "maximum": 300,
+          "description": "%config.refreshInterval.desc%"
+        },
+        "claudeHub.contextLimit": {
+          "type": "number",
+          "default": 200000,
+          "description": "%config.contextLimit.desc%"
+        },
+        "claudeHub.modelContextLimits": {
+          "type": "object",
+          "default": {},
+          "description": "%config.modelContextLimits.desc%"
+        },
+        "claudeHub.warningThreshold": {
+          "type": "number",
+          "default": 50,
+          "description": "%config.warningThreshold.desc%"
+        },
+        "claudeHub.dangerThreshold": {
+          "type": "number",
+          "default": 75,
+          "description": "%config.dangerThreshold.desc%"
+        },
+        "claudeHub.fetchSubscriptionUsage": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.fetchSubscriptionUsage.desc%"
+        },
+        "claudeHub.subscriptionRefreshInterval": {
+          "type": "number",
+          "default": 60,
+          "minimum": 30,
+          "maximum": 3600,
+          "description": "%config.subscriptionRefreshInterval.desc%"
+        },
+        "claudeHub.configDir": {
+          "type": "string",
+          "default": "",
+          "description": "%config.configDir.desc%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "@vscode/vsce": "^4.0.0",
+    "typescript": "^5.3.3"
+  }
+}

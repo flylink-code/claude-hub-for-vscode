@@ -1,0 +1,7 @@
+out
+out-test
+node_modules
+*.vsix
+.DS_Store
+example/
+
