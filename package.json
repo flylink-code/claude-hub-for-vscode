@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
