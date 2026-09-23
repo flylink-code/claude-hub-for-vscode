@@ -57,7 +57,7 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to Open VSX (Cursor)
-        if: ${{ env.OVSX_PAT != '' }}
+        if: ${{ secrets.OVSX_PAT != '' }}
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
@@ -66,7 +66,7 @@ jobs:
           npx ovsx publish *.vsix -p "$OVSX_PAT"
 
       - name: Publish to VS Code Marketplace
-        if: ${{ env.VSCE_PAT != '' }}
+        if: ${{ secrets.VSCE_PAT != '' }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npx @vscode/vsce publish -p "$VSCE_PAT" --no-git-tag-version
