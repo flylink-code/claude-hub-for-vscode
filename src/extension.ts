@@ -14,10 +14,10 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('[Claude Hub] Activating modern extension...');
 
   configManager = new ClaudeConfigManager();
-  sessionManager = new SessionManager(context);
+  sessionManager = new SessionManager(context, configManager);
   context.subscriptions.push(sessionManager);
 
-  statusBarController = new StatusBarController(sessionManager);
+  statusBarController = new StatusBarController(sessionManager, configManager);
   context.subscriptions.push(statusBarController);
 
   // Modern Webview Dashboard Provider (Unified View)

@@ -9,6 +9,7 @@
   "command.openTranscript": "Open Active Session Transcript",
   "command.openSettings": "Open Claude Code Settings",
   "command.forkSession": "Fork Claude Session",
+  "command.deleteSession": "Delete Claude Session",
   "config.title": "Claude Hub",
   "config.filterMode.desc": "Filter sessions by current workspace folder or show all active system sessions.",
   "config.filterMode.currentWorkspace": "Only show Claude Code sessions belonging to the currently open VS Code workspace folder",

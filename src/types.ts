@@ -54,6 +54,8 @@ export interface SessionInfo {
   projectPath: string;
   sessionTitle: string;
   model: string;
+  lastResponseModel?: string;
+  configuredModel?: string;
   contextLimit: number;
   tokenUsage: TokenUsage;
   tools: ToolEntry[];

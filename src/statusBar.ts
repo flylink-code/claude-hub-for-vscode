@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ClaudeConfigManager } from './claudeConfigManager.js';
 import { formatModelDisplayName } from './contextLimit.js';
 import { t } from './i18n.js';
 import { SessionManager } from './sessionManager.js';
@@ -8,12 +9,18 @@ export class StatusBarController implements vscode.Disposable {
   private item: vscode.StatusBarItem;
   private timer: NodeJS.Timeout | null = null;
 
-  constructor(private sessionManager: SessionManager) {
+  constructor(
+    private sessionManager: SessionManager,
+    private configManager?: ClaudeConfigManager,
+  ) {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this.item.command = 'claudeHub.switchSession';
 
     sessionManager.onDidUpdateSessions(() => this.update());
     sessionManager.onDidUpdateSubscription(() => this.update());
+    if (configManager) {
+      configManager.onDidChange(() => this.update());
+    }
 
     // Update active timer every 1s for live running tool duration
     this.timer = setInterval(() => {
@@ -71,7 +78,8 @@ export class StatusBarController implements vscode.Disposable {
     const warningThreshold = config.get<number>('warningThreshold', 50);
     const dangerThreshold = config.get<number>('dangerThreshold', 75);
 
-    const modelDisplay = formatModelDisplayName(session.model);
+    const gwMap = this.configManager?.getGatewayModelMap();
+    const modelDisplay = formatModelDisplayName(session.model, gwMap);
     const pct = session.tokenUsage.percentage;
 
     // Running activity
@@ -111,7 +119,13 @@ export class StatusBarController implements vscode.Disposable {
     md.supportHtml = true;
 
     const stateBadge = session.isIdle ? t('status.stateIdle') : t('status.stateActive');
-    const model = session.model || 'Unknown';
+    const gwMap = this.configManager?.getGatewayModelMap();
+    const model = formatModelDisplayName(session.model, gwMap);
+    let modelExtra = '';
+    if (session.lastResponseModel && session.lastResponseModel !== session.model) {
+      const respModel = formatModelDisplayName(session.lastResponseModel, gwMap);
+      modelExtra = ` *(⚡ 上次响应: \`${respModel}\`)*`;
+    }
     const branchPart = session.gitBranch ? ' · 🌿 ' + t('status.git') + ': `' + session.gitBranch + '`' : '';
 
     const pct = session.tokenUsage.percentage;
@@ -156,6 +170,7 @@ export class StatusBarController implements vscode.Disposable {
         ': `' +
         model +
         '`' +
+        modelExtra +
         branchPart +
         '\n\n',
     );

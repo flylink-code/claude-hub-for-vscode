@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test from 'node:test';
 import * as path from 'node:path';
-import { parseTranscriptFile } from '../src/transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle } from '../src/transcriptParser.js';
 import { decodeProjectPath, isPathInWorkspace } from '../src/configDir.js';
 import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
@@ -44,6 +44,15 @@ test('formatModelDisplayName maps models cleanly', () => {
   assert.strictEqual(formatModelDisplayName('claude-3-7-sonnet-20250219'), 'Sonnet 3.7');
   assert.strictEqual(formatModelDisplayName('claude-3-5-sonnet-20241022'), 'Sonnet 3.5');
   assert.strictEqual(formatModelDisplayName('claude-3-5-haiku-20241022'), 'Haiku 3.5');
+  assert.strictEqual(formatModelDisplayName('claude.auto'), 'Auto');
+  assert.strictEqual(formatModelDisplayName('auto'), 'Auto');
+  assert.strictEqual(formatModelDisplayName('claude.sub2api.gpt-5.6-sol'), 'gpt-5.6-sol');
+  assert.strictEqual(formatModelDisplayName('claude.sub2api.gpt-6-astra'), 'gpt-6-astra');
+  assert.strictEqual(formatModelDisplayName('claude-sonnet-5'), 'Sonnet 5');
+  assert.strictEqual(formatModelDisplayName('claude-haiku-4-5'), 'Haiku 4.5');
+  assert.strictEqual(formatModelDisplayName('claude-fable-5'), 'Fable 5');
+  assert.strictEqual(formatModelDisplayName('claude-opus-5'), 'Opus 5');
+  assert.strictEqual(formatModelDisplayName('claude.auto', new Map([['claude.auto', 'Auto']])), 'Auto');
 });
 
 test('isPathInWorkspace matches case-insensitively on Windows', () => {
@@ -64,7 +73,7 @@ test('parseTranscriptFile parses basic transcript fixture', async () => {
 });
 
 import { getWebviewContent } from '../src/webviewHtml.js';
-import { ClaudeConfigManager, matchModel } from '../src/claudeConfigManager.js';
+import { ClaudeConfigManager, matchModel, cleanModelKey } from '../src/claudeConfigManager.js';
 
 import { ClaudeFeaturesManager } from '../src/claudeFeatures.js';
 
@@ -94,16 +103,39 @@ test('ClaudeFeaturesManager reads skills and calculates cost safely', () => {
   assert.ok(cost.startsWith('$'));
 });
 
+test('cleanModelKey strips prefixes and preserves dotted versions correctly', () => {
+  assert.strictEqual(cleanModelKey('claude.sub2api.gpt-5.6-sol'), 'gpt-5.6-sol');
+  assert.strictEqual(cleanModelKey('claude.sub2api.gpt-6-astra'), 'gpt-6-astra');
+  assert.strictEqual(cleanModelKey('claude.antigravity--built-in.gemini-3.8-flash'), 'gemini-3.8-flash');
+  assert.strictEqual(cleanModelKey('claude.auto'), 'auto');
+  assert.strictEqual(cleanModelKey('auto'), 'auto');
+  assert.strictEqual(cleanModelKey('claude-sonnet-5'), 'sonnet-5');
+});
+
+test('generateForkTitle increments fork counts properly', () => {
+  assert.strictEqual(generateForkTitle(''), '未命名对话 (Fork)');
+  assert.strictEqual(generateForkTitle(undefined), '未命名对话 (Fork)');
+  assert.strictEqual(generateForkTitle('未命名对话'), '未命名对话 (Fork)');
+  assert.strictEqual(generateForkTitle('未命名对话 (Fork)'), '未命名对话 (Fork 2)');
+  assert.strictEqual(generateForkTitle('未命名对话 (Fork 2)'), '未命名对话 (Fork 3)');
+  assert.strictEqual(generateForkTitle('2026-09-生产性实训套件'), '2026-09-生产性实训套件 (Fork)');
+  assert.strictEqual(generateForkTitle('2026-09-生产性实训套件 (Fork)'), '2026-09-生产性实训套件 (Fork 2)');
+  assert.strictEqual(generateForkTitle('2026-09-生产性实训套件 (Fork 9)'), '2026-09-生产性实训套件 (Fork 10)');
+});
+
 test('ClaudeConfigManager reads settings and discovers models safely', () => {
   const mgr = new ClaudeConfigManager();
   const settings = mgr.getClaudeSettings();
   assert.ok(typeof settings === 'object');
+  const configured = mgr.getConfiguredModel();
+  assert.ok(typeof configured === 'string' || configured === undefined);
+
   const models = mgr.getDiscoveredModels('gpt-5.6-sol');
   assert.ok(Array.isArray(models));
   assert.ok(models.length > 0);
   assert.ok(models.some((m) => m.title.includes('Default') || m.id.length > 0));
 
-  // Verify matchModel matches by alias
+  // Verify matchModel matches by alias or title
   const matched = matchModel('gpt-5.6-sol', models);
   assert.ok(matched);
   assert.strictEqual(matched?.title, 'gpt-5.6-sol');

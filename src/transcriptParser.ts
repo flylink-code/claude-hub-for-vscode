@@ -10,6 +10,7 @@ export interface ParsedTranscript {
   sessionCreated?: Date;
   sessionTitle?: string;
   model: string;
+  lastResponseModel?: string;
   tokenUsage: TokenUsage;
   tools: ToolEntry[];
   activeTools: ToolEntry[];
@@ -24,6 +25,19 @@ interface CacheEntry {
   mtimeMs: number;
   size: number;
   data: ParsedTranscript;
+}
+
+export function generateForkTitle(originalTitle?: string): string {
+  const base = (originalTitle || '').trim() || '未命名对话';
+  const openIdx = base.lastIndexOf('(Fork');
+  if (openIdx !== -1 && base.endsWith(')')) {
+    const prefix = base.substring(0, openIdx).trim() || '未命名对话';
+    const inner = base.substring(openIdx + 5, base.length - 1).trim();
+    const num = inner ? parseInt(inner, 10) : 1;
+    const nextNum = isNaN(num) ? 2 : num + 1;
+    return `${prefix} (Fork ${nextNum})`;
+  }
+  return `${base} (Fork)`;
 }
 
 const transcriptCache = new Map<string, CacheEntry>();
@@ -87,6 +101,7 @@ export async function parseTranscriptFile(filePath: string): Promise<ParsedTrans
 function createEmptyTranscript(): ParsedTranscript {
   return {
     model: '',
+    lastResponseModel: undefined,
     tokenUsage: {
       inputTokens: 0,
       outputTokens: 0,
@@ -124,7 +139,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   let sessionCreated: Date | undefined;
   let customTitle: string | undefined;
   let slugTitle: string | undefined;
-  let lastModel = '';
+  let lastDeclaredModel = '';
+  let lastAssistantModel = '';
   let lastClearIndex = -1;
   let userMessagesAfterClear = 0;
   let lineIndex = 0;
@@ -185,10 +201,18 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
         }
       }
 
+      // Check model attachment (declared model, e.g. claude.auto, claude-opus-5, claude.sub2api.gpt-6-astra)
+      if (entry.attachment?.type === 'model') {
+        const id = entry.attachment.identity?.modelId;
+        if (typeof id === 'string' && id.trim()) {
+          lastDeclaredModel = id.trim();
+        }
+      }
+
       // Model & Usage from assistant message
       if (entry.type === 'assistant') {
         if (entry.message?.model) {
-          lastModel = String(entry.message.model);
+          lastAssistantModel = String(entry.message.model);
         }
         if (entry.message?.usage) {
           const u = entry.message.usage;
@@ -288,13 +312,16 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   const activeTools = allTools.filter((t) => t.status === 'running');
   const recentTools = allTools.slice(-20);
 
+  const effectiveModel = lastDeclaredModel || lastAssistantModel || '';
+
   return {
     sessionId,
     cwd,
     gitBranch,
     sessionCreated,
     sessionTitle: customTitle || slugTitle || '',
-    model: lastModel,
+    model: effectiveModel,
+    lastResponseModel: lastAssistantModel || undefined,
     tokenUsage: {
       inputTokens: wasCleared ? 0 : latestUsage.inputTokens,
       outputTokens: wasCleared ? 0 : latestUsage.outputTokens,

@@ -9,6 +9,7 @@
   "command.openTranscript": "打开当前会话底层运行日志",
   "command.openSettings": "打开 Claude Code 配置中心",
   "command.forkSession": "分叉当前会话 (Fork Session)",
+  "command.deleteSession": "删除 Claude 会话记录",
   "config.title": "Claude Hub",
   "config.filterMode.desc": "会话过滤模式：仅显示当前 VS Code 工作区关联的会话，或显示系统所有活跃会话。",
   "config.filterMode.currentWorkspace": "仅显示当前打开的 VS Code 项目关联的 Claude Code 会话",

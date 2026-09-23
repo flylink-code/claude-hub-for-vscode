@@ -9,9 +9,12 @@ import {
   resolveClaudeConfigDir,
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
-import { parseTranscriptFile } from './transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
+import { ClaudeConfigManager } from './claudeConfigManager.js';
+
+export { generateForkTitle };
 
 export class SessionManager implements vscode.Disposable {
   private _sessions: SessionInfo[] = [];
@@ -31,7 +34,10 @@ export class SessionManager implements vscode.Disposable {
   private debounceTimer: NodeJS.Timeout | null = null;
   private isScanning = false;
 
-  constructor(private context: vscode.ExtensionContext) {
+  constructor(
+    private context: vscode.ExtensionContext,
+    private configManager?: ClaudeConfigManager,
+  ) {
     const config = vscode.workspace.getConfiguration('claudeHub');
     this._filterMode = config.get<FilterMode>('filterMode', 'currentWorkspace');
 
@@ -51,6 +57,15 @@ export class SessionManager implements vscode.Disposable {
         }
       }),
     );
+
+    // Re-scan when Claude settings.json or gateway models change
+    if (this.configManager) {
+      context.subscriptions.push(
+        this.configManager.onDidChange(() => {
+          this.scheduleScan();
+        }),
+      );
+    }
 
     // Re-scan when window gains focus
     context.subscriptions.push(
@@ -103,7 +118,7 @@ export class SessionManager implements vscode.Disposable {
     this._onDidUpdateSessions.fire(this.getFilteredSessions());
   }
 
-  public async forkSession(sessionId: string): Promise<{ newSessionId: string; filePath: string; projectName: string } | null> {
+  public async forkSession(sessionId: string): Promise<{ newSessionId: string; filePath: string; projectName: string; newSessionTitle: string } | null> {
     const session = this._sessions.find((s) => s.sessionId === sessionId);
     if (!session || !session.sessionFile || !fs.existsSync(session.sessionFile)) {
       return null;
@@ -115,7 +130,21 @@ export class SessionManager implements vscode.Disposable {
       const newFilePath = path.join(dir, `${newSessionId}.jsonl`);
 
       const content = fs.readFileSync(session.sessionFile, 'utf8');
-      const forkedContent = content.split(sessionId).join(newSessionId);
+      let forkedContent = content.split(sessionId).join(newSessionId);
+
+      const newTitle = generateForkTitle(session.sessionTitle);
+      const titleEntry = JSON.stringify({
+        type: 'custom-title',
+        customTitle: newTitle,
+        sessionId: newSessionId,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (!forkedContent.endsWith('\n')) {
+        forkedContent += '\n';
+      }
+      forkedContent += titleEntry + '\n';
+
       fs.writeFileSync(newFilePath, forkedContent, 'utf8');
 
       // Rescan sessions so new session appears immediately
@@ -126,10 +155,59 @@ export class SessionManager implements vscode.Disposable {
         newSessionId,
         filePath: newFilePath,
         projectName: session.projectName,
+        newSessionTitle: newTitle,
       };
     } catch (err) {
       console.error('[Claude Hub] Failed to fork session:', err);
       return null;
+    }
+  }
+
+  public async deleteSession(sessionId: string): Promise<boolean> {
+    const session = this._sessions.find((s) => s.sessionId === sessionId);
+    if (!session || !session.sessionFile) {
+      return false;
+    }
+
+    try {
+      // 1. Delete main transcript .jsonl file
+      if (fs.existsSync(session.sessionFile)) {
+        fs.unlinkSync(session.sessionFile);
+      }
+
+      // 2. Delete subagents folder if exists (e.g. <dir>/<sessionId>/)
+      const dir = path.dirname(session.sessionFile);
+      const subagentDir = path.join(dir, sessionId);
+      if (fs.existsSync(subagentDir)) {
+        try {
+          fs.rmSync(subagentDir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn('[Claude Hub] Could not remove subagent directory:', e);
+        }
+      }
+
+      // 3. Delete session-env directory if exists
+      const configDir = this.getConfigDir();
+      const sessionEnvDir = path.join(configDir, 'session-env', sessionId);
+      if (fs.existsSync(sessionEnvDir)) {
+        try {
+          fs.rmSync(sessionEnvDir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn('[Claude Hub] Could not remove session-env directory:', e);
+        }
+      }
+
+      // 4. Reset focused session if this was the focused one
+      if (this._focusedSessionId === sessionId) {
+        this._focusedSessionId = null;
+      }
+
+      // 5. Rescan sessions so UI and status bar update immediately
+      await this.scanSessions();
+      return true;
+    } catch (err) {
+      console.error('[Claude Hub] Failed to delete session:', err);
+      return false;
     }
   }
 
@@ -238,6 +316,7 @@ export class SessionManager implements vscode.Disposable {
         return;
       }
 
+      const configuredModel = this.configManager?.getConfiguredModel();
       const workspaceFolders = (vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath);
       const projectDirs = fs.readdirSync(projectsDir);
       const discoveredSessions: SessionInfo[] = [];
@@ -282,13 +361,21 @@ export class SessionManager implements vscode.Disposable {
           const parsed = await parseTranscriptFile(filePath);
           const sessionId = parsed.sessionId || file.replace('.jsonl', '').substring(0, 8);
           const projectPath = parsed.cwd || decoded.fullPath;
-          const contextLimit = getContextLimitForModel(parsed.model, defaultLimit, modelLimits);
+          const isCurrentWorkspace = isPathInWorkspace(projectPath, workspaceFolders);
+
+          // For current workspace sessions, prioritize currently configured model from settings
+          // (e.g. user just switched provider or model in dropdown before sending a prompt).
+          // Retain lastResponseModel for physical routing transparency.
+          const effectiveModel =
+            (isCurrentWorkspace && configuredModel) ? configuredModel : (parsed.model || configuredModel || '');
+          const lastResponseModel =
+            parsed.lastResponseModel || (parsed.model && parsed.model !== effectiveModel ? parsed.model : undefined);
+
+          const contextLimit = getContextLimitForModel(effectiveModel, defaultLimit, modelLimits);
 
           const totalTokens = parsed.tokenUsage.totalTokens;
           const percentage = contextLimit > 0 ? Math.round((totalTokens / contextLimit) * 100) : 0;
           parsed.tokenUsage.percentage = percentage;
-
-          const isCurrentWorkspace = isPathInWorkspace(projectPath, workspaceFolders);
 
           const matchingWsFolder = (vscode.workspace.workspaceFolders || []).find((wf) =>
             isPathInWorkspace(projectPath, [wf.uri.fsPath]),
@@ -305,7 +392,9 @@ export class SessionManager implements vscode.Disposable {
             projectName: realProjectName,
             projectPath,
             sessionTitle: parsed.sessionTitle || '',
-            model: parsed.model,
+            model: effectiveModel,
+            lastResponseModel,
+            configuredModel: isCurrentWorkspace ? configuredModel : undefined,
             contextLimit,
             tokenUsage: parsed.tokenUsage,
             tools: parsed.tools,

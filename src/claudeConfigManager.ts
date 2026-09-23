@@ -42,6 +42,25 @@ export interface ClaudeSettings {
   [key: string]: unknown;
 }
 
+export function cleanModelKey(rawKey: string): string {
+  if (!rawKey) return '';
+  const trimmed = rawKey.trim();
+  if (trimmed.toLowerCase() === 'claude.auto' || trimmed.toLowerCase() === 'auto') {
+    return 'auto';
+  }
+  const multiDotMatch = /^claude\.[^.]+\.(.+)$/.exec(trimmed);
+  if (multiDotMatch && multiDotMatch[1]) {
+    return multiDotMatch[1];
+  }
+  if (trimmed.startsWith('claude.')) {
+    return trimmed.slice(7);
+  }
+  if (trimmed.startsWith('claude-')) {
+    return trimmed.slice(7);
+  }
+  return trimmed;
+}
+
 export function matchModel(candidate: string | undefined, models: DiscoveredModel[]): DiscoveredModel | undefined {
   if (!candidate) return undefined;
   const candLower = candidate.toLowerCase().trim();
@@ -63,6 +82,7 @@ export class ClaudeConfigManager {
   private _onDidChange: any;
   public readonly onDidChange: any;
   private settingsWatcher: fs.FSWatcher | null = null;
+  private gatewayWatcher: fs.FSWatcher | null = null;
   private debounceTimer: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -82,11 +102,17 @@ export class ClaudeConfigManager {
     }
 
     this.initSettingsWatcher();
+    this.initGatewayWatcher();
   }
 
   public getSettingsPath(): string {
     const configDir = resolveClaudeConfigDir();
     return path.join(configDir, 'settings.json');
+  }
+
+  public getGatewayModelsPath(): string {
+    const configDir = resolveClaudeConfigDir();
+    return path.join(configDir, 'cache', 'gateway-models.json');
   }
 
   private initSettingsWatcher(): void {
@@ -106,6 +132,67 @@ export class ClaudeConfigManager {
     } catch {
       // ignore watch failures
     }
+  }
+
+  private initGatewayWatcher(): void {
+    const filePath = this.getGatewayModelsPath();
+    if (!fs.existsSync(filePath)) return;
+
+    try {
+      this.gatewayWatcher = fs.watch(filePath, (_event) => {
+        if (this.debounceTimer) clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+          this._onDidChange.fire(this.getClaudeSettings());
+        }, 150);
+      });
+      if (typeof this.gatewayWatcher.unref === 'function') {
+        this.gatewayWatcher.unref();
+      }
+    } catch {
+      // ignore watch failures
+    }
+  }
+
+  public getGatewayModels(): Array<{ id: string; display_name: string }> {
+    const filePath = this.getGatewayModelsPath();
+    if (!fs.existsSync(filePath)) return [];
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed?.models)) {
+        return parsed.models.filter(
+          (m: any) => m && typeof m.id === 'string' && typeof m.display_name === 'string',
+        );
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }
+
+  public getGatewayModelMap(): Map<string, string> {
+    const map = new Map<string, string>();
+    const list = this.getGatewayModels();
+    for (const item of list) {
+      map.set(item.id, item.display_name);
+      map.set(item.id.toLowerCase(), item.display_name);
+      const clean = cleanModelKey(item.id);
+      if (clean) {
+        map.set(clean, item.display_name);
+        map.set(clean.toLowerCase(), item.display_name);
+      }
+    }
+    return map;
+  }
+
+  public getConfiguredModel(): string | undefined {
+    const settings = this.getClaudeSettings();
+    const env = settings.env || {};
+    const candidate = settings.model || env.ANTHROPIC_MODEL;
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+    return undefined;
   }
 
   public getClaudeSettings(): ClaudeSettings {
@@ -181,7 +268,7 @@ export class ClaudeConfigManager {
     // 3. Models from modelSettings
     if (settings.modelSettings && typeof settings.modelSettings === 'object') {
       for (const rawKey of Object.keys(settings.modelSettings)) {
-        const cleanName = rawKey.includes('.') ? rawKey.split('.').pop() || rawKey : rawKey;
+        const cleanName = cleanModelKey(rawKey);
         if (!models.some((m) => m.id === cleanName || m.title === cleanName || m.aliases.includes(cleanName.toLowerCase()))) {
           models.push({
             id: cleanName,
@@ -193,7 +280,21 @@ export class ClaudeConfigManager {
       }
     }
 
-    // 4. Standard Claude fallback models (if no custom env models were detected)
+    // 4. Models from gateway-models.json
+    const gwModels = this.getGatewayModels();
+    for (const gm of gwModels) {
+      const cleanName = cleanModelKey(gm.id);
+      if (!models.some((m) => m.id === cleanName || m.id === gm.id || m.title === gm.display_name)) {
+        models.push({
+          id: cleanName || gm.id,
+          title: gm.display_name,
+          subtitle: `From gateway (${gm.id})`,
+          aliases: [gm.id.toLowerCase(), cleanName.toLowerCase(), gm.display_name.toLowerCase()],
+        });
+      }
+    }
+
+    // 5. Standard Claude fallback models (if no custom env models were detected)
     if (models.length <= 1) {
       models.push(
         {
@@ -384,6 +485,14 @@ export class ClaudeConfigManager {
         // ignore
       }
       this.settingsWatcher = null;
+    }
+    if (this.gatewayWatcher) {
+      try {
+        this.gatewayWatcher.close();
+      } catch {
+        // ignore
+      }
+      this.gatewayWatcher = null;
     }
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
   }

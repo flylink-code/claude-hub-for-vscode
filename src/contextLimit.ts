@@ -25,7 +25,7 @@ export function getContextLimitForModel(
   }
 
   const id = model.toLowerCase().trim();
-  if (!id || !id.startsWith('claude')) {
+  if (!id || (!id.startsWith('claude') && id !== 'auto')) {
     return userLimit;
   }
 
@@ -36,14 +36,44 @@ export function getContextLimitForModel(
   return CONTEXT_1M;
 }
 
-export function formatModelDisplayName(model: string): string {
+export function formatModelDisplayName(
+  model: string,
+  customNames?: Record<string, string> | Map<string, string>,
+): string {
   if (!model) return 'Claude';
-  const m = model.toLowerCase();
+
+  if (customNames) {
+    if (customNames instanceof Map) {
+      const match = customNames.get(model) || customNames.get(model.toLowerCase());
+      if (match) return match;
+    } else {
+      const match = customNames[model] || customNames[model.toLowerCase()];
+      if (match) return match;
+    }
+  }
+
+  const m = model.toLowerCase().trim();
+  if (m === 'claude.auto' || m === 'auto') return 'Auto';
+
   if (m.includes('3-7-sonnet') || m.includes('3.7-sonnet')) return 'Sonnet 3.7';
   if (m.includes('3-5-sonnet') || m.includes('3.5-sonnet')) return 'Sonnet 3.5';
   if (m.includes('3-5-haiku') || m.includes('3.5-haiku')) return 'Haiku 3.5';
+  if (m.includes('sonnet-5')) return 'Sonnet 5';
+  if (m.includes('haiku-4-5') || m.includes('haiku-4.5')) return 'Haiku 4.5';
+  if (m.includes('fable-5')) return 'Fable 5';
+  if (m.includes('opus-5[1m]')) return 'Opus 5 (1M)';
+  if (m.includes('opus-5')) return 'Opus 5';
+
   if (m.includes('sonnet')) return 'Sonnet';
   if (m.includes('opus')) return 'Opus';
   if (m.includes('haiku')) return 'Haiku';
-  return model.replace(/^claude-/, '');
+  if (m.includes('fable')) return 'Fable';
+
+  // Strip claude.<provider>. prefix (e.g. claude.sub2api.gpt-5.6-sol -> gpt-5.6-sol)
+  const multiDotMatch = /^claude\.[^.]+\.(.+)$/i.exec(model);
+  if (multiDotMatch && multiDotMatch[1]) {
+    return multiDotMatch[1];
+  }
+
+  return model.replace(/^claude[.-]/i, '');
 }

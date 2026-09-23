@@ -376,6 +376,12 @@ export function getWebviewContent(): string {
       color: var(--claude-accent);
     }
 
+    .session-act-btn.delete:hover {
+      background: rgba(244, 71, 71, 0.2);
+      border-color: #f44747;
+      color: #f44747;
+    }
+
     /* Pagination Bar */
     .pagination-bar {
       display: flex;
@@ -812,12 +818,15 @@ export function getWebviewContent(): string {
         const branchStr = s.gitBranch ? '🌿 ' + s.gitBranch : '';
         const titleStr = s.sessionTitle ? s.sessionTitle : '未命名对话';
 
+        const isFork = titleStr.includes('(Fork');
+        const forkBadge = isFork ? ' <span style="background: rgba(78, 201, 176, 0.15); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Fork</span>' : '';
+
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
             '<span class="session-project-name" title="' + s.projectName + '">' + s.projectName + '</span>' +
             '<div style="display:flex; gap: 4px;">' + focusedTag + activeTag + '</div>' +
           '</div>' +
-          '<div class="session-title-text" title="' + titleStr + '">' + titleStr + '</div>' +
+          '<div class="session-title-text" title="' + titleStr + '">' + titleStr + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
             '<span>' + pct + ' (' + tokens + ' Tokens) · ' + (s.model || 'Claude') + '</span>' +
             '<span>' + branchStr + (branchStr ? ' · ' : '') + timeStr + '</span>' +
@@ -826,6 +835,7 @@ export function getWebviewContent(): string {
             '<button class="session-act-btn focus" onclick="sendMessage(\\'focusSession\\', { sessionId: \\'' + s.sessionId + '\\' })">👀 聚焦</button>' +
             '<button class="session-act-btn fork" onclick="sendMessage(\\'forkSession\\', { sessionId: \\'' + s.sessionId + '\\' })">🌿 分叉 Fork</button>' +
             '<button class="session-act-btn" onclick="sendMessage(\\'openSessionFile\\', { filePath: \\'' + (s.sessionFile || '').replace(/\\\\/g, '\\\\\\\\') + '\\' })">📄 日志</button>' +
+            '<button class="session-act-btn delete" onclick="sendMessage(\\'deleteSession\\', { sessionId: \\'' + s.sessionId + '\\' })">🗑️ 删除</button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -868,7 +878,11 @@ export function getWebviewContent(): string {
             document.getElementById('m-out').innerText = formatTokenCount(s.tokenUsage.outputTokens);
           }
 
-          document.getElementById('model-tag').innerText = '模型: ' + (s.model || '默认');
+          const dispModel = s.modelDisplay || s.model || '默认';
+          const respExtra = (s.lastResponseModelDisplay && s.lastResponseModelDisplay !== dispModel)
+            ? ' (响应: ' + s.lastResponseModelDisplay + ')'
+            : '';
+          document.getElementById('model-tag').innerText = '模型: ' + dispModel + respExtra;
           document.getElementById('branch-tag').innerText = s.gitBranch ? '🌿 ' + s.gitBranch : '';
           document.getElementById('cost-label').innerText = '预估消耗: ' + (msg.cost || '< $0.001');
 

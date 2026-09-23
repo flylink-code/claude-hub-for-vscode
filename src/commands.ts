@@ -83,8 +83,9 @@ export function registerCommands(
       }
       const result = await sessionManager.forkSession(sessionId);
       if (result) {
+        const titleInfo = result.newSessionTitle ? `「${result.newSessionTitle}」` : '';
         const pick = await vscode.window.showInformationMessage(
-          `已成功分叉会话！新会话 ID: ${result.newSessionId.slice(0, 8)}...`,
+          `已成功分叉会话 ${titleInfo} (ID: ${result.newSessionId.slice(0, 8)})`,
           '在终端启动 (claude --resume)',
           '打开日志文件',
         );
@@ -98,6 +99,48 @@ export function registerCommands(
         }
       } else {
         vscode.window.showErrorMessage('分叉会话失败，请检查文件读写权限。');
+      }
+    }),
+
+    vscode.commands.registerCommand('claudeHub.deleteSession', async (targetSessionId?: string) => {
+      let sessionId = targetSessionId;
+      if (!sessionId) {
+        const sessions = sessionManager.allSessions;
+        if (sessions.length === 0) {
+          vscode.window.showInformationMessage('当前没有可删除的会话。');
+          return;
+        }
+        const items = sessions.map((s) => ({
+          label: `${s.projectName} - ${s.sessionTitle || '未命名对话'}`,
+          description: `[${s.sessionId.substring(0, 8)}] ${s.tokenUsage.percentage}% · ${formatModelDisplayName(s.model)}`,
+          detail: s.sessionFile,
+          sessionId: s.sessionId,
+        }));
+        const selected = await vscode.window.showQuickPick(items, {
+          placeHolder: '选择要永久删除的 Claude 会话',
+        });
+        if (!selected) return;
+        sessionId = selected.sessionId;
+      }
+
+      const session = sessionManager.allSessions.find((s) => s.sessionId === sessionId);
+      const title = session ? session.sessionTitle || '未命名对话' : sessionId.substring(0, 8);
+      const proj = session ? session.projectName : '';
+      const displayLabel = proj ? `${proj} - ${title}` : title;
+
+      const confirm = await vscode.window.showWarningMessage(
+        `确定要永久删除会话「${displayLabel}」及其日志文件吗？此操作无法撤销。`,
+        { modal: true },
+        '确认删除',
+      );
+
+      if (confirm === '确认删除') {
+        const ok = await sessionManager.deleteSession(sessionId);
+        if (ok) {
+          vscode.window.showInformationMessage(`已成功删除会话: ${displayLabel}`);
+        } else {
+          vscode.window.showErrorMessage(`删除会话失败，请检查文件读写权限。`);
+        }
       }
     }),
   );

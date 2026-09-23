@@ -74,6 +74,9 @@ export const enMessages = {
   'cmd.openError': 'Claude Hub: Could not open transcript: {err}',
   'cmd.tagWs': '📁 Current WS',
   'cmd.tagOther': '🌐 Other',
+  'cmd.deleted': 'Claude Hub: Deleted session "{name}".',
+  'cmd.deleteConfirm': 'Are you sure you want to permanently delete session "{name}" and its logs?',
+  'cmd.deletePrompt': 'Select a Claude Code session to permanently delete',
 };
 
 export const zhMessages: typeof enMessages = {
@@ -141,6 +144,9 @@ export const zhMessages: typeof enMessages = {
   'cmd.openError': 'Claude Hub: 无法打开日志文件: {err}',
   'cmd.tagWs': '📁 当前工作区',
   'cmd.tagOther': '🌐 其他项目',
+  'cmd.deleted': 'Claude Hub: 已删除会话 "{name}"。',
+  'cmd.deleteConfirm': '确定要永久删除会话 "{name}" 及其日志文件吗？此操作无法撤销。',
+  'cmd.deletePrompt': '选择要永久删除的 Claude 会话',
 };
 
 export type MessageKey = keyof typeof enMessages;

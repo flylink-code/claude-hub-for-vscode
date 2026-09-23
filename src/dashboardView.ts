@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
 import { ClaudeFeaturesManager } from './claudeFeatures.js';
+import { formatModelDisplayName } from './contextLimit.js';
 import { SessionManager } from './sessionManager.js';
 import { getWebviewContent } from './webviewHtml.js';
 
@@ -112,6 +113,12 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           }
           break;
 
+        case 'deleteSession':
+          if (msg.sessionId) {
+            await vscode.commands.executeCommand('claudeHub.deleteSession', msg.sessionId);
+          }
+          break;
+
         case 'openSessionFile':
           if (msg.filePath) {
             try {
@@ -180,11 +187,14 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
     }
 
+    const gwMap = this.configManager.getGatewayModelMap();
     const allSessions = this.sessionManager.allSessions.map((s) => ({
       sessionId: s.sessionId,
       projectName: s.projectName,
       sessionTitle: s.sessionTitle,
-      model: s.model,
+      model: formatModelDisplayName(s.model, gwMap),
+      rawModel: s.model,
+      lastResponseModel: s.lastResponseModel ? formatModelDisplayName(s.lastResponseModel, gwMap) : undefined,
       tokenUsage: s.tokenUsage,
       lastUpdated: s.lastUpdated.getTime(),
       isIdle: s.isIdle,
@@ -193,9 +203,19 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       gitBranch: s.gitBranch,
     }));
 
+    const sessionPayload = session
+      ? {
+          ...session,
+          modelDisplay: formatModelDisplayName(session.model, gwMap),
+          lastResponseModelDisplay: session.lastResponseModel
+            ? formatModelDisplayName(session.lastResponseModel, gwMap)
+            : undefined,
+        }
+      : null;
+
     this._view.webview.postMessage({
       type: 'updateSession',
-      session,
+      session: sessionPayload,
       allSessions,
       focusedSessionId: session?.sessionId || null,
       subscription: this.sessionManager.subscriptionUsage,

@@ -2,7 +2,7 @@
   "name": "claude-hub",
   "displayName": "Claude Hub for VS Code",
   "description": "%extension.description%",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -84,6 +84,12 @@
         "command": "claudeHub.forkSession",
         "title": "%command.forkSession%",
         "icon": "$(git-branch)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.deleteSession",
+        "title": "%command.deleteSession%",
+        "icon": "$(trash)",
         "category": "Claude Hub"
       }
     ],
