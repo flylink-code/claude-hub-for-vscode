@@ -1,5 +1,5 @@
 {
-  "name": "claude-hub",
+  "name": "claude-hub-vscode",
   "displayName": "Claude Hub for VS Code",
   "description": "%extension.description%",
   "version": "0.2.0",
