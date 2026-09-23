@@ -4,6 +4,7 @@ import { ClaudeFeaturesManager } from './claudeFeatures.js';
 import { formatModelDisplayName } from './contextLimit.js';
 import { SessionManager } from './sessionManager.js';
 import { getWebviewContent } from './webviewHtml.js';
+import { ClaudeConfigDirProvider } from './configDir.js';
 
 export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'claudeHub.dashboardView';
@@ -15,8 +16,9 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     private readonly context: vscode.ExtensionContext,
     private readonly sessionManager: SessionManager,
     private readonly configManager: ClaudeConfigManager,
+    configDirProvider?: ClaudeConfigDirProvider,
   ) {
-    this.featuresManager = new ClaudeFeaturesManager();
+    this.featuresManager = new ClaudeFeaturesManager(configDirProvider);
 
     sessionManager.onDidUpdateSessions(() => this.sendSessionUpdate());
     sessionManager.onDidUpdateSubscription(() => this.sendSessionUpdate());

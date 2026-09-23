@@ -1,6 +1,8 @@
 import * as os from 'os';
 import * as path from 'path';
 
+export type ClaudeConfigDirProvider = () => string;
+
 export function resolveClaudeConfigDir(customSetting?: string): string {
   const setting = (customSetting ?? '').trim();
   if (setting) {

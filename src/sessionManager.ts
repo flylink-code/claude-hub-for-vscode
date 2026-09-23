@@ -3,13 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import {
+  ClaudeConfigDirProvider,
   decodeProjectPath,
   getClaudeProjectsDir,
   isPathInWorkspace,
   resolveClaudeConfigDir,
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
-import { parseTranscriptFile, generateForkTitle } from './transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
@@ -37,13 +38,14 @@ export class SessionManager implements vscode.Disposable {
   constructor(
     private context: vscode.ExtensionContext,
     private configManager?: ClaudeConfigManager,
+    private configDirProvider?: ClaudeConfigDirProvider,
   ) {
     const config = vscode.workspace.getConfiguration('claudeHub');
     this._filterMode = config.get<FilterMode>('filterMode', 'currentWorkspace');
 
     this.initWatchers();
-    this.startPeriodicScan();
-    this.startPeriodicSubscription();
+    this.restartPeriodicScan();
+    this.restartPeriodicSubscription();
 
     // Re-scan when configuration changes
     context.subscriptions.push(
@@ -51,7 +53,10 @@ export class SessionManager implements vscode.Disposable {
         if (e.affectsConfiguration('claudeHub')) {
           const cfg = vscode.workspace.getConfiguration('claudeHub');
           this._filterMode = cfg.get<FilterMode>('filterMode', 'currentWorkspace');
+          this.configManager?.refreshWatchers();
           this.initWatchers();
+          this.restartPeriodicScan();
+          this.restartPeriodicSubscription();
           this.scanSessions();
           this.refreshSubscription();
         }
@@ -130,7 +135,13 @@ export class SessionManager implements vscode.Disposable {
       const newFilePath = path.join(dir, `${newSessionId}.jsonl`);
 
       const content = fs.readFileSync(session.sessionFile, 'utf8');
-      let forkedContent = content.split(sessionId).join(newSessionId);
+      const resolvedDir = path.resolve(dir);
+      const resolvedTarget = path.resolve(newFilePath);
+      if (path.dirname(resolvedTarget) !== resolvedDir) {
+        throw new Error('Fork target escaped the source session directory');
+      }
+
+      let forkedContent = rewriteTranscriptSessionIds(content, sessionId, newSessionId);
 
       const newTitle = generateForkTitle(session.sessionTitle);
       const titleEntry = JSON.stringify({
@@ -216,6 +227,9 @@ export class SessionManager implements vscode.Disposable {
   }
 
   private getConfigDir(): string {
+    if (this.configDirProvider) {
+      return this.configDirProvider();
+    }
     const custom = vscode.workspace.getConfiguration('claudeHub').get<string>('configDir', '');
     return resolveClaudeConfigDir(custom);
   }
@@ -237,7 +251,8 @@ export class SessionManager implements vscode.Disposable {
 
     try {
       this.fileWatcher = fs.watch(projectsDir, { recursive: true }, (_event, filename) => {
-        if (typeof filename === 'string' && filename.endsWith('.jsonl')) {
+        const changedName = filename == null ? undefined : String(filename);
+        if (changedName && changedName.endsWith('.jsonl')) {
           this.scheduleScan();
         }
       });
@@ -255,25 +270,35 @@ export class SessionManager implements vscode.Disposable {
     }, 400);
   }
 
-  private startPeriodicScan(): void {
+  private restartPeriodicScan(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
     const intervalSec = vscode.workspace.getConfiguration('claudeHub').get<number>('refreshInterval', 15);
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
     this.refreshTimer = setInterval(() => {
       this.scanSessions();
     }, Math.max(3, intervalSec) * 1000);
   }
 
-  private startPeriodicSubscription(): void {
+  private restartPeriodicSubscription(): void {
+    if (this.subscriptionTimer) {
+      clearInterval(this.subscriptionTimer);
+      this.subscriptionTimer = null;
+    }
+
     const enabled = vscode.workspace.getConfiguration('claudeHub').get<boolean>('fetchSubscriptionUsage', true);
-    if (!enabled) return;
+    if (!enabled) {
+      void this.refreshSubscription();
+      return;
+    }
 
     const intervalSec = vscode.workspace.getConfiguration('claudeHub').get<number>('subscriptionRefreshInterval', 60);
-    if (this.subscriptionTimer) clearInterval(this.subscriptionTimer);
     this.subscriptionTimer = setInterval(() => {
-      this.refreshSubscription();
+      void this.refreshSubscription();
     }, Math.max(30, intervalSec) * 1000);
 
-    this.refreshSubscription();
+    void this.refreshSubscription();
   }
 
   public async refreshSubscription(): Promise<void> {
@@ -310,6 +335,9 @@ export class SessionManager implements vscode.Disposable {
       const idleTimeout = config.get<number>('idleTimeout', 180);
 
       const projectsDir = getClaudeProjectsDir(this.getConfigDir());
+      if (!this.fileWatcher && fs.existsSync(projectsDir)) {
+        this.initWatchers();
+      }
       if (!fs.existsSync(projectsDir)) {
         this._sessions = [];
         this._onDidUpdateSessions.fire([]);
@@ -446,6 +474,9 @@ export class SessionManager implements vscode.Disposable {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
     if (this.subscriptionTimer) clearInterval(this.subscriptionTimer);
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    this.refreshTimer = null;
+    this.subscriptionTimer = null;
+    this.debounceTimer = null;
     this._onDidUpdateSessions.dispose();
     this._onDidUpdateSubscription.dispose();
   }

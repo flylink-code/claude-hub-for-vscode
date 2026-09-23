@@ -43,6 +43,59 @@ export function generateForkTitle(originalTitle?: string): string {
 const transcriptCache = new Map<string, CacheEntry>();
 const MCP_PATTERN = /^mcp__(.+?)__(.+)$/;
 
+function rewriteSessionIdsInValue(value: unknown, oldSessionId: string, newSessionId: string, key?: string): unknown {
+  if (key === 'sessionId' || key === 'parentSessionId') {
+    return value === oldSessionId ? newSessionId : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => rewriteSessionIdsInValue(item, oldSessionId, newSessionId));
+  }
+
+  if (value && typeof value === 'object') {
+    const output: Record<string, unknown> = {};
+    for (const [childKey, childValue] of Object.entries(value)) {
+      output[childKey] = rewriteSessionIdsInValue(childValue, oldSessionId, newSessionId, childKey);
+    }
+    return output;
+  }
+
+  return value;
+}
+
+export function rewriteTranscriptSessionIds(
+  content: string,
+  oldSessionId: string,
+  newSessionId: string,
+): string {
+  const chunks = content.match(/.*?(?:\r\n|\n|\r|$)/g)?.filter((chunk) => chunk.length > 0) || [];
+
+  return chunks
+    .map((chunk) => {
+      let lineEnding = '';
+      let line = chunk;
+      if (line.endsWith('\r\n')) {
+        lineEnding = '\r\n';
+        line = line.slice(0, -2);
+      } else if (line.endsWith('\n') || line.endsWith('\r')) {
+        lineEnding = line.slice(-1);
+        line = line.slice(0, -1);
+      }
+
+      if (!line.trim()) {
+        return chunk;
+      }
+
+      try {
+        const parsed = JSON.parse(line);
+        return JSON.stringify(rewriteSessionIdsInValue(parsed, oldSessionId, newSessionId)) + lineEnding;
+      } catch {
+        return chunk;
+      }
+    })
+    .join('');
+}
+
 function normalizeTarget(toolName: string, input?: Record<string, unknown>): string | undefined {
   if (!input) return undefined;
 

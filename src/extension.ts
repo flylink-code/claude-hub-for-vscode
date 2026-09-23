@@ -4,6 +4,7 @@ import { registerCommands } from './commands.js';
 import { ClaudeHubDashboardProvider } from './dashboardView.js';
 import { SessionManager } from './sessionManager.js';
 import { StatusBarController } from './statusBar.js';
+import { ClaudeConfigDirProvider, resolveClaudeConfigDir } from './configDir.js';
 
 let sessionManager: SessionManager | null = null;
 let configManager: ClaudeConfigManager | null = null;
@@ -13,15 +14,20 @@ let dashboardProvider: ClaudeHubDashboardProvider | null = null;
 export function activate(context: vscode.ExtensionContext) {
   console.log('[Claude Hub] Activating modern extension...');
 
-  configManager = new ClaudeConfigManager();
-  sessionManager = new SessionManager(context, configManager);
+  const configDirProvider: ClaudeConfigDirProvider = () => {
+    const custom = vscode.workspace.getConfiguration('claudeHub').get<string>('configDir', '');
+    return resolveClaudeConfigDir(custom);
+  };
+
+  configManager = new ClaudeConfigManager(configDirProvider);
+  sessionManager = new SessionManager(context, configManager, configDirProvider);
   context.subscriptions.push(sessionManager);
 
   statusBarController = new StatusBarController(sessionManager, configManager);
   context.subscriptions.push(statusBarController);
 
   // Modern Webview Dashboard Provider (Unified View)
-  dashboardProvider = new ClaudeHubDashboardProvider(context, sessionManager, configManager);
+  dashboardProvider = new ClaudeHubDashboardProvider(context, sessionManager, configManager, configDirProvider);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       ClaudeHubDashboardProvider.viewType,

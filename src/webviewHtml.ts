@@ -714,6 +714,42 @@ export function getWebviewContent(): string {
       vscode.postMessage({ type, ...data });
     }
 
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[ch] || ch));
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value);
+    }
+
+    document.addEventListener('click', event => {
+      const source = event.target instanceof Element ? event.target : null;
+      const actionElement = source ? source.closest('[data-action]') : null;
+      if (!actionElement) return;
+
+      const action = actionElement.getAttribute('data-action');
+      if (!action) return;
+
+      if (action === 'focusSession' || action === 'forkSession' || action === 'deleteSession') {
+        sendMessage(action, { sessionId: actionElement.getAttribute('data-session-id') || '' });
+      } else if (action === 'openSessionFile') {
+        sendMessage(action, { filePath: actionElement.getAttribute('data-file-path') || '' });
+      } else if (action === 'toggleMcp') {
+        sendMessage(action, {
+          name: actionElement.getAttribute('data-name') || '',
+          enabled: actionElement.getAttribute('data-enabled') === 'true'
+        });
+      } else if (action === 'openSkill') {
+        sendMessage(action, { filePath: actionElement.getAttribute('data-file-path') || '' });
+      }
+    });
+
     // Sessions State
     let allSessions = [];
     let focusedSessionId = null;
@@ -815,27 +851,33 @@ export function getWebviewContent(): string {
         const timeStr = formatRelativeTime(s.lastUpdated);
         const tokens = s.tokenUsage ? formatTokenCount(s.tokenUsage.totalTokens) : '0';
         const pct = s.tokenUsage && s.tokenUsage.percentage ? s.tokenUsage.percentage + '%' : '0%';
-        const branchStr = s.gitBranch ? '🌿 ' + s.gitBranch : '';
+        const branchStr = s.gitBranch ? '🌿 ' + escapeHtml(s.gitBranch) : '';
         const titleStr = s.sessionTitle ? s.sessionTitle : '未命名对话';
+        const projectNameStr = escapeHtml(s.projectName || '未知项目');
+        const titleDisplay = escapeHtml(titleStr);
+        const titleAttr = escapeAttribute(titleStr);
+        const modelDisplay = escapeHtml(s.model || 'Claude');
+        const sessionIdAttr = escapeAttribute(s.sessionId || '');
+        const sessionFileAttr = escapeAttribute(s.sessionFile || '');
 
         const isFork = titleStr.includes('(Fork');
         const forkBadge = isFork ? ' <span style="background: rgba(78, 201, 176, 0.15); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Fork</span>' : '';
 
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
-            '<span class="session-project-name" title="' + s.projectName + '">' + s.projectName + '</span>' +
+            '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + '</span>' +
             '<div style="display:flex; gap: 4px;">' + focusedTag + activeTag + '</div>' +
           '</div>' +
-          '<div class="session-title-text" title="' + titleStr + '">' + titleStr + forkBadge + '</div>' +
+          '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
-            '<span>' + pct + ' (' + tokens + ' Tokens) · ' + (s.model || 'Claude') + '</span>' +
+            '<span>' + pct + ' (' + tokens + ' Tokens) · ' + modelDisplay + '</span>' +
             '<span>' + branchStr + (branchStr ? ' · ' : '') + timeStr + '</span>' +
           '</div>' +
           '<div class="session-actions-row">' +
-            '<button class="session-act-btn focus" onclick="sendMessage(\\'focusSession\\', { sessionId: \\'' + s.sessionId + '\\' })">👀 聚焦</button>' +
-            '<button class="session-act-btn fork" onclick="sendMessage(\\'forkSession\\', { sessionId: \\'' + s.sessionId + '\\' })">🌿 分叉 Fork</button>' +
-            '<button class="session-act-btn" onclick="sendMessage(\\'openSessionFile\\', { filePath: \\'' + (s.sessionFile || '').replace(/\\\\/g, '\\\\\\\\') + '\\' })">📄 日志</button>' +
-            '<button class="session-act-btn delete" onclick="sendMessage(\\'deleteSession\\', { sessionId: \\'' + s.sessionId + '\\' })">🗑️ 删除</button>' +
+            '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '">👀 聚焦</button>' +
+            '<button class="session-act-btn fork" data-action="forkSession" data-session-id="' + sessionIdAttr + '">🌿 分叉 Fork</button>' +
+            '<button class="session-act-btn" data-action="openSessionFile" data-file-path="' + sessionFileAttr + '">📄 日志</button>' +
+            '<button class="session-act-btn delete" data-action="deleteSession" data-session-id="' + sessionIdAttr + '">🗑️ 删除</button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -924,7 +966,7 @@ export function getWebviewContent(): string {
               const strike = td.status === 'completed' ? 'style="text-decoration: line-through; opacity: 0.6;"' : '';
               return '<div style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 0;">' +
                 '<input type="checkbox" ' + checked + ' disabled>' +
-                '<span ' + strike + '>' + td.content + '</span>' +
+                '<span ' + strike + '>' + escapeHtml(td.content) + '</span>' +
               '</div>';
             }).join('');
           } else {
@@ -952,11 +994,12 @@ export function getWebviewContent(): string {
         const mcpList = document.getElementById('mcp-servers-list');
         if (msg.mcpServers && msg.mcpServers.length > 0) {
           mcpList.innerHTML = msg.mcpServers.map(s => {
-            const onCls = s.enabled ? 'switch-btn on' : 'switch-btn';
-            const onTxt = s.enabled ? 'ON' : 'OFF';
+            const enabled = s.isEnabled === true || s.enabled === true;
+            const onCls = enabled ? 'switch-btn on' : 'switch-btn';
+            const onTxt = enabled ? 'ON' : 'OFF';
             return '<div class="feature-item">' +
-              '<span>' + s.name + '</span>' +
-              '<button class="' + onCls + '" onclick="sendMessage(\\'toggleMcp\\', { name: \\'' + s.name + '\\', enabled: ' + !s.enabled + ' })">' + onTxt + '</button>' +
+              '<span>' + escapeHtml(s.name) + '</span>' +
+              '<button class="' + onCls + '" data-action="toggleMcp" data-name="' + escapeAttribute(s.name) + '" data-enabled="' + (!enabled) + '">' + onTxt + '</button>' +
             '</div>';
           }).join('');
         } else {
@@ -966,10 +1009,11 @@ export function getWebviewContent(): string {
         const skillsList = document.getElementById('skills-list');
         if (msg.skills && msg.skills.length > 0) {
           skillsList.innerHTML = msg.skills.map(sk => {
-            return '<div class="feature-item" style="cursor: pointer;" onclick="sendMessage(\\'openSkill\\', { filePath: \\'' + (sk.path || '').replace(/\\\\/g, '\\\\\\\\') + '\\' })">' +
+            const skillPath = sk.filePath || sk.path || '';
+            return '<div class="feature-item" style="cursor: pointer;" data-action="openSkill" data-file-path="' + escapeAttribute(skillPath) + '">' +
               '<div>' +
-                '<div style="font-weight: 500;">' + sk.name + '</div>' +
-                '<div style="font-size: 10px; color: var(--text-muted);">' + (sk.description || '无描述') + '</div>' +
+                '<div style="font-weight: 500;">' + escapeHtml(sk.name) + '</div>' +
+                '<div style="font-size: 10px; color: var(--text-muted);">' + escapeHtml(sk.description || '无描述') + '</div>' +
               '</div>' +
               '<span style="font-size: 10px; color: var(--claude-accent);">查看</span>' +
             '</div>';

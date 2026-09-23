@@ -1,9 +1,9 @@
 {
-  "name": "claude-hub-vscode",
+  "name": "claude-hub",
   "displayName": "Claude Hub for VS Code",
   "description": "%extension.description%",
-  "version": "0.2.0",
-  "publisher": "zCode",
+  "version": "0.2.1",
+  "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
     "type": "git",

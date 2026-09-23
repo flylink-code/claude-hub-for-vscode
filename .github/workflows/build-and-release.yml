@@ -49,27 +49,40 @@ jobs:
           path: '*.vsix'
           if-no-files-found: error
 
+      - name: Check publishing credentials
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF#refs/tags/v}" != "$VERSION" ]; then
+            echo "::error::Git tag version does not match package.json version $VERSION."
+            exit 1
+          fi
+          if [ -z "$OVSX_PAT" ] || [ -z "$VSCE_PAT" ]; then
+            echo "::error::Both OVSX_PAT and VSCE_PAT are required to publish a release to Open VSX and VS Code Marketplace."
+            exit 1
+          fi
+
+      - name: Publish to Open VSX (Cursor)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          npx ovsx create-namespace "$PUBLISHER" || true
+          npx ovsx publish *.vsix
+
+      - name: Publish to VS Code Marketplace
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx @vscode/vsce publish --packagePath *.vsix
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: '*.vsix'
           generate_release_notes: true
-
-      - name: Publish to Open VSX (Cursor)
-        if: ${{ secrets.OVSX_PAT != '' }}
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: |
-          PUBLISHER=$(node -p "require('./package.json').publisher")
-          npx ovsx create-namespace "$PUBLISHER" -p "$OVSX_PAT" || true
-          npx ovsx publish *.vsix -p "$OVSX_PAT"
-
-      - name: Publish to VS Code Marketplace
-        if: ${{ secrets.VSCE_PAT != '' }}
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx @vscode/vsce publish -p "$VSCE_PAT" --no-git-tag-version
-
-
-

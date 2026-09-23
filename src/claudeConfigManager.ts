@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { resolveClaudeConfigDir, getClaudeProjectsDir } from './configDir.js';
+import { ClaudeConfigDirProvider, resolveClaudeConfigDir, getClaudeProjectsDir } from './configDir.js';
 
 function getVsCode(): any {
   try {
@@ -84,8 +84,10 @@ export class ClaudeConfigManager {
   private settingsWatcher: fs.FSWatcher | null = null;
   private gatewayWatcher: fs.FSWatcher | null = null;
   private debounceTimer: NodeJS.Timeout | null = null;
+  private readonly configDirProvider: ClaudeConfigDirProvider;
 
-  constructor() {
+  constructor(configDirProvider?: ClaudeConfigDirProvider) {
+    this.configDirProvider = configDirProvider ?? (() => resolveClaudeConfigDir());
     const vsc = getVsCode();
     if (vsc?.EventEmitter) {
       this._onDidChange = new vsc.EventEmitter();
@@ -101,56 +103,116 @@ export class ClaudeConfigManager {
       };
     }
 
+    this.initWatchers();
+  }
+
+  private getConfigDir(): string {
+    return this.configDirProvider();
+  }
+
+  public getSettingsPath(): string {
+    return path.join(this.getConfigDir(), 'settings.json');
+  }
+
+  public getGatewayModelsPath(): string {
+    return path.join(this.getConfigDir(), 'cache', 'gateway-models.json');
+  }
+
+  private initWatchers(): void {
+    this.closeWatcher('settings');
+    this.closeWatcher('gateway');
     this.initSettingsWatcher();
     this.initGatewayWatcher();
   }
 
-  public getSettingsPath(): string {
-    const configDir = resolveClaudeConfigDir();
-    return path.join(configDir, 'settings.json');
+  private closeWatcher(kind: 'settings' | 'gateway'): void {
+    const watcher = kind === 'settings' ? this.settingsWatcher : this.gatewayWatcher;
+    if (watcher) {
+      try {
+        watcher.close();
+      } catch {
+        // ignore
+      }
+    }
+    if (kind === 'settings') {
+      this.settingsWatcher = null;
+    } else {
+      this.gatewayWatcher = null;
+    }
   }
 
-  public getGatewayModelsPath(): string {
-    const configDir = resolveClaudeConfigDir();
-    return path.join(configDir, 'cache', 'gateway-models.json');
+  private findExistingDirectory(startDir: string): string {
+    let current = path.resolve(startDir);
+    while (true) {
+      let isDirectory = false;
+      try {
+        isDirectory = fs.existsSync(current) && fs.statSync(current).isDirectory();
+      } catch {
+        isDirectory = false;
+      }
+      if (isDirectory) {
+        return current;
+      }
+
+      const parent = path.dirname(current);
+      if (parent === current) {
+        return current;
+      }
+      current = parent;
+    }
+  }
+
+  public refreshWatchers(): void {
+    this.initWatchers();
+  }
+
+  private watchConfigFile(
+    filePath: string,
+    assign: (watcher: fs.FSWatcher) => void,
+  ): void {
+    const targetDir = path.resolve(path.dirname(filePath));
+    const watchDir = this.findExistingDirectory(targetDir);
+    const targetName = path.basename(filePath);
+
+    try {
+      const watcher = fs.watch(watchDir, (_event, filename) => {
+        const changedName = filename == null ? undefined : String(filename);
+        const isDirectTargetChange = watchDir === targetDir && (!changedName || changedName === targetName);
+        const isTargetDirectoryChange =
+          watchDir !== targetDir &&
+          (!changedName || changedName === path.basename(targetDir));
+
+        if (!isDirectTargetChange && !isTargetDirectoryChange) {
+          return;
+        }
+
+        if (this.debounceTimer) clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+          this._onDidChange.fire(this.getClaudeSettings());
+          if (this.findExistingDirectory(targetDir) === targetDir) {
+            this.initWatchers();
+          }
+        }, 150);
+      });
+      assign(watcher);
+      if (typeof watcher.unref === 'function') {
+        watcher.unref();
+      }
+    } catch {
+      // ignore watch failures
+    }
   }
 
   private initSettingsWatcher(): void {
-    const filePath = this.getSettingsPath();
-    if (!fs.existsSync(filePath)) return;
-
-    try {
-      this.settingsWatcher = fs.watch(filePath, (_event) => {
-        if (this.debounceTimer) clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-          this._onDidChange.fire(this.getClaudeSettings());
-        }, 150);
-      });
-      if (typeof this.settingsWatcher.unref === 'function') {
-        this.settingsWatcher.unref();
-      }
-    } catch {
-      // ignore watch failures
-    }
+    this.watchConfigFile(this.getSettingsPath(), (watcher) => {
+      this.settingsWatcher = watcher;
+    });
   }
 
   private initGatewayWatcher(): void {
-    const filePath = this.getGatewayModelsPath();
-    if (!fs.existsSync(filePath)) return;
-
-    try {
-      this.gatewayWatcher = fs.watch(filePath, (_event) => {
-        if (this.debounceTimer) clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-          this._onDidChange.fire(this.getClaudeSettings());
-        }, 150);
-      });
-      if (typeof this.gatewayWatcher.unref === 'function') {
-        this.gatewayWatcher.unref();
-      }
-    } catch {
-      // ignore watch failures
-    }
+    this.watchConfigFile(this.getGatewayModelsPath(), (watcher) => {
+      this.gatewayWatcher = watcher;
+    });
   }
 
   public getGatewayModels(): Array<{ id: string; display_name: string }> {
@@ -392,6 +454,7 @@ export class ClaudeConfigManager {
       }
 
       fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf-8');
+      this.initWatchers();
       this._onDidChange.fire(current);
       return true;
     } catch (err) {
@@ -409,6 +472,7 @@ export class ClaudeConfigManager {
         fs.mkdirSync(parentDir, { recursive: true });
       }
       fs.writeFileSync(filePath, '{\n  "model": "claude-3-7-sonnet-20250219"\n}\n', 'utf-8');
+      this.initWatchers();
     }
     if (vsc) {
       const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(filePath));
@@ -437,7 +501,7 @@ export class ClaudeConfigManager {
   }
 
   public cleanHistoricalSessions(olderThanDays = 3): number {
-    const configDir = resolveClaudeConfigDir();
+    const configDir = this.getConfigDir();
     const projectsDir = getClaudeProjectsDir(configDir);
     if (!fs.existsSync(projectsDir)) return 0;
 
@@ -478,22 +542,8 @@ export class ClaudeConfigManager {
   }
 
   public dispose(): void {
-    if (this.settingsWatcher) {
-      try {
-        this.settingsWatcher.close();
-      } catch {
-        // ignore
-      }
-      this.settingsWatcher = null;
-    }
-    if (this.gatewayWatcher) {
-      try {
-        this.gatewayWatcher.close();
-      } catch {
-        // ignore
-      }
-      this.gatewayWatcher = null;
-    }
+    this.closeWatcher('settings');
+    this.closeWatcher('gateway');
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
   }
 }

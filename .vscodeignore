@@ -2,6 +2,7 @@
 .vscode-test/**
 out-test/**
 out/test/**
+out/sidebarProvider.js
 test/**
 src/**
 scripts/**

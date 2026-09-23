@@ -9,7 +9,7 @@ function getVsCode(): any {
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { resolveClaudeConfigDir } from './configDir.js';
+import { ClaudeConfigDirProvider, resolveClaudeConfigDir } from './configDir.js';
 import { TokenUsage } from './types.js';
 
 export interface McpServerInfo {
@@ -35,18 +35,23 @@ export interface CheckpointInfo {
 }
 
 export class ClaudeFeaturesManager {
-  private configDir: string;
+  private readonly configDirProvider: ClaudeConfigDirProvider;
 
-  constructor() {
-    this.configDir = resolveClaudeConfigDir();
+  constructor(configDirProvider?: ClaudeConfigDirProvider) {
+    this.configDirProvider = configDirProvider ?? (() => resolveClaudeConfigDir());
+  }
+
+  private getConfigDir(): string {
+    return this.configDirProvider();
   }
 
   public getMcpServers(): McpServerInfo[] {
+    const configDir = this.getConfigDir();
     const servers: McpServerInfo[] = [];
     const disabledSet = new Set<string>();
 
     // 1. Read disabled servers from settings.json
-    const settingsPath = path.join(this.configDir, 'settings.json');
+    const settingsPath = path.join(configDir, 'settings.json');
     if (fs.existsSync(settingsPath)) {
       try {
         const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
@@ -96,7 +101,7 @@ export class ClaudeFeaturesManager {
   }
 
   public toggleMcpServer(name: string, enable: boolean): boolean {
-    const settingsPath = path.join(this.configDir, 'settings.json');
+    const settingsPath = path.join(this.getConfigDir(), 'settings.json');
     if (!fs.existsSync(settingsPath)) return false;
 
     try {
@@ -122,10 +127,11 @@ export class ClaudeFeaturesManager {
   }
 
   public getSkills(): SkillInfo[] {
+    const configDir = this.getConfigDir();
     const skills: SkillInfo[] = [];
 
     // 1. Global Skills in ~/.claude/skills/
-    const globalSkillsDir = path.join(this.configDir, 'skills');
+    const globalSkillsDir = path.join(configDir, 'skills');
     if (fs.existsSync(globalSkillsDir)) {
       try {
         const dirs = fs.readdirSync(globalSkillsDir);
@@ -198,8 +204,9 @@ export class ClaudeFeaturesManager {
   }
 
   public getRecentCheckpoints(): CheckpointInfo[] {
+    const configDir = this.getConfigDir();
     const checkpoints: CheckpointInfo[] = [];
-    const historyDir = path.join(this.configDir, 'file-history');
+    const historyDir = path.join(configDir, 'file-history');
     if (!fs.existsSync(historyDir)) return checkpoints;
 
     try {

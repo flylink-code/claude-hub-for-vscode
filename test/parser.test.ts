@@ -1,8 +1,10 @@
 import assert from 'node:assert';
 import test from 'node:test';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
-import { parseTranscriptFile, generateForkTitle } from '../src/transcriptParser.js';
-import { decodeProjectPath, isPathInWorkspace } from '../src/configDir.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds } from '../src/transcriptParser.js';
+import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
 import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
 
@@ -31,6 +33,11 @@ test('decodeProjectPath handles Unix encoded paths correctly', () => {
   const res = decodeProjectPath('-Users-ed-work-my-project');
   assert.strictEqual(res.fullPath, '/Users/ed/work/my/project');
   assert.ok(res.name.length > 0);
+});
+
+test('resolveClaudeConfigDir honors custom paths and home expansion', () => {
+  assert.strictEqual(resolveClaudeConfigDir('C:\\custom-claude'), 'C:\\custom-claude');
+  assert.strictEqual(resolveClaudeConfigDir('~/custom-claude'), path.join(os.homedir(), 'custom-claude'));
 });
 
 test('getContextLimitForModel returns correct limits', () => {
@@ -72,6 +79,32 @@ test('parseTranscriptFile parses basic transcript fixture', async () => {
   assert.ok(Array.isArray(parsed.todos));
 });
 
+test('rewriteTranscriptSessionIds updates metadata without changing message text', () => {
+  const oldId = 'old-session-id';
+  const newId = 'new-session-id';
+  const malformed = '{"type": "broken"';
+  const content = [
+    JSON.stringify({
+      type: 'user',
+      sessionId: oldId,
+      parentSessionId: oldId,
+      message: { content: `Keep ${oldId} in user text` },
+    }),
+    malformed,
+    '',
+  ].join('\r\n');
+
+  const rewritten = rewriteTranscriptSessionIds(content, oldId, newId);
+  const lines = rewritten.split('\r\n');
+  const first = JSON.parse(lines[0]);
+
+  assert.strictEqual(first.sessionId, newId);
+  assert.strictEqual(first.parentSessionId, newId);
+  assert.strictEqual(first.message.content, `Keep ${oldId} in user text`);
+  assert.strictEqual(lines[1], malformed);
+  assert.strictEqual(lines[2], '');
+});
+
 import { getWebviewContent } from '../src/webviewHtml.js';
 import { ClaudeConfigManager, matchModel, cleanModelKey } from '../src/claudeConfigManager.js';
 
@@ -87,6 +120,12 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('session-search'));
   assert.ok(html.includes('session-cards-list'));
   assert.ok(html.includes('session-pagination'));
+  assert.ok(html.includes('function escapeHtml'));
+  assert.ok(html.includes('data-action="focusSession"'));
+  assert.ok(html.includes('data-action="openSessionFile"'));
+  assert.ok(html.includes('data-action="toggleMcp"'));
+  assert.ok(html.includes('data-action="openSkill"'));
+  assert.ok(html.includes('event.target instanceof Element'));
 });
 
 test('ClaudeFeaturesManager reads skills and calculates cost safely', () => {
@@ -141,4 +180,44 @@ test('ClaudeConfigManager reads settings and discovers models safely', () => {
   assert.strictEqual(matched?.title, 'gpt-5.6-sol');
 
   mgr.dispose();
+});
+
+test('config directory provider is shared by Claude configuration and features', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-config-'));
+  const cacheDir = path.join(tempDir, 'cache');
+  const skillsDir = path.join(tempDir, 'skills', 'demo-skill');
+  let manager: ClaudeConfigManager | undefined;
+
+  try {
+    fs.mkdirSync(cacheDir, { recursive: true });
+    fs.mkdirSync(skillsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(tempDir, 'settings.json'),
+      JSON.stringify({
+        model: 'custom-model',
+        mcpServers: { demo: { command: 'demo-mcp' } },
+      }),
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(cacheDir, 'gateway-models.json'),
+      JSON.stringify({ models: [{ id: 'custom-model', display_name: 'Custom Model' }] }),
+      'utf8',
+    );
+    fs.writeFileSync(path.join(skillsDir, 'SKILL.md'), '# Demo Skill\n\nA test skill.', 'utf8');
+
+    manager = new ClaudeConfigManager(() => tempDir);
+    assert.strictEqual(manager.getSettingsPath(), path.join(tempDir, 'settings.json'));
+    assert.strictEqual(manager.getGatewayModelsPath(), path.join(cacheDir, 'gateway-models.json'));
+    assert.strictEqual(manager.getConfiguredModel(), 'custom-model');
+    assert.strictEqual(manager.getGatewayModels()[0].id, 'custom-model');
+
+    const features = new ClaudeFeaturesManager(() => tempDir);
+    assert.ok(features.getMcpServers().some((server) => server.name === 'demo'));
+    assert.ok(features.getSkills().some((skill) => skill.filePath === path.join(skillsDir, 'SKILL.md')));
+
+  } finally {
+    manager?.dispose();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });
