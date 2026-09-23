@@ -53,23 +53,16 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if [ "${GITHUB_REF#refs/tags/v}" != "$VERSION" ]; then
             echo "::error::Git tag version does not match package.json version $VERSION."
             exit 1
           fi
-          if [ -z "$OVSX_PAT" ] || [ -z "$VSCE_PAT" ]; then
-            echo "::error::Both OVSX_PAT and VSCE_PAT are required to publish a release to Open VSX and VS Code Marketplace."
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::error::OVSX_PAT is required to publish a release to Open VSX."
             exit 1
           fi
-
-      - name: Publish to VS Code Marketplace
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx @vscode/vsce publish --packagePath *.vsix
 
       - name: Publish to Open VSX (Cursor)
         if: startsWith(github.ref, 'refs/tags/v')
