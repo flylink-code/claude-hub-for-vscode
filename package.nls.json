@@ -1,5 +1,5 @@
 {
-  "extension.description": "Real-time monitor and HUD for Claude Code: context window, active tools, subagents, todos, and rate limits.",
+  "extension.description": "Monitor and manage Claude Code sessions in VS Code: context window, models, token usage, tools, todos, and subscription limits.",
   "viewsContainers.title": "Claude",
   "views.dashboard": "Hub",
   "views.treeView": "Overview",

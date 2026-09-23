@@ -1,113 +1,172 @@
 # Claude Hub for VS Code
 
-实时监控、管理与可视化展示 **Claude Code** 运行状态的 VS Code 扩展插件。专为搭配 Claude Code 打造，提供单页流畅折叠仪表盘、状态栏实时 HUD 监控、多会话中心（检索/翻页/分叉 Fork）、MCP 与 Skills 生态管理。
+[English](#english) · [简体中文](#zh-cn)
 
----
+<a id="english"></a>
 
-## ✨ 核心特性
+## English
 
-- 📊 **单页流畅折叠仪表盘 (Modern Accordion Dashboard)**：
-  - 弃用繁琐的水平 Tab 栏，采用现代感十足的单页纵向滚动 + 手风琴折叠面板。
-  - **实时运行监控 (常驻展开)**：项目会话指示灯、渐变色上下文进度条、单行指标气泡（输入、缓存命中、写入、输出 Tokens）、预估使用成本与 Git 分支。
-  - **动态工具与待办清单**：仅在工具运行时高亮弹出秒级耗时气泡，待办任务清单按需自适应展开。
-- 🕒 **全功能会话管理中心 (Session Manager)**：
-  - **智能分类过滤**：`全部` · `当前工作区` · `活跃中` 一键切换。
-  - **即时模糊搜索**：支持按项目名称、会话标题、Git 分支即时过滤。
-  - **分页浏览**：支持对海量历史会话（100+ Sessions）平滑翻页浏览，杜绝长列表卡顿。
-  - **🌿 会话分叉 (Fork Session)**：一键克隆会话全量上下文历史并分配独立 UUID，生成全新探索分支，支持快速打开或在终端以 `claude --resume` 启动。
-- 🎯 **双重工作区过滤模式**：
-  - **当前工作区模式 (默认)**：自动匹配 VS Code 当前打开的项目，聚焦当前项目会话，清爽无干扰。
-  - **全局所有会话模式**：一键切换查看本机系统内所有正在运行的 Claude Code 会话。
-- 🧩 **扩展生态管理 (MCP & Skills)**：
-  - 自动扫描并展示当前配置的 MCP 服务，支持一键开关启停。
-  - 识别并列出所有已安装技能（Skills），支持一键在 VS Code 中直接打开预览与编辑 `SKILL.md`。
-- 🌐 **网络代理与环境配置**：
-  - 支持查看与修改 API Base URL 代理地址。
-  - 一键直达 Claude 全局配置 `settings.json` 与项目级指南 `CLAUDE.md`。
-- 📌 **精致状态栏与适度结构化悬停卡片 (Status Bar & Hover HUD)**：
-  - 状态栏紧凑指标：`$(robot) claude-hub · 7% | $(sync~spin) Edit (3s) | Todos 2/5`。
-  - 适度丰富的 Markdown 悬停卡片：图形化进度条、结构化 Token 流与常用快捷操作。
+Monitor, manage, and visualize **Claude Code** sessions inside VS Code. Claude Hub provides a single-page dashboard, a status-bar HUD, a session browser with search, paging, fork, and delete, plus controls for MCP servers and skills.
 
----
+### Features
 
-## 🛠️ 快捷指令 (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+- **Dashboard.** A vertical accordion replaces a tab bar. The live panel stays open and shows the session indicator, context-window progress, input / cache / write / output tokens, estimated cost, and the Git branch. Tool activity and the todo list expand only while they are in use.
+- **Sessions.** Filter by all sessions, the current workspace, or active sessions. Search by project, title, or Git branch, and page through long histories. Fork copies a session’s full transcript into a new UUID so you can open it or resume it with `claude --resume`. Delete removes a session record.
+- **Workspace scope.** Current-workspace mode follows the folder open in VS Code. All-sessions mode lists every Claude Code session on the machine.
+- **MCP and skills.** Claude Hub lists configured MCP servers and can enable or disable them. Installed skills are listed, and `SKILL.md` opens in the editor.
+- **Environment.** View and edit the API base URL. Open the global `~/.claude/settings.json` and the project `CLAUDE.md` from the dashboard.
+- **Status bar.** A compact item reports context usage, the running tool, and todo progress. Hover shows a progress bar, token breakdown, and common actions.
 
-| 命令 | 说明 |
+### Commands
+
+Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
+
+| Command | Action |
 | --- | --- |
-| `Claude Hub: 刷新 Claude Code 状态` | 立即强制重新扫描会话与订阅额度 |
-| `Claude Hub: 切换当前工作区 / 全局所有会话过滤` | 切换「当前工作区」与「全局会话」模式 |
-| `Claude Hub: 切换聚焦查看的 Claude 会话` | 弹出列表快速切换当前聚焦的会话 |
-| `Claude Hub: 分叉当前会话 (Fork Session)` | 复制当前会话全量历史为新独立会话 |
-| `Claude Hub: 打开当前会话底层运行日志` | 在编辑器中打开当前会话底层的 `.jsonl` 运行日志 |
-| `Claude Hub: 打开 Claude Code 配置中心` | 快速打开 `~/.claude/settings.json` 配置文件 |
+| `Claude Hub: Refresh Claude Code Status` | Rescan sessions and subscription usage |
+| `Claude Hub: Toggle Workspace / All Sessions Filter` | Switch between the current workspace and all sessions |
+| `Claude Hub: Switch Focused Claude Session` | Pick the session shown in the dashboard |
+| `Claude Hub: Fork Claude Session` | Copy the current session into a new session |
+| `Claude Hub: Delete Claude Session` | Delete a session record |
+| `Claude Hub: Open Active Session Transcript` | Open the session `.jsonl` transcript |
+| `Claude Hub: Open Claude Code Settings` | Open `~/.claude/settings.json` |
 
----
-
-## ⚙️ 配置选项
-
-在 VS Code `settings.json` 中可进行个性化调整：
+### Settings
 
 ```jsonc
 {
-  // 会话过滤模式: "currentWorkspace" (仅当前工作区) 或 "all" (全部会话)
+  // "currentWorkspace" or "all"
   "claudeHub.filterMode": "currentWorkspace",
 
-  // 状态栏显示开关
   "claudeHub.showStatusBarItem": true,
 
-  // 闲置判定时间 (秒)，默认 180 秒无操作自动标记为闲置；设置为 0 表示永不闲置
+  // Seconds without activity before a session is idle. 0 never marks a session idle.
   "claudeHub.idleTimeout": 180,
 
-  // 刷新检测周期 (秒)
+  // How often to rescan session files, in seconds.
   "claudeHub.refreshInterval": 15,
 
-  // 上下文预警阈值 (默认 50% 黄色警告，75% 红色高危)
+  // Context-window colors: yellow at 50%, red at 75%.
   "claudeHub.warningThreshold": 50,
   "claudeHub.dangerThreshold": 75,
 
-  // 自定义模型上下文大小限制覆盖 (Exact Model ID -> tokens)
+  // Exact model id -> token limit.
   "claudeHub.modelContextLimits": {
     "claude-3-7-sonnet": 200000
   },
 
-  // 是否拉取 5 小时订阅配额
+  // Read the 5-hour subscription quota from local credentials.
   "claudeHub.fetchSubscriptionUsage": true,
 
-  // 自定义 Claude 配置文件夹 (默认为 ~/.claude)
+  // Claude config directory. Empty uses ~/.claude.
   "claudeHub.configDir": "",
 
-  // 界面语言: "auto" (自动跟随 VS Code), "zh-CN", "en"
+  // "auto" follows VS Code, or set "zh-CN" or "en".
   "claudeHub.language": "auto"
 }
 ```
 
----
-
-## 📦 本地开发与构建
+### Development
 
 ```bash
-# 1. 安装依赖
 npm install
-
-# 2. 编译 TypeScript
 npm run compile
-
-# 3. 运行自动化单元测试
 npm test
 
-# 4. 打包生成 .vsix 插件安装包 (Windows PowerShell)
+# Windows
 .\scripts\package.ps1
+
+# macOS / Linux
+./scripts/package.sh
 ```
 
----
+### Acknowledgements
 
-## 🙏 致谢与灵感来源 (Acknowledgements)
+- **[claude-context-bar](https://github.com/edenaion/claude-context-bar)** by [Ed Zisk (@edenaion)](https://github.com/edenaion) — status-bar context monitoring, path encoding, and multi-workspace session mapping.
+- **[claude-hud](https://github.com/jarrodwatts/claude-hud)** by [Jarrod Watts (@jarrodwatts)](https://github.com/jarrodwatts) — terminal HUD layout, JSONL transcript parsing, live tool tracking, and cost calculation.
+- **[claude-code-manager](https://github.com/vishalguptax/claude-code-manager)** by [Vishal Gupta (@vishalguptax)](https://github.com/vishalguptax) — session browser, search across many sessions, and the fork workflow.
 
-本项目的诞生与设计汲取了开源社区优秀项目的启发，在此特向以下项目及其作者致以诚挚的感谢：
+<a id="zh-cn"></a>
 
-1. **[claude-context-bar](https://github.com/edenaion/claude-context-bar)** by [Ed Zisk (@edenaion)](https://github.com/edenaion)  
-   - 启发了 VS Code 状态栏上下文窗口监控、项目路径编码解码与多工作区会话映射机制。
-2. **[claude-hud](https://github.com/jarrodwatts/claude-hud)** by [Jarrod Watts (@jarrodwatts)](https://github.com/jarrodwatts)  
-   - 启发了 Claude Code 终端 HUD 状态行体系、JSONL Transcript 解析机制、实时工具追踪与成本计算模型。
-3. **[claude-code-manager](https://github.com/vishalguptax/claude-code-manager)** by [Vishal Gupta (@vishalguptax)](https://github.com/vishalguptax)  
-   - 启发了现代会话中心（Session Manager）的设计理念、海量会话检索以及会话分叉（Fork Session）的工作流设计。
+## 简体中文
+
+在 VS Code 里监控、管理并查看 **Claude Code** 会话。Claude Hub 提供单页仪表盘、状态栏 HUD、可搜索和分页的会话列表（支持分叉与删除），以及 MCP 服务和技能的管理。
+
+### 功能
+
+- **仪表盘。** 用纵向手风琴代替横向标签。实时面板保持展开，显示会话指示、上下文进度、输入 / 缓存命中 / 写入 / 输出 Token、预估费用和 Git 分支。工具耗时和待办清单只在有内容时展开。
+- **会话。** 可按全部、当前工作区或活跃中过滤，并按项目名、标题或 Git 分支搜索，长列表分页浏览。分叉会把会话的完整记录复制为新的 UUID，可直接打开，或在终端用 `claude --resume` 继续。删除会移除一条会话记录。
+- **工作区范围。** 当前工作区模式跟随 VS Code 正在打开的文件夹。全部会话模式列出本机所有 Claude Code 会话。
+- **MCP 与技能。** 列出已配置的 MCP 服务，并可启停。已安装技能会列出来，`SKILL.md` 可在编辑器中打开。
+- **环境。** 查看并修改 API Base URL，从仪表盘打开全局 `~/.claude/settings.json` 和项目里的 `CLAUDE.md`。
+- **状态栏。** 紧凑显示上下文占用、正在运行的工具和待办进度。悬停卡片包含进度条、Token 明细和常用操作。
+
+### 命令
+
+用 `Ctrl+Shift+P` / `Cmd+Shift+P` 打开命令面板。
+
+| 命令 | 作用 |
+| --- | --- |
+| `Claude Hub: 刷新 Claude Code 状态` | 重新扫描会话和订阅额度 |
+| `Claude Hub: 切换当前工作区 / 全局所有会话过滤` | 在当前工作区与全部会话之间切换 |
+| `Claude Hub: 切换聚焦查看的 Claude 会话` | 选择仪表盘当前显示的会话 |
+| `Claude Hub: 分叉当前会话 (Fork Session)` | 把当前会话复制为一条新会话 |
+| `Claude Hub: 删除 Claude 会话记录` | 删除一条会话记录 |
+| `Claude Hub: 打开当前会话底层运行日志` | 打开该会话的 `.jsonl` 记录 |
+| `Claude Hub: 打开 Claude Code 配置中心` | 打开 `~/.claude/settings.json` |
+
+### 设置
+
+```jsonc
+{
+  // "currentWorkspace"（仅当前工作区）或 "all"（全部会话）
+  "claudeHub.filterMode": "currentWorkspace",
+
+  // 是否显示状态栏
+  "claudeHub.showStatusBarItem": true,
+
+  // 闲置判定秒数，默认 180。设为 0 表示永不标为闲置。
+  "claudeHub.idleTimeout": 180,
+
+  // 重新扫描会话文件的间隔（秒）
+  "claudeHub.refreshInterval": 15,
+
+  // 上下文占用颜色：50% 黄色，75% 红色
+  "claudeHub.warningThreshold": 50,
+  "claudeHub.dangerThreshold": 75,
+
+  // 模型 ID -> Token 上限
+  "claudeHub.modelContextLimits": {
+    "claude-3-7-sonnet": 200000
+  },
+
+  // 是否从本地凭据读取 5 小时订阅配额
+  "claudeHub.fetchSubscriptionUsage": true,
+
+  // Claude 配置目录，留空则为 ~/.claude
+  "claudeHub.configDir": "",
+
+  // "auto" 跟随 VS Code，也可设为 "zh-CN" 或 "en"
+  "claudeHub.language": "auto"
+}
+```
+
+### 本地开发
+
+```bash
+npm install
+npm run compile
+npm test
+
+# Windows
+.\scripts\package.ps1
+
+# macOS / Linux
+./scripts/package.sh
+```
+
+### 致谢
+
+- **[claude-context-bar](https://github.com/edenaion/claude-context-bar)**，作者 [Ed Zisk (@edenaion)](https://github.com/edenaion)。状态栏上下文监控、路径编解码，以及多工作区会话对应关系来自这个项目。
+- **[claude-hud](https://github.com/jarrodwatts/claude-hud)**，作者 [Jarrod Watts (@jarrodwatts)](https://github.com/jarrodwatts)。终端 HUD 布局、JSONL 记录解析、实时工具跟踪和费用计算来自这个项目。
+- **[claude-code-manager](https://github.com/vishalguptax/claude-code-manager)**，作者 [Vishal Gupta (@vishalguptax)](https://github.com/vishalguptax)。会话列表、大量会话检索，以及分叉流程来自这个项目。

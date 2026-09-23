@@ -1,5 +1,5 @@
 {
-  "extension.description": "Claude Code 实时运行状态与 HUD 监控：上下文 Token 消耗、活跃工具、子代理任务、待办清单及订阅配额。",
+  "extension.description": "在 VS Code 中监控并管理 Claude Code 会话：上下文窗口、模型、Token 用量、工具、待办与订阅配额。",
   "viewsContainers.title": "Claude",
   "views.dashboard": "Hub",
   "views.treeView": "总览",
