@@ -7,6 +7,13 @@ import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds } f
 import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
 import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
+import {
+  formatProgressBar,
+  formatK,
+  resolveRenderOptions,
+  formatStatusBarText,
+  StatusBarRenderOptions,
+} from '../src/statusBarFormatter.js';
 
 test('resolveLanguage respects config overrides and auto detection', () => {
   assert.strictEqual(resolveLanguage('zh-CN', 'en-US'), 'zh-CN');
@@ -265,3 +272,175 @@ test('ClaudeConfigManager manages AGENTS.md and CLAUDE.md status and generation'
     fs.rmSync(wsDir, { recursive: true, force: true });
   }
 });
+
+test('statusBar formatters format numbers and progress bar properly', () => {
+  assert.strictEqual(formatK(900), '900');
+  assert.strictEqual(formatK(1500), '1.5k');
+  assert.strictEqual(formatK(200000), '200.0k');
+  assert.strictEqual(formatK(1000000), '1.0M');
+  assert.strictEqual(formatK(2500000), '2.5M');
+
+  // Test progress bar
+  const bar0 = formatProgressBar(0, 5);
+  assert.strictEqual(bar0, '▱▱▱▱▱');
+  const bar50 = formatProgressBar(50, 6);
+  assert.strictEqual(bar50, '▰▰▰▱▱▱');
+  const bar100 = formatProgressBar(100, 4);
+  assert.strictEqual(bar100, '▰▰▰▰');
+});
+
+test('statusBar formatStatusBarText renders compact, minimal, detailed, hud and custom presets correctly', () => {
+  const baseInput = {
+    percentage: 7,
+    totalTokens: 14000,
+    contextLimit: 200000,
+    modelDisplay: 'Sonnet 3.7',
+    hasRunningTool: false,
+    cost: '$0.02',
+    gitBranch: 'main',
+    todos: [{ status: 'completed' }, { status: 'pending' }],
+  };
+
+  // 1. Minimal preset
+  const minimalText = formatStatusBarText({
+    ...baseInput,
+    options: {
+      preset: 'minimal',
+      contextFormat: 'percent',
+      showProgressBar: false,
+      showModel: false,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: false,
+    },
+  });
+  assert.strictEqual(minimalText, '$(sparkle) 7%');
+
+  // 1.1 Minimal running
+  const minimalRunning = formatStatusBarText({
+    ...baseInput,
+    hasRunningTool: true,
+    activeToolName: 'Bash',
+    elapsedSec: 3,
+    options: {
+      preset: 'minimal',
+      contextFormat: 'percent',
+      showProgressBar: false,
+      showModel: false,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: false,
+    },
+  });
+  assert.strictEqual(minimalRunning, '$(sync~spin) 7%');
+
+  // 2. Compact preset
+  const compactIdle = formatStatusBarText({
+    ...baseInput,
+    options: {
+      preset: 'compact',
+      contextFormat: 'percent',
+      showProgressBar: false,
+      showModel: true,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+    },
+  });
+  assert.strictEqual(compactIdle, '$(sparkle) 7% · Sonnet 3.7');
+
+  const compactRunning = formatStatusBarText({
+    ...baseInput,
+    hasRunningTool: true,
+    activeToolName: 'Bash',
+    elapsedSec: 4,
+    options: {
+      preset: 'compact',
+      contextFormat: 'percent',
+      showProgressBar: false,
+      showModel: true,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+    },
+  });
+  assert.strictEqual(compactRunning, '$(sync~spin) 7% · Bash (4s)');
+
+  // 3. HUD preset
+  const hudIdle = formatStatusBarText({
+    ...baseInput,
+    options: {
+      preset: 'hud',
+      contextFormat: 'percent',
+      showProgressBar: true,
+      showModel: true,
+      showCost: true,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+    },
+  });
+  assert.ok(hudIdle.startsWith('[Sonnet 3.7]'));
+  assert.ok(hudIdle.includes('7%'));
+  assert.ok(hudIdle.includes('│ $0.02'));
+
+  const hudRunning = formatStatusBarText({
+    ...baseInput,
+    hasRunningTool: true,
+    activeToolName: 'Edit',
+    elapsedSec: 2,
+    options: {
+      preset: 'hud',
+      contextFormat: 'percent',
+      showProgressBar: true,
+      showModel: true,
+      showCost: true,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+    },
+  });
+  assert.ok(hudRunning.includes('│ ◐ Edit (2s)'));
+
+  // 4. Detailed preset
+  const detailedText = formatStatusBarText({
+    ...baseInput,
+    options: {
+      preset: 'detailed',
+      contextFormat: 'both',
+      showProgressBar: true,
+      showModel: true,
+      showCost: true,
+      showGitBranch: true,
+      showTodos: true,
+      showTools: true,
+    },
+  });
+  assert.ok(detailedText.includes('$(sparkle)'));
+  assert.ok(detailedText.includes('7% (14.0k/200.0k)'));
+  assert.ok(detailedText.includes('Sonnet 3.7'));
+  assert.ok(detailedText.includes('$0.02'));
+  assert.ok(detailedText.includes('☑ 1/2'));
+  assert.ok(detailedText.includes('🌿 main'));
+
+  // 5. Custom preset with tokens only
+  const customTokens = formatStatusBarText({
+    ...baseInput,
+    options: {
+      preset: 'custom',
+      contextFormat: 'tokens',
+      showProgressBar: false,
+      showModel: true,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+    },
+  });
+  assert.strictEqual(customTokens, '$(sparkle) 14.0k/200.0k · Sonnet 3.7');
+});
+

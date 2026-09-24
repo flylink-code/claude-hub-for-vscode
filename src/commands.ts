@@ -143,5 +143,57 @@ export function registerCommands(
         }
       }
     }),
+
+    vscode.commands.registerCommand('claudeHub.configureStatusBar', async () => {
+      const currentConfig = vscode.workspace.getConfiguration('claudeHub');
+      const currentPreset = currentConfig.get<string>('statusBar.preset', 'compact');
+
+      const items = [
+        {
+          label: '$(sparkle) 紧凑模式 (Compact)' + (currentPreset === 'compact' ? ' ✓ 当前' : ''),
+          description: '$(sparkle) 7% · Sonnet 3.7',
+          detail: '均衡简洁：显示上下文百分比与模型名称，执行任务时显示工具与耗时',
+          preset: 'compact',
+        },
+        {
+          label: '$(zap) 极简模式 (Minimal)' + (currentPreset === 'minimal' ? ' ✓ 当前' : ''),
+          description: '$(sparkle) 7%',
+          detail: '极低占用：仅显示状态图标与上下文占用百分比，不占状态栏宽度',
+          preset: 'minimal',
+        },
+        {
+          label: '$(list-unordered) 详细模式 (Detailed)' + (currentPreset === 'detailed' ? ' ✓ 当前' : ''),
+          description: '$(sparkle) ▰▰▱▱ 7% (14k/200k) · Sonnet 3.7 · $0.02 · 🌿 main',
+          detail: '完整信息：包含微型进度条、绝对 Token/上限、模型、费用预估与 Git 分支',
+          preset: 'detailed',
+        },
+        {
+          label: '$(terminal) Claude HUD 风格 (HUD Style)' + (currentPreset === 'hud' ? ' ✓ 当前' : ''),
+          description: '[Sonnet 3.7] ▰▰▱▱ 7% │ $0.02',
+          detail: '经典终端风格：模仿 claude-hud 插件排版样式',
+          preset: 'hud',
+        },
+        {
+          label: '$(gear) 自定义微调 / 打开高级设置' + (currentPreset === 'custom' ? ' ✓ 当前' : ''),
+          description: '细粒度控制进度条、Token 格式、费用、分支、待办及对齐位置',
+          detail: '打开 VS Code 设置中心定位到 Claude Hub 状态栏配置',
+          preset: 'custom',
+        },
+      ];
+
+      const picked = await vscode.window.showQuickPick(items, {
+        placeHolder: '选择 Claude Hub 底部状态栏显示风格',
+      });
+
+      if (!picked) return;
+
+      if (picked.preset === 'custom') {
+        await currentConfig.update('statusBar.preset', 'custom', vscode.ConfigurationTarget.Global);
+        await vscode.commands.executeCommand('workbench.action.openSettings', 'claudeHub.statusBar');
+      } else {
+        await currentConfig.update('statusBar.preset', picked.preset, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`已切换状态栏风格为「${picked.label.split(' ')[1]}」`);
+      }
+    }),
   );
 }

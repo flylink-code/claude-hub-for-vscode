@@ -1,20 +1,48 @@
 import * as vscode from 'vscode';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
+import { ClaudeFeaturesManager } from './claudeFeatures.js';
 import { formatModelDisplayName } from './contextLimit.js';
 import { t } from './i18n.js';
 import { SessionManager } from './sessionManager.js';
+import {
+  ConfigGetter,
+  formatK,
+  formatProgressBar,
+  formatStatusBarText,
+  resolveRenderOptions,
+  StatusBarContextFormat,
+  StatusBarFormatInput,
+  StatusBarPosition,
+  StatusBarPreset,
+  StatusBarRenderOptions,
+} from './statusBarFormatter.js';
 import { SessionInfo, SubscriptionUsageData } from './types.js';
 
+export {
+  ConfigGetter,
+  formatK,
+  formatProgressBar,
+  formatStatusBarText,
+  resolveRenderOptions,
+  StatusBarContextFormat,
+  StatusBarFormatInput,
+  StatusBarPosition,
+  StatusBarPreset,
+  StatusBarRenderOptions,
+};
+
 export class StatusBarController implements vscode.Disposable {
-  private item: vscode.StatusBarItem;
+  private item!: vscode.StatusBarItem;
+  private currentPosition: StatusBarPosition = 'right';
   private timer: NodeJS.Timeout | null = null;
+  private disposables: vscode.Disposable[] = [];
+  private lastTooltipString: string = '';
 
   constructor(
     private sessionManager: SessionManager,
     private configManager?: ClaudeConfigManager,
   ) {
-    this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    this.item.command = 'claudeHub.switchSession';
+    this.createItem();
 
     sessionManager.onDidUpdateSessions(() => this.update());
     sessionManager.onDidUpdateSubscription(() => this.update());
@@ -22,15 +50,43 @@ export class StatusBarController implements vscode.Disposable {
       configManager.onDidChange(() => this.update());
     }
 
-    // Update active timer every 1s for live running tool duration
+    const configListener = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('claudeHub')) {
+        this.checkPositionAndRecreate();
+        this.update();
+      }
+    });
+    this.disposables.push(configListener);
+
+    // Update active timer every 1s ONLY for the status bar text duration (never refresh tooltip)
     this.timer = setInterval(() => {
       const active = this.sessionManager.focusedSession;
       if (active && active.activeTools.length > 0) {
-        this.update();
+        this.updateRunningTimeText();
       }
     }, 1000);
 
     this.update();
+  }
+
+  private createItem(): void {
+    const config = vscode.workspace.getConfiguration('claudeHub');
+    const pos = config.get<StatusBarPosition>('statusBar.position', 'right');
+    this.currentPosition = pos;
+
+    const alignment =
+      pos === 'left' ? vscode.StatusBarAlignment.Left : vscode.StatusBarAlignment.Right;
+    this.item = vscode.window.createStatusBarItem(alignment, pos === 'left' ? 10 : 100);
+    this.item.command = 'claudeHub.switchSession';
+  }
+
+  private checkPositionAndRecreate(): void {
+    const config = vscode.workspace.getConfiguration('claudeHub');
+    const targetPos = config.get<StatusBarPosition>('statusBar.position', 'right');
+    if (targetPos !== this.currentPosition) {
+      this.item.dispose();
+      this.createItem();
+    }
   }
 
   public update(): void {
@@ -49,7 +105,7 @@ export class StatusBarController implements vscode.Disposable {
       const otherActive = allSessions.filter((s) => !s.isIdle).length;
       if (filterMode === 'currentWorkspace' && otherActive > 0) {
         this.item.text = '$(sparkle) Idle (' + otherActive + ')';
-        this.item.tooltip = new vscode.MarkdownString(
+        const tip = new vscode.MarkdownString(
           '**Claude Code** · ' +
             t('status.stateIdle') +
             '\n\n' +
@@ -58,17 +114,19 @@ export class StatusBarController implements vscode.Disposable {
             t('status.switchToAll') +
             '](command:claudeHub.toggleFilter)',
         );
-        this.item.tooltip.isTrusted = true;
+        tip.isTrusted = true;
+        this.setTooltipIfChanged(tip);
       } else {
         this.item.text = '$(sparkle) Idle';
-        this.item.tooltip = new vscode.MarkdownString(
+        const tip = new vscode.MarkdownString(
           '**Claude Code** · ' +
             t('status.stateIdle') +
             '\n\n[' +
             t('status.refresh') +
             '](command:claudeHub.refresh)',
         );
-        this.item.tooltip.isTrusted = true;
+        tip.isTrusted = true;
+        this.setTooltipIfChanged(tip);
       }
       this.item.backgroundColor = undefined;
       this.item.show();
@@ -83,22 +141,32 @@ export class StatusBarController implements vscode.Disposable {
     const pct = session.tokenUsage.percentage;
 
     // Running activity
-    let activityText = '';
     let hasRunningTool = false;
+    let activeToolName: string | undefined;
+    let elapsedSec = 0;
     if (session.activeTools.length > 0) {
       hasRunningTool = true;
       const tTool = session.activeTools[0];
-      const elapsedSec = Math.max(0, Math.floor((Date.now() - tTool.startTime.getTime()) / 1000));
-      activityText = ` · ${tTool.name} (${elapsedSec}s)`;
+      activeToolName = tTool.name;
+      elapsedSec = Math.max(0, Math.floor((Date.now() - tTool.startTime.getTime()) / 1000));
     }
 
-    // Clean, modern minimal status bar text: $(sparkle) 7% · gpt-5.6-sol
-    const icon = hasRunningTool ? '$(sync~spin)' : '$(sparkle)';
-    if (hasRunningTool) {
-      this.item.text = `${icon} ${pct}%${activityText}`;
-    } else {
-      this.item.text = `${icon} ${pct}% · ${modelDisplay}`;
-    }
+    const renderOpts = resolveRenderOptions(config);
+    const cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
+
+    this.item.text = formatStatusBarText({
+      percentage: pct,
+      totalTokens: session.tokenUsage.totalTokens,
+      contextLimit: session.contextLimit,
+      modelDisplay,
+      hasRunningTool,
+      activeToolName,
+      elapsedSec,
+      cost,
+      gitBranch: session.gitBranch,
+      todos: session.todos,
+      options: renderOpts,
+    });
 
     // Color warning
     if (pct >= dangerThreshold) {
@@ -109,8 +177,55 @@ export class StatusBarController implements vscode.Disposable {
       this.item.backgroundColor = undefined;
     }
 
-    this.item.tooltip = this.buildTooltip(session, this.sessionManager.subscriptionUsage);
+    this.setTooltipIfChanged(this.buildTooltip(session, this.sessionManager.subscriptionUsage));
     this.item.show();
+  }
+
+  /**
+   * Only update the status bar label text for running tool seconds.
+   * Never touch tooltip or call show() so hover popups stay smooth without flicker.
+   */
+  private updateRunningTimeText(): void {
+    const session = this.sessionManager.focusedSession;
+    if (!session || session.activeTools.length === 0) return;
+
+    const config = vscode.workspace.getConfiguration('claudeHub');
+    const show = config.get<boolean>('showStatusBarItem', true);
+    if (!show) return;
+
+    const renderOpts = resolveRenderOptions(config);
+    if (!renderOpts.showTools) return;
+
+    const tTool = session.activeTools[0];
+    const elapsedSec = Math.max(0, Math.floor((Date.now() - tTool.startTime.getTime()) / 1000));
+    const gwMap = this.configManager?.getGatewayModelMap();
+    const modelDisplay = formatModelDisplayName(session.model, gwMap);
+    const cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
+
+    const newText = formatStatusBarText({
+      percentage: session.tokenUsage.percentage,
+      totalTokens: session.tokenUsage.totalTokens,
+      contextLimit: session.contextLimit,
+      modelDisplay,
+      hasRunningTool: true,
+      activeToolName: tTool.name,
+      elapsedSec,
+      cost,
+      gitBranch: session.gitBranch,
+      todos: session.todos,
+      options: renderOpts,
+    });
+
+    if (this.item.text !== newText) {
+      this.item.text = newText;
+    }
+  }
+
+  private setTooltipIfChanged(md: vscode.MarkdownString): void {
+    if (this.lastTooltipString !== md.value) {
+      this.lastTooltipString = md.value;
+      this.item.tooltip = md;
+    }
   }
 
   private buildTooltip(session: SessionInfo, subscription: SubscriptionUsageData | null): vscode.MarkdownString {
@@ -129,7 +244,7 @@ export class StatusBarController implements vscode.Disposable {
     const branchPart = session.gitBranch ? ' · 🌿 ' + t('status.git') + ': `' + session.gitBranch + '`' : '';
 
     const pct = session.tokenUsage.percentage;
-    const bar = renderProgressBar(pct);
+    const bar = formatProgressBar(pct, 8);
     const totalK = formatK(session.tokenUsage.totalTokens);
     const limitK = formatK(session.contextLimit);
 
@@ -139,10 +254,23 @@ export class StatusBarController implements vscode.Disposable {
     const outTokens = formatK(session.tokenUsage.outputTokens);
     const totalIn = session.tokenUsage.inputTokens + session.tokenUsage.cacheReadTokens;
     const hitRate = totalIn > 0 ? Math.round((session.tokenUsage.cacheReadTokens / totalIn) * 100) : 0;
+    const cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
 
-    // Elegant and balanced header with visual progress bar
+    // Header with visual progress bar and cost
     md.appendMarkdown('### 🤖 ' + session.projectName + ' · ' + stateBadge + '\n\n');
-    md.appendMarkdown('上下文: `' + bar + '` **' + pct + '%** (' + totalK + ' / ' + limitK + ' Tokens)\n\n');
+    md.appendMarkdown(
+      '上下文: `' +
+        bar +
+        '` **' +
+        pct +
+        '%** (' +
+        totalK +
+        ' / ' +
+        limitK +
+        ' Tokens) · 费用: **' +
+        cost +
+        '**\n\n',
+    );
 
     // Structured data blockquote
     md.appendMarkdown(
@@ -178,9 +306,8 @@ export class StatusBarController implements vscode.Disposable {
     // Running Tool (only if running)
     if (session.activeTools.length > 0) {
       const tTool = session.activeTools[0];
-      const dur = Math.max(0, Math.floor((Date.now() - tTool.startTime.getTime()) / 1000));
       const target = tTool.target ? ' (' + tTool.target + ')' : '';
-      md.appendMarkdown('*运行中: ' + tTool.name + target + ' [' + dur + 's]*\n\n');
+      md.appendMarkdown('*运行中: ' + tTool.name + target + '*\n\n');
     }
 
     // Todos (only if active)
@@ -203,7 +330,7 @@ export class StatusBarController implements vscode.Disposable {
       md.appendMarkdown('*5h 配额: ' + subscription.session.percentage + '%' + resetStr + '*\n\n');
     }
 
-    // Balanced bottom action bar
+    // Bottom action bar
     md.appendMarkdown('---\n');
     const filterLabel =
       this.sessionManager.filterMode === 'currentWorkspace' ? t('status.quickAll') : t('status.quickCurrent');
@@ -216,7 +343,7 @@ export class StatusBarController implements vscode.Disposable {
         t('status.quickSwitch') +
         '](command:claudeHub.switchSession)  ·  [' +
         t('status.quickLog') +
-        '](command:claudeHub.openSessionTranscript)\n',
+        '](command:claudeHub.openSessionTranscript)  ·  [⚙ 状态栏风格](command:claudeHub.configureStatusBar)\n',
     );
 
     return md;
@@ -224,23 +351,9 @@ export class StatusBarController implements vscode.Disposable {
 
   public dispose(): void {
     if (this.timer) clearInterval(this.timer);
+    for (const d of this.disposables) {
+      d.dispose();
+    }
     this.item.dispose();
   }
-}
-
-function renderProgressBar(percentage: number, length = 8): string {
-  const clamped = Math.max(0, Math.min(100, percentage));
-  const filled = Math.round((clamped / 100) * length);
-  const empty = length - filled;
-  return '▰'.repeat(filled) + '▱'.repeat(empty);
-}
-
-function formatK(tokens: number): string {
-  if (tokens >= 1_000_000) {
-    return (tokens / 1_000_000).toFixed(1) + 'M';
-  }
-  if (tokens >= 1_000) {
-    return Math.round(tokens / 1_000) + 'K';
-  }
-  return String(tokens);
 }

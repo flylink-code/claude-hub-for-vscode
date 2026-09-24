@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -91,6 +91,12 @@
         "title": "%command.deleteSession%",
         "icon": "$(trash)",
         "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.configureStatusBar",
+        "title": "%command.configureStatusBar%",
+        "icon": "$(paintcan)",
+        "category": "Claude Hub"
       }
     ],
     "menus": {
@@ -147,6 +153,83 @@
           "type": "boolean",
           "default": true,
           "description": "%config.showStatusBarItem.desc%"
+        },
+        "claudeHub.statusBar.preset": {
+          "type": "string",
+          "enum": [
+            "compact",
+            "minimal",
+            "detailed",
+            "hud",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "%config.statusBar.preset.compact%",
+            "%config.statusBar.preset.minimal%",
+            "%config.statusBar.preset.detailed%",
+            "%config.statusBar.preset.hud%",
+            "%config.statusBar.preset.custom%"
+          ],
+          "default": "compact",
+          "description": "%config.statusBar.preset.desc%"
+        },
+        "claudeHub.statusBar.contextFormat": {
+          "type": "string",
+          "enum": [
+            "percent",
+            "tokens",
+            "both"
+          ],
+          "enumDescriptions": [
+            "%config.statusBar.contextFormat.percent%",
+            "%config.statusBar.contextFormat.tokens%",
+            "%config.statusBar.contextFormat.both%"
+          ],
+          "default": "percent",
+          "description": "%config.statusBar.contextFormat.desc%"
+        },
+        "claudeHub.statusBar.showProgressBar": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.statusBar.showProgressBar.desc%"
+        },
+        "claudeHub.statusBar.showModel": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.statusBar.showModel.desc%"
+        },
+        "claudeHub.statusBar.showCost": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.statusBar.showCost.desc%"
+        },
+        "claudeHub.statusBar.showGitBranch": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.statusBar.showGitBranch.desc%"
+        },
+        "claudeHub.statusBar.showTodos": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.statusBar.showTodos.desc%"
+        },
+        "claudeHub.statusBar.showTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.statusBar.showTools.desc%"
+        },
+        "claudeHub.statusBar.position": {
+          "type": "string",
+          "enum": [
+            "right",
+            "left"
+          ],
+          "enumDescriptions": [
+            "%config.statusBar.position.right%",
+            "%config.statusBar.position.left%"
+          ],
+          "default": "right",
+          "description": "%config.statusBar.position.desc%"
         },
         "claudeHub.idleTimeout": {
           "type": "number",

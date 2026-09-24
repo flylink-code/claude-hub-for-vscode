@@ -15,7 +15,7 @@ Monitor, manage, and visualize **Claude Code** sessions inside VS Code. Claude H
 - **Workspace scope.** Current-workspace mode follows the folder open in VS Code. All-sessions mode lists every Claude Code session on the machine.
 - **MCP and skills.** Claude Hub lists configured MCP servers and can enable or disable them. Installed skills are listed, and `SKILL.md` opens in the editor.
 - **Environment.** View and edit the API base URL. Open the global `~/.claude/settings.json`, and open or generate the project `AGENTS.md` / `CLAUDE.md` from the dashboard.
-- **Status bar.** A compact item reports context usage, the running tool, and todo progress. Hover shows a progress bar, token breakdown, and common actions.
+- **Status bar.** Highly customizable status-bar HUD with presets (`compact`, `minimal`, `detailed`, `hud`, or `custom`) and fine-grained toggles for mini progress bar, model name, tokens format, cost estimation, git branch, todos, running tool timing, and alignment. Optimized hover tooltip ensures zero flicker during live countdowns.
 
 ### Commands
 
@@ -30,6 +30,7 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
 | `Claude Hub: Delete Claude Session` | Delete a session record |
 | `Claude Hub: Open Active Session Transcript` | Open the session `.jsonl` transcript |
 | `Claude Hub: Open Claude Code Settings` | Open `~/.claude/settings.json` |
+| `Claude Hub: Configure Status Bar Style` | Quick switch presets or tweak status bar display |
 
 ### Settings
 
@@ -39,6 +40,23 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
   "claudeHub.filterMode": "currentWorkspace",
 
   "claudeHub.showStatusBarItem": true,
+
+  // Status bar display presets: "compact" | "minimal" | "detailed" | "hud" | "custom"
+  "claudeHub.statusBar.preset": "compact",
+
+  // Status bar position: "right" or "left"
+  "claudeHub.statusBar.position": "right",
+
+  // Context format in custom mode: "percent" | "tokens" | "both"
+  "claudeHub.statusBar.contextFormat": "percent",
+
+  // Fine-grained toggles for custom mode
+  "claudeHub.statusBar.showProgressBar": false,
+  "claudeHub.statusBar.showModel": true,
+  "claudeHub.statusBar.showCost": false,
+  "claudeHub.statusBar.showGitBranch": false,
+  "claudeHub.statusBar.showTodos": false,
+  "claudeHub.statusBar.showTools": true,
 
   // Seconds without activity before a session is idle. 0 never marks a session idle.
   "claudeHub.idleTimeout": 180,
@@ -99,7 +117,7 @@ npm test
 - **工作区范围。** 当前工作区模式跟随 VS Code 正在打开的文件夹。全部会话模式列出本机所有 Claude Code 会话。
 - **MCP 与技能。** 列出已配置的 MCP 服务，并可启停。已安装技能会列出来，`SKILL.md` 可在编辑器中打开。
 - **环境。** 查看并修改 API Base URL，从仪表盘打开全局 `~/.claude/settings.json`，并打开或生成项目里的 `AGENTS.md` / `CLAUDE.md`。
-- **状态栏。** 紧凑显示上下文占用、正在运行的工具和待办进度。悬停卡片包含进度条、Token 明细和常用操作。
+- **状态栏。** 高度可定制的状态栏 HUD，支持多种预设风格（紧凑 `compact`、极简 `minimal`、详细 `detailed`、经典 HUD `hud`、自定义 `custom`），并提供微型进度条、模型名称、Token 格式、费用预估、Git 分支、待办进度、工具耗时及左右对齐等细粒度开关。经过深度防抖优化，任务执行走秒期间悬浮卡片绝对稳定、零闪烁。
 
 ### 命令
 
@@ -114,6 +132,7 @@ npm test
 | `Claude Hub: 删除 Claude 会话记录` | 删除一条会话记录 |
 | `Claude Hub: 打开当前会话底层运行日志` | 打开该会话的 `.jsonl` 记录 |
 | `Claude Hub: 打开 Claude Code 配置中心` | 打开 `~/.claude/settings.json` |
+| `Claude Hub: 配置状态栏显示风格` | 快速切换预设或细粒度微调状态栏显示项 |
 
 ### 设置
 
@@ -124,6 +143,23 @@ npm test
 
   // 是否显示状态栏
   "claudeHub.showStatusBarItem": true,
+
+  // 状态栏预设风格："compact"（紧凑） | "minimal"（极简） | "detailed"（详细） | "hud"（经典 HUD） | "custom"（自定义）
+  "claudeHub.statusBar.preset": "compact",
+
+  // 状态栏对齐位置："right"（右侧）或 "left"（左侧）
+  "claudeHub.statusBar.position": "right",
+
+  // 自定义模式下上下文使用率格式："percent" | "tokens" | "both"
+  "claudeHub.statusBar.contextFormat": "percent",
+
+  // 自定义模式细粒度开关
+  "claudeHub.statusBar.showProgressBar": false,
+  "claudeHub.statusBar.showModel": true,
+  "claudeHub.statusBar.showCost": false,
+  "claudeHub.statusBar.showGitBranch": false,
+  "claudeHub.statusBar.showTodos": false,
+  "claudeHub.statusBar.showTools": true,
 
   // 闲置判定秒数，默认 180。设为 0 表示永不标为闲置。
   "claudeHub.idleTimeout": 180,
