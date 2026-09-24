@@ -8,7 +8,7 @@
 [CmdletBinding()]
 param(
     [switch]$SkipTest,
-    [string]$OutputDir = ""
+    [string]$OutputDir = "dist"
 )
 
 $ErrorActionPreference = "Stop"

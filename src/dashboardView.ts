@@ -64,6 +64,13 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           this.sendSessionUpdate();
           break;
 
+        case 'setFilterMode':
+          if (msg.mode === 'currentWorkspace' || msg.mode === 'all') {
+            this.sessionManager.setFilterMode(msg.mode);
+            this.sendSessionUpdate();
+          }
+          break;
+
         case 'openLog': {
           const session = this.sessionManager.focusedSession;
           if (session) {
@@ -149,7 +156,13 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           break;
 
         case 'openClaudeMd':
-          await this.configManager.openClaudeMdFile();
+          await this.configManager.openProjectDocFile(msg.docType);
+          this.sendConfigUpdate();
+          break;
+
+        case 'openProjectDoc':
+          await this.configManager.openProjectDocFile(msg.docType);
+          this.sendConfigUpdate();
           break;
 
         case 'newConversation': {
@@ -220,6 +233,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       session: sessionPayload,
       allSessions,
       focusedSessionId: session?.sessionId || null,
+      filterMode: this.sessionManager.filterMode,
       subscription: this.sessionManager.subscriptionUsage,
       cost,
     });
@@ -230,6 +244,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     this._view.webview.postMessage({
       type: 'loadConfig',
       config: this.configManager.getClaudeSettings(),
+      projectDocs: this.configManager.getProjectDocStatus(),
     });
   }
 

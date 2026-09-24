@@ -12,7 +12,8 @@ echo "=== [2/4] 运行测试套件 ==="
 npm test
 
 echo "=== [3/4] 打包 .vsix 插件包 ==="
-npx vsce package --no-dependencies
+mkdir -p dist
+npx vsce package --no-dependencies --out dist/
 
 echo "=== [4/4] 打包完成! ==="
-ls -lh *.vsix
+ls -lh dist/*.vsix

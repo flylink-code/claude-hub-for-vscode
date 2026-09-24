@@ -480,24 +480,106 @@ export class ClaudeConfigManager {
     }
   }
 
-  public async openClaudeMdFile(): Promise<void> {
+  public getProjectDocStatus(customWorkspaceRoot?: string): { hasAgentsMd: boolean; hasClaudeMd: boolean } {
+    let rootPath = customWorkspaceRoot;
+    if (!rootPath) {
+      const vsc = getVsCode();
+      const wsFolders = vsc?.workspace?.workspaceFolders;
+      if (wsFolders && wsFolders.length > 0) {
+        rootPath = wsFolders[0].uri.fsPath;
+      }
+    }
+    if (!rootPath) {
+      return { hasAgentsMd: false, hasClaudeMd: false };
+    }
+    const agentsMdPath = path.join(rootPath, 'AGENTS.md');
+    const claudeMdPath = path.join(rootPath, 'CLAUDE.md');
+    return {
+      hasAgentsMd: fs.existsSync(agentsMdPath),
+      hasClaudeMd: fs.existsSync(claudeMdPath),
+    };
+  }
+
+  public async openProjectDocFile(
+    docType?: 'AGENTS' | 'CLAUDE',
+    customWorkspaceRoot?: string,
+  ): Promise<string | undefined> {
     const vsc = getVsCode();
-    if (!vsc) return;
-    const wsFolders = vsc.workspace.workspaceFolders;
-    if (!wsFolders || wsFolders.length === 0) {
-      vsc.window.showWarningMessage('No workspace open to locate CLAUDE.md');
-      return;
+    let rootPath = customWorkspaceRoot;
+    if (!rootPath && vsc) {
+      const wsFolders = vsc.workspace?.workspaceFolders;
+      if (wsFolders && wsFolders.length > 0) {
+        rootPath = wsFolders[0].uri.fsPath;
+      }
     }
-    const claudeMdPath = path.join(wsFolders[0].uri.fsPath, 'CLAUDE.md');
-    if (!fs.existsSync(claudeMdPath)) {
-      fs.writeFileSync(
-        claudeMdPath,
-        `# CLAUDE.md\n\nGuidelines for Claude Code working on this project.\n\n## Build & Test\n\n`,
-        'utf-8',
-      );
+
+    if (!rootPath) {
+      if (vsc) {
+        vsc.window.showWarningMessage('未打开工作区，无法定位项目根目录。');
+      }
+      return undefined;
     }
-    const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(claudeMdPath));
-    await vsc.window.showTextDocument(doc);
+
+    const agentsMdPath = path.join(rootPath, 'AGENTS.md');
+    const claudeMdPath = path.join(rootPath, 'CLAUDE.md');
+
+    let selectedType = docType;
+    if (!selectedType && vsc) {
+      const hasAgents = fs.existsSync(agentsMdPath);
+      const hasClaude = fs.existsSync(claudeMdPath);
+
+      const items = [
+        {
+          label: '$(robot) AGENTS.md',
+          description: hasAgents ? '已存在（点击编辑）' : '未创建（点击自动生成新文件）',
+          detail: '新版 Claude Code 规范，支持智能体规则与任务指引',
+          type: 'AGENTS' as const,
+        },
+        {
+          label: '$(file-text) CLAUDE.md',
+          description: hasClaude ? '已存在（点击编辑）' : '未创建（点击自动生成新文件）',
+          detail: '经典 Claude Code 项目规范与说明文档',
+          type: 'CLAUDE' as const,
+        },
+      ];
+
+      const picked = await vsc.window.showQuickPick(items, {
+        placeHolder: '选择要打开或生成的项目规范文件',
+      });
+      if (!picked) return undefined;
+      selectedType = picked.type;
+    }
+
+    if (!selectedType) {
+      selectedType = 'AGENTS';
+    }
+
+    const targetPath = selectedType === 'AGENTS' ? agentsMdPath : claudeMdPath;
+    if (!fs.existsSync(targetPath)) {
+      const defaultContent =
+        selectedType === 'AGENTS'
+          ? `# AGENTS.md\n\nGuidelines for AI agents and Claude Code working on this project.\n\n## Project Overview\n\n## Build & Test Commands\n\n## Agent Rules & Guidelines\n\n`
+          : `# CLAUDE.md\n\nGuidelines for Claude Code working on this project.\n\n## Build & Test\n\n`;
+      fs.writeFileSync(targetPath, defaultContent, 'utf-8');
+      if (vsc) {
+        vsc.window.showInformationMessage(`已为项目生成根目录 ${selectedType}.md`);
+      }
+    }
+
+    if (vsc) {
+      try {
+        const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(targetPath));
+        await vsc.window.showTextDocument(doc);
+      } catch (err) {
+        vsc.window.showErrorMessage(`无法打开文件: ${err}`);
+      }
+    }
+
+    return targetPath;
+  }
+
+  public async openClaudeMdFile(): Promise<void> {
+    await this.openProjectDocFile();
   }
 
   public cleanHistoricalSessions(olderThanDays = 3): number {

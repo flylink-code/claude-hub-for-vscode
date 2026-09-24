@@ -14,7 +14,7 @@ Monitor, manage, and visualize **Claude Code** sessions inside VS Code. Claude H
 - **Sessions.** Filter by all sessions, the current workspace, or active sessions. Search by project, title, or Git branch, and page through long histories. Fork copies a session’s full transcript into a new UUID so you can open it or resume it with `claude --resume`. Delete removes a session record.
 - **Workspace scope.** Current-workspace mode follows the folder open in VS Code. All-sessions mode lists every Claude Code session on the machine.
 - **MCP and skills.** Claude Hub lists configured MCP servers and can enable or disable them. Installed skills are listed, and `SKILL.md` opens in the editor.
-- **Environment.** View and edit the API base URL. Open the global `~/.claude/settings.json` and the project `CLAUDE.md` from the dashboard.
+- **Environment.** View and edit the API base URL. Open the global `~/.claude/settings.json`, and open or generate the project `AGENTS.md` / `CLAUDE.md` from the dashboard.
 - **Status bar.** A compact item reports context usage, the running tool, and todo progress. Hover shows a progress bar, token breakdown, and common actions.
 
 ### Commands
@@ -98,7 +98,7 @@ npm test
 - **会话。** 可按全部、当前工作区或活跃中过滤，并按项目名、标题或 Git 分支搜索，长列表分页浏览。分叉会把会话的完整记录复制为新的 UUID，可直接打开，或在终端用 `claude --resume` 继续。删除会移除一条会话记录。
 - **工作区范围。** 当前工作区模式跟随 VS Code 正在打开的文件夹。全部会话模式列出本机所有 Claude Code 会话。
 - **MCP 与技能。** 列出已配置的 MCP 服务，并可启停。已安装技能会列出来，`SKILL.md` 可在编辑器中打开。
-- **环境。** 查看并修改 API Base URL，从仪表盘打开全局 `~/.claude/settings.json` 和项目里的 `CLAUDE.md`。
+- **环境。** 查看并修改 API Base URL，从仪表盘打开全局 `~/.claude/settings.json`，并打开或生成项目里的 `AGENTS.md` / `CLAUDE.md`。
 - **状态栏。** 紧凑显示上下文占用、正在运行的工具和待办进度。悬停卡片包含进度条、Token 明细和常用操作。
 
 ### 命令

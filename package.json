@@ -207,7 +207,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
-    "package": "vsce package --no-dependencies"
+    "package": "vsce package --no-dependencies --out dist/"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",

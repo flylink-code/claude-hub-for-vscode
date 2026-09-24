@@ -125,6 +125,10 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('data-action="openSessionFile"'));
   assert.ok(html.includes('data-action="toggleMcp"'));
   assert.ok(html.includes('data-action="openSkill"'));
+  assert.ok(html.includes('id="top-filter-btn"'));
+  assert.ok(html.includes('id="btn-open-agents-md"'));
+  assert.ok(html.includes('id="btn-open-claude-md"'));
+  assert.ok(html.includes('setFilterMode'));
   assert.ok(html.includes('event.target instanceof Element'));
 });
 
@@ -219,5 +223,45 @@ test('config directory provider is shared by Claude configuration and features',
   } finally {
     manager?.dispose();
     fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('ClaudeConfigManager manages AGENTS.md and CLAUDE.md status and generation', async () => {
+  const wsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-ws-'));
+  const mgr = new ClaudeConfigManager();
+
+  try {
+    // Initial status: neither exists
+    let status = mgr.getProjectDocStatus(wsDir);
+    assert.strictEqual(status.hasAgentsMd, false);
+    assert.strictEqual(status.hasClaudeMd, false);
+
+    // Generate AGENTS.md
+    const agentsPath = await mgr.openProjectDocFile('AGENTS', wsDir);
+    assert.ok(agentsPath);
+    assert.ok(fs.existsSync(agentsPath));
+    const agentsContent = fs.readFileSync(agentsPath, 'utf8');
+    assert.ok(agentsContent.includes('# AGENTS.md'));
+    assert.ok(agentsContent.includes('## Agent Rules & Guidelines'));
+
+    // Check status after creating AGENTS.md
+    status = mgr.getProjectDocStatus(wsDir);
+    assert.strictEqual(status.hasAgentsMd, true);
+    assert.strictEqual(status.hasClaudeMd, false);
+
+    // Generate CLAUDE.md
+    const claudePath = await mgr.openProjectDocFile('CLAUDE', wsDir);
+    assert.ok(claudePath);
+    assert.ok(fs.existsSync(claudePath));
+    const claudeContent = fs.readFileSync(claudePath, 'utf8');
+    assert.ok(claudeContent.includes('# CLAUDE.md'));
+
+    // Check status after creating both
+    status = mgr.getProjectDocStatus(wsDir);
+    assert.strictEqual(status.hasAgentsMd, true);
+    assert.strictEqual(status.hasClaudeMd, true);
+  } finally {
+    mgr.dispose();
+    fs.rmSync(wsDir, { recursive: true, force: true });
   }
 });

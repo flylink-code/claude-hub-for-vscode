@@ -77,6 +77,13 @@ export function getWebviewContent(): string {
       color: var(--text-main);
     }
 
+    .icon-btn.active {
+      background: rgba(224, 122, 95, 0.16);
+      border-color: rgba(224, 122, 95, 0.4);
+      color: var(--claude-accent);
+      font-weight: 600;
+    }
+
     /* Accordion Section */
     .section-wrap {
       background: var(--card-bg);
@@ -527,7 +534,7 @@ export function getWebviewContent(): string {
     </div>
     <div class="top-actions">
       <button class="icon-btn" title="刷新状态" onclick="sendMessage('refresh')">🔄 刷新</button>
-      <button class="icon-btn" title="切换当前工作区 / 全局过滤" onclick="sendMessage('toggleFilter')">📁 过滤</button>
+      <button class="icon-btn" id="top-filter-btn" title="切换当前工作区 / 全局过滤" onclick="sendMessage('toggleFilter')">📁 过滤</button>
     </div>
   </div>
 
@@ -685,7 +692,10 @@ export function getWebviewContent(): string {
       <div id="save-toast" class="toast">✓ 配置已保存更新</div>
 
       <button class="btn btn-secondary" onclick="sendMessage('openSettingsJson')">⚙️ 打开 Claude settings.json</button>
-      <button class="btn btn-secondary" onclick="sendMessage('openClaudeMd')">📝 编辑项目根目录 CLAUDE.md</button>
+      <div style="display: flex; gap: 6px; margin-top: 6px;">
+        <button class="btn btn-secondary" id="btn-open-agents-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'AGENTS' })" title="打开或创建项目根目录 AGENTS.md (支持新版 Agent 规范)">🤖 打开 AGENTS.md</button>
+        <button class="btn btn-secondary" id="btn-open-claude-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'CLAUDE' })" title="打开或创建项目根目录 CLAUDE.md (经典项目说明)">📝 打开 CLAUDE.md</button>
+      </div>
 
     </div>
   </div>
@@ -754,17 +764,49 @@ export function getWebviewContent(): string {
     let allSessions = [];
     let focusedSessionId = null;
     let currentFilter = 'all';
+    let backendFilterMode = null;
     let searchKeyword = '';
     let currentPage = 1;
     const pageSize = 6;
 
-    function setSessionFilter(filter) {
+    function updateTopFilterButton(mode) {
+      const btn = document.getElementById('top-filter-btn');
+      if (!btn) return;
+      if (mode === 'currentWorkspace') {
+        btn.innerHTML = '📁 工作区';
+        btn.className = 'icon-btn active';
+        btn.title = '当前过滤：仅当前工作区（点击切换为全部会话）';
+      } else {
+        btn.innerHTML = '🌐 全部';
+        btn.className = 'icon-btn';
+        btn.title = '当前过滤：显示全部会话（点击切换为仅当前工作区）';
+      }
+    }
+
+    function setSessionFilter(filter, notifyBackend = true) {
       currentFilter = filter;
       currentPage = 1;
       document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      if (filter === 'all') document.getElementById('chip-all').classList.add('active');
-      if (filter === 'workspace') document.getElementById('chip-ws').classList.add('active');
-      if (filter === 'active') document.getElementById('chip-active').classList.add('active');
+      if (filter === 'all') {
+        const chip = document.getElementById('chip-all');
+        if (chip) chip.classList.add('active');
+        if (notifyBackend) {
+          backendFilterMode = 'all';
+          updateTopFilterButton('all');
+          sendMessage('setFilterMode', { mode: 'all' });
+        }
+      } else if (filter === 'workspace') {
+        const chip = document.getElementById('chip-ws');
+        if (chip) chip.classList.add('active');
+        if (notifyBackend) {
+          backendFilterMode = 'currentWorkspace';
+          updateTopFilterButton('currentWorkspace');
+          sendMessage('setFilterMode', { mode: 'currentWorkspace' });
+        }
+      } else if (filter === 'active') {
+        const chip = document.getElementById('chip-active');
+        if (chip) chip.classList.add('active');
+      }
       renderSessionsList();
     }
 
@@ -812,7 +854,17 @@ export function getWebviewContent(): string {
     function renderSessionsList() {
       const container = document.getElementById('session-cards-list');
       const totalBadge = document.getElementById('sessions-total-badge');
-      totalBadge.innerText = allSessions.length + ' 个会话';
+      const wsCount = allSessions.filter(s => s.isCurrentWorkspace).length;
+      const totalCount = allSessions.length;
+
+      if (currentFilter === 'workspace') {
+        totalBadge.innerText = wsCount + ' / ' + totalCount + ' 个会话';
+      } else if (currentFilter === 'active') {
+        const activeCount = allSessions.filter(s => !s.isIdle).length;
+        totalBadge.innerText = activeCount + ' / ' + totalCount + ' 个会话';
+      } else {
+        totalBadge.innerText = totalCount + ' 个会话';
+      }
 
       let filtered = allSessions.filter(s => {
         if (currentFilter === 'workspace' && !s.isCurrentWorkspace) return false;
@@ -836,7 +888,11 @@ export function getWebviewContent(): string {
       document.getElementById('btn-next-page').disabled = currentPage >= totalPages;
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px 0;">未找到符合条件的会话</div>';
+        if (currentFilter === 'workspace') {
+          container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px 0;"><div>当前工作区暂无会话</div><div style="margin-top: 8px;"><button class="filter-chip active" style="display: inline-block; padding: 3px 10px;" onclick="setSessionFilter(\\'all\\')">🌐 查看全部项目会话</button></div></div>';
+        } else {
+          container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px 0;">未找到符合条件的会话</div>';
+        }
         return;
       }
 
@@ -903,6 +959,20 @@ export function getWebviewContent(): string {
         }
         if (msg.focusedSessionId !== undefined) {
           focusedSessionId = msg.focusedSessionId;
+        }
+
+        if (msg.filterMode !== undefined) {
+          const modeChanged = backendFilterMode !== msg.filterMode;
+          backendFilterMode = msg.filterMode;
+          updateTopFilterButton(msg.filterMode);
+
+          if (modeChanged) {
+            currentFilter = msg.filterMode === 'currentWorkspace' ? 'workspace' : 'all';
+            currentPage = 1;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            const activeChip = document.getElementById(msg.filterMode === 'currentWorkspace' ? 'chip-ws' : 'chip-all');
+            if (activeChip) activeChip.classList.add('active');
+          }
         }
 
         renderSessionsList();
@@ -987,6 +1057,18 @@ export function getWebviewContent(): string {
         const c = msg.config || {};
         if (c.apiBaseUrl) {
           document.getElementById('cfg-base-url').value = c.apiBaseUrl;
+        }
+        if (msg.projectDocs) {
+          const btnAgents = document.getElementById('btn-open-agents-md');
+          const btnClaude = document.getElementById('btn-open-claude-md');
+          if (btnAgents) {
+            btnAgents.innerHTML = msg.projectDocs.hasAgentsMd ? '🤖 编辑 AGENTS.md' : '🤖 生成 AGENTS.md';
+            btnAgents.title = msg.projectDocs.hasAgentsMd ? '当前项目已存在 AGENTS.md，点击打开编辑' : '当前项目未创建 AGENTS.md，点击自动生成模板';
+          }
+          if (btnClaude) {
+            btnClaude.innerHTML = msg.projectDocs.hasClaudeMd ? '📝 编辑 CLAUDE.md' : '📝 生成 CLAUDE.md';
+            btnClaude.title = msg.projectDocs.hasClaudeMd ? '当前项目已存在 CLAUDE.md，点击打开编辑' : '当前项目未创建 CLAUDE.md，点击自动生成模板';
+          }
         }
       }
 
