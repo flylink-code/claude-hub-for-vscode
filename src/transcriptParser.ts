@@ -182,6 +182,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
 
   const toolMap = new Map<string, ToolEntry>();
   const agentMap = new Map<string, AgentEntry>();
+  const pendingToolResults = new Map<string, { isError: boolean; endTime: Date }>();
+  const activeToolIds = new Set<string>();
   const skillsSet = new Set<string>();
   const mcpSet = new Set<string>();
   const todos: TodoItem[] = [];
@@ -218,6 +220,24 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
 
     try {
       const entry = JSON.parse(line);
+      const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
+
+      const closeActiveTools = (time: Date, fallbackStatus: 'completed' | 'error' = 'error') => {
+        for (const tid of activeToolIds) {
+          const t = toolMap.get(tid);
+          if (t && t.status === 'running') {
+            t.status = fallbackStatus;
+            t.endTime = time;
+            t.durationMs = Math.max(0, time.getTime() - t.startTime.getTime());
+          }
+          const ag = agentMap.get(tid);
+          if (ag && ag.status === 'running') {
+            ag.status = 'completed';
+            ag.endTime = time;
+          }
+        }
+        activeToolIds.clear();
+      };
 
       if (!sessionId && entry.sessionId) {
         sessionId = entry.sessionId;
@@ -229,7 +249,6 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
         gitBranch = entry.gitBranch;
       }
       if (!sessionCreated && entry.timestamp) {
-        const ts = new Date(entry.timestamp);
         if (!isNaN(ts.getTime())) {
           sessionCreated = ts;
         }
@@ -252,6 +271,23 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             userMessagesAfterClear++;
           }
         }
+
+        // If a new user text prompt starts, close running tools from previous turns
+        const isUserPrompt =
+          (typeof c === 'string' && c.trim().length > 0) ||
+          (Array.isArray(c) &&
+            c.some(
+              (b: any) =>
+                b && b.type === 'text' && typeof b.text === 'string' && b.text.trim().length > 0,
+            ));
+        if (isUserPrompt) {
+          closeActiveTools(ts, 'error');
+        }
+      }
+
+      // Turn completion markers from CLI: cost-state or last-prompt indicates turn finalized
+      if (entry.type === 'cost-state' || entry.type === 'last-prompt') {
+        closeActiveTools(ts, 'error');
       }
 
       // Check model attachment (declared model, e.g. claude.auto, claude-opus-5, claude.sub2api.gpt-6-astra)
@@ -281,10 +317,22 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
           }
           latestUsage = current;
         }
+
+        // If assistant responds with final text and no tool_use, close prior running tools
+        const msgContent = entry.message?.content;
+        if (Array.isArray(msgContent)) {
+          const hasToolUse = msgContent.some((b: any) => b && b.type === 'tool_use');
+          const hasText = msgContent.some(
+            (b: any) =>
+              b && b.type === 'text' && typeof b.text === 'string' && b.text.trim().length > 0,
+          );
+          if (!hasToolUse && hasText) {
+            closeActiveTools(ts, 'completed');
+          }
+        }
       }
 
       // Extract tool_use & tool_result
-      const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
       const content = entry.message?.content;
 
       if (Array.isArray(content)) {
@@ -304,14 +352,32 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             }
 
             const target = normalizeTarget(name, input);
+            const pending = pendingToolResults.get(block.id);
+            const status: 'running' | 'completed' | 'error' = pending
+              ? (pending.isError ? 'error' : 'completed')
+              : 'running';
+            const endTime = pending ? pending.endTime : undefined;
+            const durationMs =
+              pending && ts
+                ? Math.max(0, pending.endTime.getTime() - ts.getTime())
+                : undefined;
+
             const toolEntry: ToolEntry = {
               id: block.id,
               name,
               target,
-              status: 'running',
+              status,
               startTime: ts,
+              endTime,
+              durationMs,
             };
             toolMap.set(block.id, toolEntry);
+
+            if (status === 'running') {
+              activeToolIds.add(block.id);
+            } else if (pending) {
+              pendingToolResults.delete(block.id);
+            }
 
             if (name === 'Task' || name === 'Agent') {
               const agentEntry: AgentEntry = {
@@ -319,8 +385,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
                 type: String(input.subagent_type || 'agent'),
                 model: input.model ? String(input.model) : undefined,
                 description: input.description ? String(input.description) : undefined,
-                status: 'running',
+                status: status === 'running' ? 'running' : 'completed',
                 startTime: ts,
+                endTime,
                 background: Boolean(input.run_in_background),
               };
               agentMap.set(block.id, agentEntry);
@@ -336,14 +403,21 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
               }
             }
           } else if (block.type === 'tool_result' && block.tool_use_id) {
-            const existingTool = toolMap.get(block.tool_use_id);
+            const toolId = block.tool_use_id;
+            const existingTool = toolMap.get(toolId);
             if (existingTool) {
               existingTool.status = block.is_error ? 'error' : 'completed';
               existingTool.endTime = ts;
               existingTool.durationMs = Math.max(0, ts.getTime() - existingTool.startTime.getTime());
+              activeToolIds.delete(toolId);
+            } else {
+              pendingToolResults.set(toolId, {
+                isError: Boolean(block.is_error),
+                endTime: ts,
+              });
             }
 
-            const existingAgent = agentMap.get(block.tool_use_id);
+            const existingAgent = agentMap.get(toolId);
             if (existingAgent) {
               existingAgent.status = 'completed';
               existingAgent.endTime = ts;

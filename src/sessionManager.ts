@@ -414,6 +414,30 @@ export class SessionManager implements vscode.Disposable {
             ? path.basename(parsed.cwd)
             : decoded.name;
 
+          // If session is idle, ensure activeTools is cleared and reconcile lingering running tools/agents
+          const activeTools = isIdle ? [] : parsed.activeTools;
+          const tools = isIdle
+            ? parsed.tools.map((t) =>
+                t.status === 'running'
+                  ? {
+                      ...t,
+                      status: 'completed' as const,
+                      endTime: t.endTime || fileStat.mtime,
+                      durationMs:
+                        t.durationMs ??
+                        Math.max(0, (t.endTime || fileStat.mtime).getTime() - t.startTime.getTime()),
+                    }
+                  : t,
+              )
+            : parsed.tools;
+          const agents = isIdle
+            ? parsed.agents.map((a) =>
+                a.status === 'running'
+                  ? { ...a, status: 'completed' as const, endTime: a.endTime || fileStat.mtime }
+                  : a,
+              )
+            : parsed.agents;
+
           discoveredSessions.push({
             sessionId,
             sessionFile: filePath,
@@ -425,9 +449,9 @@ export class SessionManager implements vscode.Disposable {
             configuredModel: isCurrentWorkspace ? configuredModel : undefined,
             contextLimit,
             tokenUsage: parsed.tokenUsage,
-            tools: parsed.tools,
-            activeTools: parsed.activeTools,
-            agents: parsed.agents,
+            tools,
+            activeTools,
+            agents,
             todos: parsed.todos,
             skills: parsed.skills,
             mcpServers: parsed.mcpServers,

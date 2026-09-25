@@ -444,3 +444,141 @@ test('statusBar formatStatusBarText renders compact, minimal, detailed, hud and 
   assert.strictEqual(customTokens, '$(sparkle) 14.0k/200.0k · Sonnet 3.7');
 });
 
+test('parseTranscriptFile handles out-of-order tool_result before tool_use', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-test-ooo-'));
+  const testFile = path.join(tempDir, 'test-ooo.jsonl');
+
+  try {
+    const lines = [
+      // 1. Tool result arrives first (e.g. out of order in fast streaming)
+      JSON.stringify({
+        type: 'user',
+        timestamp: '2026-09-24T10:00:01.000Z',
+        message: {
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'toolu_01_read_file',
+              content: 'file contents here',
+              is_error: false,
+            },
+          ],
+        },
+      }),
+      // 2. Corresponding tool_use arrives second
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-24T10:00:00.998Z',
+        message: {
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_01_read_file',
+              name: 'Read',
+              input: { file_path: '/path/to/app_model.c' },
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(testFile, lines.join('\n'), 'utf8');
+
+    const result = await parseTranscriptFile(testFile);
+    assert.strictEqual(result.activeTools.length, 0, 'No active tools should linger when result is present');
+    assert.strictEqual(result.tools.length, 1);
+    assert.strictEqual(result.tools[0].name, 'Read');
+    assert.strictEqual(result.tools[0].target, 'app_model.c');
+    assert.strictEqual(result.tools[0].status, 'completed');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile reconciles lingering running tools on turn completion (cost-state / new turn)', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-test-reconcile-'));
+  const testFile = path.join(tempDir, 'test-reconcile.jsonl');
+
+  try {
+    const lines = [
+      // 1. Tool use started
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-24T10:00:00.000Z',
+        message: {
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_unfinished',
+              name: 'Bash',
+              input: { command: 'long-running-cmd' },
+            },
+          ],
+        },
+      }),
+      // 2. Turn ended and cost-state was recorded by Claude CLI without tool_result (e.g. user aborted)
+      JSON.stringify({
+        type: 'cost-state',
+        timestamp: '2026-09-24T10:00:05.000Z',
+      }),
+    ];
+
+    fs.writeFileSync(testFile, lines.join('\n'), 'utf8');
+
+    const result = await parseTranscriptFile(testFile);
+    assert.strictEqual(result.activeTools.length, 0, 'Active tools should be reconciled on cost-state');
+    assert.strictEqual(result.tools.length, 1);
+    assert.strictEqual(result.tools[0].status, 'error');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile reconciles running tools when assistant delivers final text', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-test-asst-text-'));
+  const testFile = path.join(tempDir, 'test-asst.jsonl');
+
+  try {
+    const lines = [
+      // 1. Tool use started
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-24T10:00:00.000Z',
+        message: {
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_02',
+              name: 'Grep',
+              input: { pattern: 'test' },
+            },
+          ],
+        },
+      }),
+      // 2. Assistant finishes turn with plain text
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-24T10:00:02.000Z',
+        message: {
+          content: [
+            {
+              type: 'text',
+              text: 'Here is the summary of search results.',
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(testFile, lines.join('\n'), 'utf8');
+
+    const result = await parseTranscriptFile(testFile);
+    assert.strictEqual(result.activeTools.length, 0, 'Active tools should be closed when assistant replies with text');
+    assert.strictEqual(result.tools.length, 1);
+    assert.strictEqual(result.tools[0].status, 'completed');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+

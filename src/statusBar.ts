@@ -61,7 +61,7 @@ export class StatusBarController implements vscode.Disposable {
     // Update active timer every 1s ONLY for the status bar text duration (never refresh tooltip)
     this.timer = setInterval(() => {
       const active = this.sessionManager.focusedSession;
-      if (active && active.activeTools.length > 0) {
+      if (active && !active.isIdle && active.activeTools.length > 0) {
         this.updateRunningTimeText();
       }
     }, 1000);
@@ -140,11 +140,11 @@ export class StatusBarController implements vscode.Disposable {
     const modelDisplay = formatModelDisplayName(session.model, gwMap);
     const pct = session.tokenUsage.percentage;
 
-    // Running activity
+    // Running activity (only when session is active and not idle)
     let hasRunningTool = false;
     let activeToolName: string | undefined;
     let elapsedSec = 0;
-    if (session.activeTools.length > 0) {
+    if (!session.isIdle && session.activeTools.length > 0) {
       hasRunningTool = true;
       const tTool = session.activeTools[0];
       activeToolName = tTool.name;
@@ -187,7 +187,7 @@ export class StatusBarController implements vscode.Disposable {
    */
   private updateRunningTimeText(): void {
     const session = this.sessionManager.focusedSession;
-    if (!session || session.activeTools.length === 0) return;
+    if (!session || session.isIdle || session.activeTools.length === 0) return;
 
     const config = vscode.workspace.getConfiguration('claudeHub');
     const show = config.get<boolean>('showStatusBarItem', true);
@@ -303,8 +303,8 @@ export class StatusBarController implements vscode.Disposable {
         '\n\n',
     );
 
-    // Running Tool (only if running)
-    if (session.activeTools.length > 0) {
+    // Running Tool (only if running and session is active)
+    if (!session.isIdle && session.activeTools.length > 0) {
       const tTool = session.activeTools[0];
       const target = tTool.target ? ' (' + tTool.target + ')' : '';
       md.appendMarkdown('*运行中: ' + tTool.name + target + '*\n\n');
