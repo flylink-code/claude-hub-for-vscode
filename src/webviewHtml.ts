@@ -242,6 +242,49 @@ export function getWebviewContent(): string {
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
+    /* Enhanced Todo Card in Hub Dashboard */
+    .todo-item-card {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      margin-bottom: 3px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.15s;
+    }
+    .todo-item-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .todo-item-card.completed {
+      opacity: 0.65;
+    }
+    .todo-item-card.in_progress {
+      background: rgba(56, 139, 253, 0.1);
+      border-color: rgba(56, 139, 253, 0.3);
+      font-weight: 500;
+    }
+    .todo-badge-icon {
+      flex-shrink: 0;
+      font-size: 11px;
+      line-height: 1;
+    }
+    .todo-progress-track {
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      margin: 4px 0 6px 0;
+    }
+    .todo-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--claude-accent, #e07a5f);
+      transition: width 0.3s ease;
+    }
+
     /* Session Manager Filters */
     .filter-chips-row {
       display: flex;
@@ -522,6 +565,143 @@ export function getWebviewContent(): string {
       margin-top: 6px;
       display: none;
     }
+
+    /* Agent Map & Subagents Tree */
+    .agents-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .agent-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      padding: 6px 8px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .agent-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(224, 122, 95, 0.4);
+    }
+
+    .agent-item.nested {
+      margin-left: 16px;
+      border-left: 2px solid var(--claude-accent);
+      background: rgba(224, 122, 95, 0.04);
+    }
+
+    .agent-item.nested::before {
+      content: '';
+      position: absolute;
+      left: -10px;
+      top: 14px;
+      width: 8px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .agent-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .agent-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .agent-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--text-muted);
+    }
+
+    .agent-dot.running {
+      background: #4ec9b0;
+      box-shadow: 0 0 6px #4ec9b0;
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    .agent-dot.completed {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .agent-dot.error {
+      background: #f44747;
+      box-shadow: 0 0 6px #f44747;
+    }
+
+    @keyframes pulse-dot {
+      0% { opacity: 0.6; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.15); }
+      100% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    .agent-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .agent-type-badge {
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .agent-badges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .agent-meta-chip {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 9.5px;
+    }
+
+    .agent-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.3;
+      white-space: normal;
+      word-break: break-all;
+    }
+
+    .agent-detail-body {
+      margin-top: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      font-size: 9.5px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
   </style>
 </head>
 <body>
@@ -590,11 +770,26 @@ export function getWebviewContent(): string {
 
       <!-- Tasks Checklist (Auto collapsed when empty) -->
       <div id="todos-container" style="margin-top: 8px; display: none;">
-        <div style="display: flex; justify-content: space-between; font-weight: 500; font-size: 11px; margin-bottom: 4px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 500; font-size: 11px; margin-bottom: 2px;">
           <span>📋 待办任务</span>
           <span id="todos-counter" class="status-pill">0/0</span>
         </div>
+        <div class="todo-progress-track">
+          <div id="todos-progress-bar" class="todo-progress-fill" style="width: 0%;"></div>
+        </div>
         <div id="todos-list"></div>
+      </div>
+
+      <!-- Agent Map: 协作代理拓扑 (有代理时自动展示) -->
+      <div id="agents-container" style="margin-top: 8px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 11px; margin-bottom: 5px; cursor: pointer;" onclick="toggleAgentsList()">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span id="agents-caret" class="caret" style="display: inline-block; font-size: 9px; transition: transform 0.2s;">▼</span>
+            <span>🤖 协作代理拓扑 (Agent Map)</span>
+          </div>
+          <span id="agents-counter" class="status-pill">0</span>
+        </div>
+        <div id="agents-list" class="agents-tree"></div>
       </div>
 
       <!-- 5h Quota -->
@@ -720,6 +915,25 @@ export function getWebviewContent(): string {
         if (val === '1') document.getElementById(id).classList.remove('collapsed');
       } catch (e) {}
     });
+
+    function toggleAgentsList() {
+      const list = document.getElementById('agents-list');
+      const caret = document.getElementById('agents-caret');
+      if (!list) return;
+      if (list.style.display === 'none') {
+        list.style.display = 'flex';
+        if (caret) caret.style.transform = 'rotate(0deg)';
+      } else {
+        list.style.display = 'none';
+        if (caret) caret.style.transform = 'rotate(-90deg)';
+      }
+    }
+
+    function toggleAgentDetail(detailId) {
+      const el = document.getElementById(detailId);
+      if (!el) return;
+      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'flex' : 'none';
+    }
 
     function sendMessage(type, data = {}) {
       vscode.postMessage({ type, ...data });
@@ -1001,6 +1215,7 @@ export function getWebviewContent(): string {
 
         const isFork = titleStr.includes('(Fork');
         const forkBadge = isFork ? ' <span style="background: rgba(78, 201, 176, 0.15); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Fork</span>' : '';
+        const agentsBadge = (s.agentsCount && s.agentsCount > 0) ? ' <span title="包含 ' + s.agentsCount + ' 个协作代理" style="background: rgba(224, 122, 95, 0.15); color: var(--claude-accent); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">🤖 ' + s.agentsCount + '</span>' : '';
 
         const durationMs = s.durationMs !== undefined ? s.durationMs : 0;
         const durationStr = durationMs > 0 ? formatDuration(durationMs, false) : '';
@@ -1016,14 +1231,19 @@ export function getWebviewContent(): string {
         if (timeStr) rightMetaParts.push(timeStr);
         const rightMetaHtml = rightMetaParts.join(' · ');
 
+        let tokenText = pct + ' (' + tokens + ' Tokens) · ' + modelDisplay;
+        if (s.subagentsTotalTokens && s.subagentsTotalTokens > 0) {
+          tokenText += ' <span style="opacity: 0.75;" title="含子代理独立消耗: +' + s.subagentsTotalTokens + '">(含代理 +' + formatTokenCount(s.subagentsTotalTokens) + ')</span>';
+        }
+
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
             '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + '</span>' +
-            '<div style="display:flex; gap: 4px;">' + focusedTag + activeTag + '</div>' +
+            '<div style="display:flex; gap: 4px;">' + focusedTag + activeTag + agentsBadge + '</div>' +
           '</div>' +
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
-            '<span>' + pct + ' (' + tokens + ' Tokens) · ' + modelDisplay + '</span>' +
+            '<span>' + tokenText + '</span>' +
             '<span>' + rightMetaHtml + '</span>' +
           '</div>' +
           '<div class="session-actions-row">' +
@@ -1094,7 +1314,11 @@ export function getWebviewContent(): string {
             : '';
           document.getElementById('model-tag').innerText = '模型: ' + dispModel + respExtra;
           document.getElementById('branch-tag').innerText = s.gitBranch ? '🌿 ' + s.gitBranch : '';
-          document.getElementById('cost-label').innerText = '预估消耗: ' + (msg.cost || '< $0.001');
+          const baseCostText = '预估消耗: ' + (msg.cost || '< $0.001');
+          const subagentCostExtra = (s.subagentsTotalTokens && s.subagentsTotalTokens > 0)
+            ? ' (含子代理: +' + formatTokenCount(s.subagentsTotalTokens) + ' tok)'
+            : '';
+          document.getElementById('cost-label').innerText = baseCostText + subagentCostExtra;
 
           const statusBadge = document.getElementById('session-status-badge');
           const globalBadge = document.getElementById('global-status-pill');
@@ -1130,18 +1354,103 @@ export function getWebviewContent(): string {
           if (s.todos && s.todos.length > 0) {
             todosWrap.style.display = 'block';
             const done = s.todos.filter(x => x.status === 'completed').length;
-            document.getElementById('todos-counter').innerText = done + '/' + s.todos.length;
+            const inProg = s.todos.filter(x => x.status === 'in_progress').length;
+            const pct = Math.round((done / s.todos.length) * 100);
+
+            const counterEl = document.getElementById('todos-counter');
+            if (counterEl) {
+              const summaryText = done + '/' + s.todos.length + ' (' + pct + '%)';
+              counterEl.innerText = inProg > 0 ? summaryText + ' · 🔄' : summaryText;
+            }
+            const progBar = document.getElementById('todos-progress-bar');
+            if (progBar) {
+              progBar.style.width = pct + '%';
+            }
+
             todosList.innerHTML = s.todos.map(td => {
-              const checked = td.status === 'completed' ? 'checked' : '';
-              const strike = td.status === 'completed' ? 'style="text-decoration: line-through; opacity: 0.6;"' : '';
-              return '<div style="display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 0;">' +
-                '<input type="checkbox" ' + checked + ' disabled>' +
-                '<span ' + strike + '>' + escapeHtml(td.content) + '</span>' +
+              const statusClass = td.status === 'completed' ? 'completed' : (td.status === 'in_progress' ? 'in_progress' : 'pending');
+              let iconHtml = '☐';
+              let strike = '';
+              if (td.status === 'completed') {
+                iconHtml = '<span style="color: #2ea043; font-weight: bold;">☑</span>';
+                strike = 'style="text-decoration: line-through; opacity: 0.65;"';
+              } else if (td.status === 'in_progress') {
+                iconHtml = '<span class="spin" style="color: #58a6ff; font-weight: bold;">🔄</span>';
+              } else {
+                iconHtml = '<span style="opacity: 0.5;">☐</span>';
+              }
+              return '<div class="todo-item-card ' + statusClass + '">' +
+                '<span class="todo-badge-icon">' + iconHtml + '</span>' +
+                '<span ' + strike + ' style="word-break: break-word;">' + escapeHtml(td.content) + '</span>' +
               '</div>';
             }).join('');
           } else {
             todosWrap.style.display = 'none';
           }
+
+          // Agents Map (Subagents List)
+          const agentsWrap = document.getElementById('agents-container');
+          const agentsList = document.getElementById('agents-list');
+          if (s.agents && s.agents.length > 0) {
+            agentsWrap.style.display = 'block';
+            const runningCount = s.agents.filter(a => a.status === 'running').length;
+            const counterText = runningCount > 0 ? runningCount + ' 运行中 · 共 ' + s.agents.length : s.agents.length + ' 个代理';
+            document.getElementById('agents-counter').innerText = counterText;
+
+            agentsList.innerHTML = s.agents.map((a, idx) => {
+              const isNested = (a.spawnDepth && a.spawnDepth > 1) || !!a.parentAgentId;
+              const cardClass = isNested ? 'agent-item nested' : 'agent-item';
+              const dotClass = a.status === 'running' ? 'agent-dot running' : (a.status === 'error' ? 'agent-dot error' : 'agent-dot completed');
+              const nameText = a.name || (a.type ? '/' + a.type : '子代理 #' + (idx + 1));
+              const nameDisplay = escapeHtml(nameText);
+              const typeBadge = a.type && a.type !== 'fork' ? '<span class="agent-type-badge">' + escapeHtml(a.type) + '</span>' : '';
+
+              const badges = [];
+              if (a.durationMs) {
+                badges.push('<span class="agent-meta-chip">⏱️ ' + formatDuration(a.durationMs, false) + '</span>');
+              } else if (a.startTime) {
+                const liveDur = Math.max(0, Date.now() - new Date(a.startTime).getTime());
+                badges.push('<span class="agent-meta-chip">⏱️ ' + formatDuration(liveDur, false) + '</span>');
+              }
+              if (a.totalTokens) {
+                badges.push('<span class="agent-meta-chip">🪙 ' + formatTokenCount(a.totalTokens) + '</span>');
+              }
+              if (a.toolsCount && a.toolsCount > 0) {
+                badges.push('<span class="agent-meta-chip">🛠️ ' + a.toolsCount + '</span>');
+              }
+              if (a.worktreeBranch) {
+                badges.push('<span class="agent-meta-chip" title="Worktree: ' + escapeAttribute(a.worktreeBranch) + '">🌿 ' + escapeHtml(a.worktreeBranch) + '</span>');
+              }
+
+              const descHtml = a.description ? '<div class="agent-desc" title="' + escapeAttribute(a.description) + '">' + escapeHtml(a.description) + '</div>' : '';
+
+              const agentDetailId = 'agent-detail-' + idx;
+              const details = [];
+              if (a.id) details.push('<div><strong>ID:</strong> ' + escapeHtml(a.id) + '</div>');
+              if (a.model) details.push('<div><strong>模型:</strong> ' + escapeHtml(a.model) + '</div>');
+              if (a.parentAgentId) details.push('<div><strong>父代理:</strong> ' + escapeHtml(a.parentAgentId) + '</div>');
+              if (a.worktreePath) details.push('<div><strong>工作区:</strong> ' + escapeHtml(a.worktreePath) + '</div>');
+              const detailContent = details.length > 0 ? '<div id="' + agentDetailId + '" class="agent-detail-body" style="display: none;">' + details.join('') + '</div>' : '';
+
+              return '<div class="' + cardClass + '" onclick="toggleAgentDetail(\\'' + agentDetailId + '\\')">' +
+                '<div class="agent-item-header">' +
+                  '<div class="agent-title-row">' +
+                    '<span class="' + dotClass + '"></span>' +
+                    '<span class="agent-name" title="' + escapeAttribute(nameText) + '">' + nameDisplay + '</span>' +
+                    typeBadge +
+                  '</div>' +
+                  '<div class="agent-badges">' + badges.join('') + '</div>' +
+                '</div>' +
+                descHtml +
+                detailContent +
+              '</div>';
+            }).join('');
+          } else {
+            agentsWrap.style.display = 'none';
+          }
+        } else {
+          const agentsWrap = document.getElementById('agents-container');
+          if (agentsWrap) agentsWrap.style.display = 'none';
         }
 
         updateLiveSessionDuration();

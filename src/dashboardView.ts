@@ -32,6 +32,23 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     }, 1000);
   }
 
+  public async show(): Promise<void> {
+    try {
+      await vscode.commands.executeCommand('workbench.view.extension.claude-hub-container');
+    } catch {
+      // fallback if container ID differs
+    }
+    if (this._view) {
+      this._view.show(true);
+    } else {
+      try {
+        await vscode.commands.executeCommand('claudeHub.dashboardView.focus');
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -216,6 +233,8 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       isCurrentWorkspace: s.isCurrentWorkspace,
       sessionFile: s.sessionFile,
       gitBranch: s.gitBranch,
+      agentsCount: s.agents?.length || 0,
+      subagentsTotalTokens: s.subagentsTotalTokens,
     }));
 
     const sessionPayload = session

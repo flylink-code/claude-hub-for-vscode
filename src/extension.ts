@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(dashboardProvider);
 
   // Register Commands
-  registerCommands(context, sessionManager, configManager);
+  registerCommands(context, sessionManager, configManager, dashboardProvider);
 
   // Run initial scan
   sessionManager.scanSessions();

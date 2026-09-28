@@ -10,9 +10,9 @@ import {
   resolveClaudeConfigDir,
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
-import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds } from './transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
-import { FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
+import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
 
 export { generateForkTitle };
@@ -252,7 +252,7 @@ export class SessionManager implements vscode.Disposable {
     try {
       this.fileWatcher = fs.watch(projectsDir, { recursive: true }, (_event, filename) => {
         const changedName = filename == null ? undefined : String(filename);
-        if (changedName && changedName.endsWith('.jsonl')) {
+        if (changedName && (changedName.endsWith('.jsonl') || changedName.endsWith('.meta.json'))) {
           this.scheduleScan();
         }
       });
@@ -408,11 +408,14 @@ export class SessionManager implements vscode.Disposable {
           const matchingWsFolder = (vscode.workspace.workspaceFolders || []).find((wf) =>
             isPathInWorkspace(projectPath, [wf.uri.fsPath]),
           );
-          const realProjectName = matchingWsFolder
+          const rawProjectName = matchingWsFolder
             ? matchingWsFolder.name
             : parsed.cwd
             ? path.basename(parsed.cwd)
             : decoded.name;
+          const realProjectName = /^(claude[-_]hub([-_]for)?[-_]vscode|claude[-_]hub)$/i.test(rawProjectName)
+            ? 'Claude Hub'
+            : rawProjectName;
 
           // If session is idle, ensure activeTools is cleared and reconcile lingering running tools/agents
           const activeTools = isIdle ? [] : parsed.activeTools;
@@ -430,13 +433,42 @@ export class SessionManager implements vscode.Disposable {
                   : t,
               )
             : parsed.tools;
+          // Discover and parse subagents from <sessionDir>/<sessionId>/subagents
+          const rawSessionId = file.replace('.jsonl', '');
+          const subagentsDir = path.join(fullDirPath, rawSessionId, 'subagents');
+          let subagents: AgentEntry[] = [];
+          if (fs.existsSync(subagentsDir)) {
+            try {
+              subagents = await parseSubagentsDir(subagentsDir, isIdle);
+            } catch (err) {
+              console.warn('[Claude Hub] Failed to parse subagents for session:', sessionId, err);
+            }
+          }
+
+          // Merge subagents with parsed.agents from the main transcript
+          const mergedAgents: AgentEntry[] = [...subagents];
+          for (const mainAgent of parsed.agents) {
+            const alreadyExists = mergedAgents.some(
+              (a) => a.id === mainAgent.id || (mainAgent.id && a.id.startsWith(mainAgent.id)),
+            );
+            if (!alreadyExists) {
+              mergedAgents.push(
+                isIdle && mainAgent.status === 'running'
+                  ? { ...mainAgent, status: 'completed' as const, endTime: mainAgent.endTime || fileStat.mtime }
+                  : mainAgent,
+              );
+            }
+          }
+
           const agents = isIdle
-            ? parsed.agents.map((a) =>
+            ? mergedAgents.map((a) =>
                 a.status === 'running'
                   ? { ...a, status: 'completed' as const, endTime: a.endTime || fileStat.mtime }
                   : a,
               )
-            : parsed.agents;
+            : mergedAgents;
+
+          const subagentsTotalTokens = agents.reduce((sum, a) => sum + (a.totalTokens || 0), 0);
 
           const sessionCreated =
             parsed.sessionCreated && !isNaN(parsed.sessionCreated.getTime())
@@ -473,6 +505,7 @@ export class SessionManager implements vscode.Disposable {
             tools,
             activeTools,
             agents,
+            subagentsTotalTokens: subagentsTotalTokens > 0 ? subagentsTotalTokens : undefined,
             todos: parsed.todos,
             skills: parsed.skills,
             mcpServers: parsed.mcpServers,

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
+import { ClaudeHubDashboardProvider } from './dashboardView.js';
 import { formatModelDisplayName } from './contextLimit.js';
 import { t } from './i18n.js';
 import { SessionManager } from './sessionManager.js';
@@ -9,6 +10,7 @@ export function registerCommands(
   context: vscode.ExtensionContext,
   sessionManager: SessionManager,
   configManager: ClaudeConfigManager,
+  dashboardProvider?: ClaudeHubDashboardProvider,
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('claudeHub.refresh', async () => {
@@ -193,6 +195,23 @@ export function registerCommands(
       } else {
         await currentConfig.update('statusBar.preset', picked.preset, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage(`已切换状态栏风格为「${picked.label.split(' ')[1]}」`);
+      }
+    }),
+
+    vscode.commands.registerCommand('claudeHub.openDashboard', async () => {
+      if (dashboardProvider) {
+        await dashboardProvider.show();
+        return;
+      }
+      try {
+        await vscode.commands.executeCommand('workbench.view.extension.claude-hub-container');
+      } catch {
+        // fallback
+      }
+      try {
+        await vscode.commands.executeCommand('claudeHub.dashboardView.focus');
+      } catch {
+        // fallback
       }
     }),
   );

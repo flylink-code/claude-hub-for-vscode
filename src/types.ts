@@ -19,13 +19,22 @@ export interface ToolEntry {
 
 export interface AgentEntry {
   id: string;
+  name?: string;
   type: string;
   model?: string;
   description?: string;
-  status: 'running' | 'completed';
-  startTime: Date;
+  status: 'running' | 'completed' | 'error';
+  startTime?: Date;
   endTime?: Date;
+  durationMs?: number;
+  totalTokens?: number;
+  tokenUsage?: TokenUsage;
+  parentAgentId?: string;
+  spawnDepth?: number;
+  worktreeBranch?: string;
+  worktreePath?: string;
   background?: boolean;
+  toolsCount?: number;
 }
 
 export interface TodoItem {
@@ -61,6 +70,7 @@ export interface SessionInfo {
   tools: ToolEntry[];
   activeTools: ToolEntry[];
   agents: AgentEntry[];
+  subagentsTotalTokens?: number;
   todos: TodoItem[];
   skills: string[];
   mcpServers: string[];

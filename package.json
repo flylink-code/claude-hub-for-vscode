@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.8",
+  "version": "0.2.10",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -50,6 +50,12 @@
       ]
     },
     "commands": [
+      {
+        "command": "claudeHub.openDashboard",
+        "title": "%command.openDashboard%",
+        "icon": "$(dashboard)",
+        "category": "Claude Hub"
+      },
       {
         "command": "claudeHub.refresh",
         "title": "%command.refresh%",
@@ -230,6 +236,19 @@
           ],
           "default": "right",
           "description": "%config.statusBar.position.desc%"
+        },
+        "claudeHub.statusBar.clickAction": {
+          "type": "string",
+          "enum": [
+            "openDashboard",
+            "switchSession"
+          ],
+          "enumDescriptions": [
+            "%config.statusBar.clickAction.openDashboard%",
+            "%config.statusBar.clickAction.switchSession%"
+          ],
+          "default": "openDashboard",
+          "description": "%config.statusBar.clickAction.desc%"
         },
         "claudeHub.idleTimeout": {
           "type": "number",

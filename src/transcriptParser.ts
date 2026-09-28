@@ -131,6 +131,34 @@ function normalizeTarget(toolName: string, input?: Record<string, unknown>): str
   return undefined;
 }
 
+/**
+ * Extracts markdown checklist todos from text (e.g. - [ ] task, - [x] done, - [/] in progress).
+ */
+export function extractMarkdownTodos(text: string): TodoItem[] {
+  if (!text || typeof text !== 'string') return [];
+  const lines = text.split('\n');
+  const results: TodoItem[] = [];
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    if (!trimmed.startsWith('- [') && !trimmed.startsWith('* [') && !trimmed.startsWith('+ [')) {
+      continue;
+    }
+    const closeBracketIdx = trimmed.indexOf(']', 3);
+    if (closeBracketIdx === -1) continue;
+    const mark = trimmed.substring(3, closeBracketIdx).trim().toLowerCase();
+    const content = trimmed.substring(closeBracketIdx + 1).trim();
+    if (!content) continue;
+    let status: 'pending' | 'in_progress' | 'completed' = 'pending';
+    if (mark === 'x') {
+      status = 'completed';
+    } else if (mark === '/' || mark === '-') {
+      status = 'in_progress';
+    }
+    results.push({ content, status });
+  }
+  return results;
+}
+
 export async function parseTranscriptFile(filePath: string): Promise<ParsedTranscript> {
   let stats: fs.Stats;
   try {
@@ -193,6 +221,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   const skillsSet = new Set<string>();
   const mcpSet = new Set<string>();
   const todos: TodoItem[] = [];
+  const tasksMap = new Map<string, TodoItem>();
+  let latestMarkdownTodos: TodoItem[] = [];
 
   let sessionId: string | undefined;
   let cwd: string | undefined;
@@ -344,7 +374,12 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
 
         // If assistant responds with final text and no tool_use, close prior running tools
         const msgContent = entry.message?.content;
-        if (Array.isArray(msgContent)) {
+        if (typeof msgContent === 'string') {
+          const parsed = extractMarkdownTodos(msgContent);
+          if (parsed.length > 0) {
+            latestMarkdownTodos = parsed;
+          }
+        } else if (Array.isArray(msgContent)) {
           const hasToolUse = msgContent.some((b: any) => b && b.type === 'tool_use');
           const hasText = msgContent.some(
             (b: any) =>
@@ -352,6 +387,14 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
           );
           if (!hasToolUse && hasText) {
             closeActiveTools(ts, 'completed');
+          }
+          for (const b of msgContent) {
+            if (b && b.type === 'text' && typeof b.text === 'string') {
+              const parsed = extractMarkdownTodos(b.text);
+              if (parsed.length > 0) {
+                latestMarkdownTodos = parsed;
+              }
+            }
           }
         }
       }
@@ -425,6 +468,32 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
                   });
                 }
               }
+            } else if (name === 'TaskCreate' && input) {
+              const content = String(input.subject || input.description || 'Task');
+              const taskItem: TodoItem = {
+                content,
+                status: 'pending',
+              };
+              tasksMap.set(block.id, taskItem);
+              if (input.taskId) {
+                tasksMap.set(String(input.taskId), taskItem);
+              }
+            } else if (name === 'TaskUpdate' && input) {
+              const taskId = input.taskId ? String(input.taskId) : undefined;
+              if (taskId && tasksMap.has(taskId)) {
+                const item = tasksMap.get(taskId)!;
+                if (input.status) {
+                  item.status =
+                    input.status === 'completed'
+                      ? 'completed'
+                      : input.status === 'in_progress'
+                      ? 'in_progress'
+                      : 'pending';
+                }
+                if (input.subject) {
+                  item.content = String(input.subject);
+                }
+              }
             }
           } else if (block.type === 'tool_result' && block.tool_use_id) {
             const toolId = block.tool_use_id;
@@ -446,12 +515,32 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
               existingAgent.status = 'completed';
               existingAgent.endTime = ts;
             }
+
+            if (tasksMap.has(toolId)) {
+              if (entry.toolUseResult?.task?.id) {
+                const tId = String(entry.toolUseResult.task.id);
+                tasksMap.set(tId, tasksMap.get(toolId)!);
+              } else if (typeof block.content === 'string') {
+                const match = block.content.match(/Task #(\d+) created/i);
+                if (match && match[1]) {
+                  tasksMap.set(match[1], tasksMap.get(toolId)!);
+                }
+              }
+            }
           }
         }
       }
     } catch {
       // Ignore unparseable lines
     }
+  }
+
+  if (todos.length === 0 && tasksMap.size > 0) {
+    const uniqueTasks = Array.from(new Set(tasksMap.values()));
+    todos.push(...uniqueTasks);
+  }
+  if (todos.length === 0 && latestMarkdownTodos.length > 0) {
+    todos.push(...latestMarkdownTodos);
   }
 
   const wasCleared = lastClearIndex !== -1 && userMessagesAfterClear === 0;
@@ -493,3 +582,213 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     lastEntryTimestamp: lastEntryTimestamp ?? undefined,
   };
 }
+
+export interface SubagentMeta {
+  agentType?: string;
+  name?: string;
+  description?: string;
+  model?: string;
+  spawnDepth?: number;
+  parentAgentId?: string;
+  worktreeBranch?: string;
+  worktreePath?: string;
+  requestShape?: string;
+  toolUseId?: string;
+}
+
+/**
+ * Parses all subagents within a session's subagents/ folder.
+ */
+export async function parseSubagentsDir(
+  subagentsDir: string,
+  isSessionIdle: boolean = false,
+): Promise<AgentEntry[]> {
+  if (!fs.existsSync(subagentsDir)) {
+    return [];
+  }
+
+  let entries: string[] = [];
+  try {
+    entries = fs.readdirSync(subagentsDir);
+  } catch {
+    return [];
+  }
+
+  const metaFiles = entries.filter((f) => f.startsWith('agent-') && f.endsWith('.meta.json'));
+  const agents: AgentEntry[] = [];
+
+  for (const metaFile of metaFiles) {
+    const metaPath = path.join(subagentsDir, metaFile);
+    const agentId = metaFile.replace(/^agent-/, '').replace(/\.meta\.json$/, '');
+    const jsonlPath = path.join(subagentsDir, `agent-${agentId}.jsonl`);
+
+    let meta: SubagentMeta = {};
+    try {
+      const content = fs.readFileSync(metaPath, 'utf8');
+      meta = JSON.parse(content) as SubagentMeta;
+    } catch {
+      // Continue with empty meta
+    }
+
+    let startTime: Date | undefined;
+    let lastTimestamp: Date | undefined;
+    let endTime: Date | undefined;
+    let lastStopReason: string | null = null;
+    let promptSnippet: string | undefined;
+    let toolCount = 0;
+    let totalTokens = 0;
+    let tokenUsage: TokenUsage | undefined;
+
+    if (fs.existsSync(jsonlPath)) {
+      try {
+        const fileStream = fs.createReadStream(jsonlPath);
+        const rl = readline.createInterface({
+          input: fileStream,
+          crlfDelay: Infinity,
+        });
+
+        for await (const line of rl) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          try {
+            const row = JSON.parse(trimmed);
+            if (row.timestamp) {
+              const rowDate = new Date(row.timestamp);
+              if (!startTime) startTime = rowDate;
+              lastTimestamp = rowDate;
+            }
+
+            if (row.message) {
+              if (row.message.usage) {
+                const u = row.message.usage;
+                const inTok = Number(u.input_tokens || 0);
+                const outTok = Number(u.output_tokens || 0);
+                const cacheRead = Number(u.cache_read_input_tokens || 0);
+                const cacheCreate = Number(u.cache_creation_input_tokens || 0);
+                totalTokens = inTok + outTok + cacheRead + cacheCreate;
+                tokenUsage = {
+                  inputTokens: inTok,
+                  outputTokens: outTok,
+                  cacheReadTokens: cacheRead,
+                  cacheCreationTokens: cacheCreate,
+                  totalTokens,
+                  percentage: 0,
+                };
+              }
+              if (row.message.stop_reason) {
+                lastStopReason = row.message.stop_reason;
+              }
+              if (Array.isArray(row.message.content)) {
+                for (const blk of row.message.content) {
+                  if (blk && blk.type === 'tool_use') {
+                    toolCount++;
+                  }
+                }
+              }
+            }
+
+            if (!promptSnippet && row.type === 'user') {
+              if (typeof row.message?.content === 'string') {
+                promptSnippet = row.message.content;
+              } else if (Array.isArray(row.message?.content)) {
+                const textBlock = row.message.content.find((b: any) => b && b.type === 'text');
+                if (textBlock && typeof textBlock.text === 'string') {
+                  promptSnippet = textBlock.text;
+                }
+              }
+            }
+          } catch {
+            // Ignore corrupted lines
+          }
+        }
+      } catch {
+        // Ignore file read errors
+      }
+    }
+
+    // Determine status
+    let status: 'running' | 'completed' | 'error' = 'completed';
+    if (!isSessionIdle) {
+      if (lastStopReason === 'end_turn') {
+        status = 'completed';
+      } else if (lastStopReason === 'max_tokens' || lastStopReason === 'stop_sequence') {
+        status = 'completed';
+      } else if (startTime && lastTimestamp && Date.now() - lastTimestamp.getTime() > 180000) {
+        // Inactive for more than 3 minutes
+        status = 'completed';
+      } else {
+        status = 'running';
+      }
+    }
+
+    if (status === 'completed') {
+      endTime = lastTimestamp;
+    }
+
+    const durationMs = startTime
+      ? Math.max(0, (endTime ? endTime.getTime() : (lastTimestamp ? lastTimestamp.getTime() : Date.now())) - startTime.getTime())
+      : undefined;
+
+    // Resolve name and description cleanly
+    let name = meta.name;
+    let description = meta.description;
+
+    if (!description && promptSnippet) {
+      const cleanSnippet = promptSnippet.trim();
+      if (cleanSnippet.startsWith('Review target:') || cleanSnippet.includes('/code-review')) {
+        description = '/code-review';
+      } else {
+        description = cleanSnippet.length > 50 ? cleanSnippet.substring(0, 48) + '...' : cleanSnippet;
+      }
+    }
+
+    if (!name && !description) {
+      name = meta.agentType || 'agent';
+    }
+
+    agents.push({
+      id: agentId,
+      name,
+      type: meta.agentType || 'agent',
+      model: meta.model,
+      description,
+      status,
+      startTime,
+      endTime,
+      durationMs,
+      totalTokens: totalTokens > 0 ? totalTokens : undefined,
+      tokenUsage,
+      parentAgentId: meta.parentAgentId,
+      spawnDepth: meta.spawnDepth || 1,
+      worktreeBranch: meta.worktreeBranch,
+      worktreePath: meta.worktreePath,
+      background: meta.requestShape === 'background',
+      toolsCount: toolCount > 0 ? toolCount : undefined,
+    });
+  }
+
+  // Sort: primary agents first, nested subagents immediately under their parent
+  const rootAgents = agents.filter((a) => !a.parentAgentId || a.spawnDepth === 1);
+  const childAgents = agents.filter((a) => a.parentAgentId && a.spawnDepth && a.spawnDepth > 1);
+
+  rootAgents.sort((a, b) => (a.startTime?.getTime() || 0) - (b.startTime?.getTime() || 0));
+
+  const ordered: AgentEntry[] = [];
+  for (const root of rootAgents) {
+    ordered.push(root);
+    const children = childAgents.filter((c) => c.parentAgentId === root.id);
+    children.sort((a, b) => (a.startTime?.getTime() || 0) - (b.startTime?.getTime() || 0));
+    ordered.push(...children);
+  }
+
+  // Add any orphaned children
+  for (const child of childAgents) {
+    if (!ordered.some((a) => a.id === child.id)) {
+      ordered.push(child);
+    }
+  }
+
+  return ordered;
+}
+
