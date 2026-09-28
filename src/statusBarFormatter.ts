@@ -48,6 +48,32 @@ export function formatK(tokens: number): string {
   return String(tokens);
 }
 
+/**
+ * Formats a duration in milliseconds into a compact human-readable string.
+ * @param ms Duration in milliseconds
+ * @param precise If true, includes seconds when under 1 hour (e.g. "12m 30s")
+ */
+export function formatDuration(ms: number, precise: boolean = false): string {
+  if (isNaN(ms) || ms < 0) ms = 0;
+  const totalSec = Math.floor(ms / 1000);
+  if (totalSec < 60) {
+    return precise ? `${totalSec}s` : (totalSec === 0 ? '< 1m' : `${totalSec}s`);
+  }
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  if (minutes < 60) {
+    return precise && seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours < 24) {
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  }
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+}
+
 export function resolveRenderOptions(config: ConfigGetter): StatusBarRenderOptions {
   const preset = (config.get<StatusBarPreset>('statusBar.preset', 'compact') as StatusBarPreset) || 'compact';
 

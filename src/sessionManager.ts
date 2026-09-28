@@ -438,6 +438,27 @@ export class SessionManager implements vscode.Disposable {
               )
             : parsed.agents;
 
+          const sessionCreated =
+            parsed.sessionCreated && !isNaN(parsed.sessionCreated.getTime())
+              ? parsed.sessionCreated
+              : fileStat.birthtime && fileStat.birthtime.getTime() > 0
+              ? fileStat.birthtime
+              : fileStat.mtime;
+
+          // Calculate active interaction duration (filters idle gaps > 5min)
+          let activeDurationMs = parsed.activeDurationMs || 0;
+          if (!isIdle && parsed.lastEntryTimestamp) {
+            const recentDiff = Date.now() - parsed.lastEntryTimestamp;
+            if (recentDiff > 0 && recentDiff <= 300_000) {
+              activeDurationMs += recentDiff;
+            }
+          }
+
+          const totalSpanMs = Math.max(
+            0,
+            (isIdle ? fileStat.mtime.getTime() : Date.now()) - sessionCreated.getTime(),
+          );
+
           discoveredSessions.push({
             sessionId,
             sessionFile: filePath,
@@ -456,8 +477,11 @@ export class SessionManager implements vscode.Disposable {
             skills: parsed.skills,
             mcpServers: parsed.mcpServers,
             gitBranch: parsed.gitBranch,
-            sessionCreated: parsed.sessionCreated,
+            sessionCreated,
             lastUpdated: fileStat.mtime,
+            durationMs: activeDurationMs,
+            totalSpanMs,
+            currentTurnStartTime: parsed.currentTurnStartTime,
             isIdle,
             isCurrentWorkspace,
             wasCleared: parsed.wasCleared,

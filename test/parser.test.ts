@@ -10,6 +10,7 @@ import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
 import {
   formatProgressBar,
   formatK,
+  formatDuration,
   resolveRenderOptions,
   formatStatusBarText,
   StatusBarRenderOptions,
@@ -135,6 +136,8 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('id="top-filter-btn"'));
   assert.ok(html.includes('id="btn-open-agents-md"'));
   assert.ok(html.includes('id="btn-open-claude-md"'));
+  assert.ok(html.includes('id="session-dur-label"'));
+  assert.ok(html.includes('updateLiveSessionDuration'));
   assert.ok(html.includes('setFilterMode'));
   assert.ok(html.includes('event.target instanceof Element'));
 });
@@ -495,6 +498,49 @@ test('parseTranscriptFile handles out-of-order tool_result before tool_use', asy
   }
 });
 
+test('parseTranscriptFile calculates activeDurationMs by filtering multi-day idle gaps', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-test-dur-'));
+  const testFile = path.join(tempDir, 'test-dur.jsonl');
+
+  try {
+    const lines = [
+      // Day 1: Session created and initial query (active 1 minute)
+      JSON.stringify({
+        sessionId: 'session-multi-day-test',
+        type: 'user',
+        timestamp: '2026-09-24T10:00:00.000Z',
+        message: { content: [{ type: 'text', text: 'Hello Claude' }] },
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-24T10:01:00.000Z',
+        message: { content: [{ type: 'text', text: 'Hello! How can I help?' }] },
+      }),
+      // Idle for 3 days (e.g. 72 hours of silence / computer shutdown)
+      // Day 4: User resumes work and interacts for 2 minutes
+      JSON.stringify({
+        type: 'user',
+        timestamp: '2026-09-27T10:00:00.000Z',
+        message: { content: [{ type: 'text', text: 'Continue task' }] },
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-27T10:02:00.000Z',
+        message: { content: [{ type: 'text', text: 'All done.' }] },
+      }),
+    ];
+
+    fs.writeFileSync(testFile, lines.join('\n'), 'utf8');
+
+    const result = await parseTranscriptFile(testFile);
+    // Total calendar span is 3 days (259,320,000 ms), but active duration should only be 1min + 2min = 3 minutes (180,000 ms)
+    assert.strictEqual(result.activeDurationMs, 180000, 'Idle gap of 3 days must be filtered out');
+    assert.strictEqual(result.currentTurnStartTime?.toISOString(), '2026-09-27T10:00:00.000Z');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('parseTranscriptFile reconciles lingering running tools on turn completion (cost-state / new turn)', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-test-reconcile-'));
   const testFile = path.join(tempDir, 'test-reconcile.jsonl');
@@ -580,5 +626,26 @@ test('parseTranscriptFile reconciles running tools when assistant delivers final
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test('formatDuration formats milliseconds into human-readable compact strings', () => {
+  // Normal/compact mode
+  assert.strictEqual(formatDuration(0), '< 1m');
+  assert.strictEqual(formatDuration(45000), '45s');
+  assert.strictEqual(formatDuration(60000), '1m');
+  assert.strictEqual(formatDuration(125000), '2m');
+  assert.strictEqual(formatDuration(3600000), '1h');
+  assert.strictEqual(formatDuration(3660000), '1h 1m');
+  assert.strictEqual(formatDuration(86400000), '1d');
+  assert.strictEqual(formatDuration(90000000), '1d 1h');
+
+  // Precise mode (shows seconds under 1 hour)
+  assert.strictEqual(formatDuration(0, true), '0s');
+  assert.strictEqual(formatDuration(14000, true), '14s');
+  assert.strictEqual(formatDuration(65000, true), '1m 5s');
+  assert.strictEqual(formatDuration(120000, true), '2m');
+  assert.strictEqual(formatDuration(3600000, true), '1h');
+  assert.strictEqual(formatDuration(-100, true), '0s');
+});
+
 
 

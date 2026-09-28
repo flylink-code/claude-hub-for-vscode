@@ -573,8 +573,9 @@ export function getWebviewContent(): string {
         <span id="branch-tag">🌿 --</span>
       </div>
 
-      <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 2px;">
         <span id="cost-label">预估消耗: &lt; $0.001</span>
+        <span id="session-dur-label" style="text-align: right;">⏱️ 对话时长: --</span>
       </div>
 
       <!-- Live Running Tool Banner (Auto hidden when idle) -->
@@ -763,6 +764,7 @@ export function getWebviewContent(): string {
     // Sessions State
     let allSessions = [];
     let focusedSessionId = null;
+    let currentSession = null;
     let currentFilter = 'all';
     let backendFilterMode = null;
     let searchKeyword = '';
@@ -826,6 +828,87 @@ export function getWebviewContent(): string {
     function nextPage() {
       currentPage++;
       renderSessionsList();
+    }
+
+    function formatDuration(ms, precise) {
+      if (isNaN(ms) || ms < 0) ms = 0;
+      const totalSec = Math.floor(ms / 1000);
+      if (totalSec < 60) {
+        return precise ? totalSec + 's' : (totalSec === 0 ? '< 1m' : totalSec + 's');
+      }
+      const minutes = Math.floor(totalSec / 60);
+      const seconds = totalSec % 60;
+      if (minutes < 60) {
+        return (precise && seconds > 0) ? (minutes + 'm ' + seconds + 's') : (minutes + 'm');
+      }
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      if (hours < 24) {
+        return remainingMinutes > 0 ? (hours + 'h ' + remainingMinutes + 'm') : (hours + 'h');
+      }
+      const days = Math.floor(hours / 24);
+      const remainingHours = hours % 24;
+      return remainingHours > 0 ? (days + 'd ' + remainingHours + 'h') : (days + 'd');
+    }
+
+    function updateLiveSessionDuration() {
+      const durEl = document.getElementById('session-dur-label');
+      if (durEl) {
+        if (!currentSession) {
+          durEl.innerText = '⏱️ 对话时长: --';
+          durEl.title = '';
+        } else {
+          const isIdle = !!currentSession.isIdle;
+          const createdTime = currentSession.sessionCreated ? new Date(currentSession.sessionCreated).getTime() : 0;
+          const turnStartTime = currentSession.currentTurnStartTime ? new Date(currentSession.currentTurnStartTime).getTime() : 0;
+          const baseDurMs = currentSession.durationMs || 0;
+
+          if (isIdle) {
+            const durText = formatDuration(baseDurMs, false);
+            durEl.innerText = '⏱️ 对话时长: ' + durText;
+            let tip = '累计有效对话时长: ' + durText;
+            if (createdTime > 0) {
+              tip += ' · 会话创建于 ' + formatRelativeTime(createdTime);
+            }
+            if (currentSession.totalSpanMs && currentSession.totalSpanMs > baseDurMs) {
+              tip += ' (历时跨度 ' + formatDuration(currentSession.totalSpanMs, false) + ')';
+            }
+            durEl.title = tip;
+          } else {
+            // Active running state
+            let turnDurMs = 0;
+            if (turnStartTime > 0) {
+              turnDurMs = Math.max(0, Date.now() - turnStartTime);
+            }
+            const turnText = turnDurMs > 0 ? formatDuration(turnDurMs, true) : '';
+            const totalActiveMs = baseDurMs + (turnDurMs > 0 && turnDurMs <= 300000 ? turnDurMs : 0);
+            const totalText = formatDuration(totalActiveMs, false);
+
+            if (turnText) {
+              durEl.innerText = '⏱️ 运行时长: ' + turnText + ' (总计 ' + totalText + ')';
+              let tip = '当前任务运行时长: ' + turnText + ' · 累计有效对话: ' + totalText;
+              if (createdTime > 0) {
+                tip += ' · 会话创建于 ' + formatRelativeTime(createdTime);
+              }
+              durEl.title = tip;
+            } else {
+              durEl.innerText = '⏱️ 运行时长: ' + formatDuration(totalActiveMs, true);
+              durEl.title = '累计有效运行时长: ' + formatDuration(totalActiveMs, true);
+            }
+          }
+        }
+      }
+
+      // Also update running tool banner if tool is actively executing
+      if (currentSession && !currentSession.isIdle && currentSession.activeTools && currentSession.activeTools.length > 0) {
+        const toolDurEl = document.getElementById('running-tool-dur');
+        if (toolDurEl) {
+          const t = currentSession.activeTools[0];
+          const startMs = t.startTime ? new Date(t.startTime).getTime() : 0;
+          const elapsedSec = startMs > 0 ? Math.max(0, Math.floor((Date.now() - startMs) / 1000)) : 0;
+          toolDurEl.innerText = elapsedSec + 's';
+        }
+      }
     }
 
     function formatRelativeTime(timestamp) {
@@ -919,6 +1002,20 @@ export function getWebviewContent(): string {
         const isFork = titleStr.includes('(Fork');
         const forkBadge = isFork ? ' <span style="background: rgba(78, 201, 176, 0.15); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Fork</span>' : '';
 
+        const durationMs = s.durationMs !== undefined ? s.durationMs : 0;
+        const durationStr = durationMs > 0 ? formatDuration(durationMs, false) : '';
+        let durationTitle = '累计有效对话: ' + durationStr;
+        if (s.totalSpanMs && s.totalSpanMs > durationMs) {
+          durationTitle += ' · 创建跨度: ' + formatDuration(s.totalSpanMs, false);
+        }
+        const durationBadge = durationStr ? '<span title="' + escapeAttribute(durationTitle) + '">⏱️ ' + durationStr + '</span>' : '';
+
+        const rightMetaParts = [];
+        if (durationBadge) rightMetaParts.push(durationBadge);
+        if (branchStr) rightMetaParts.push(branchStr);
+        if (timeStr) rightMetaParts.push(timeStr);
+        const rightMetaHtml = rightMetaParts.join(' · ');
+
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
             '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + '</span>' +
@@ -927,7 +1024,7 @@ export function getWebviewContent(): string {
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
             '<span>' + pct + ' (' + tokens + ' Tokens) · ' + modelDisplay + '</span>' +
-            '<span>' + branchStr + (branchStr ? ' · ' : '') + timeStr + '</span>' +
+            '<span>' + rightMetaHtml + '</span>' +
           '</div>' +
           '<div class="session-actions-row">' +
             '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '">👀 聚焦</button>' +
@@ -954,6 +1051,7 @@ export function getWebviewContent(): string {
 
       if (msg.type === 'updateSession') {
         const s = msg.session;
+        currentSession = s || null;
         if (msg.allSessions) {
           allSessions = msg.allSessions;
         }
@@ -1018,7 +1116,9 @@ export function getWebviewContent(): string {
             const t = s.activeTools[0];
             document.getElementById('running-tool-name').innerText = t.name;
             document.getElementById('running-tool-target').innerText = t.target ? ' ' + t.target : '';
-            document.getElementById('running-tool-dur').innerText = t.durationMs ? Math.round(t.durationMs / 1000) + 's' : '0s';
+            const tStartMs = t.startTime ? new Date(t.startTime).getTime() : 0;
+            const tDurSec = tStartMs > 0 ? Math.max(0, Math.floor((Date.now() - tStartMs) / 1000)) : (t.durationMs ? Math.round(t.durationMs / 1000) : 0);
+            document.getElementById('running-tool-dur').innerText = tDurSec + 's';
             banner.style.display = 'flex';
           } else {
             banner.style.display = 'none';
@@ -1043,6 +1143,8 @@ export function getWebviewContent(): string {
             todosWrap.style.display = 'none';
           }
         }
+
+        updateLiveSessionDuration();
 
         // Subscription Rate Limits
         if (msg.subscription && msg.subscription.fiveHour) {
@@ -1108,6 +1210,13 @@ export function getWebviewContent(): string {
         document.getElementById('ext-count-badge').innerText = totalExt + ' 项';
       }
     });
+
+    // 1-second live ticker for session duration and running tools
+    setInterval(() => {
+      if (currentSession && (!currentSession.isIdle || (currentSession.activeTools && currentSession.activeTools.length > 0))) {
+        updateLiveSessionDuration();
+      }
+    }, 1000);
 
     // Notify backend ready
     sendMessage('ready');

@@ -6,6 +6,7 @@ import { t } from './i18n.js';
 import { SessionManager } from './sessionManager.js';
 import {
   ConfigGetter,
+  formatDuration,
   formatK,
   formatProgressBar,
   formatStatusBarText,
@@ -20,6 +21,7 @@ import { SessionInfo, SubscriptionUsageData } from './types.js';
 
 export {
   ConfigGetter,
+  formatDuration,
   formatK,
   formatProgressBar,
   formatStatusBarText,
@@ -256,6 +258,21 @@ export class StatusBarController implements vscode.Disposable {
     const hitRate = totalIn > 0 ? Math.round((session.tokenUsage.cacheReadTokens / totalIn) * 100) : 0;
     const cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
 
+    const durationMs = session.durationMs ?? 0;
+    let durationText: string;
+    if (!session.isIdle && session.currentTurnStartTime) {
+      const turnMs = Math.max(0, Date.now() - session.currentTurnStartTime.getTime());
+      const turnText = formatDuration(turnMs, true);
+      const totalText = formatDuration(durationMs + (turnMs <= 300_000 ? turnMs : 0), false);
+      durationText = `${turnText} (总计 ${totalText})`;
+    } else {
+      durationText = formatDuration(durationMs, false);
+      if (session.totalSpanMs && session.totalSpanMs > durationMs) {
+        durationText += ` (跨度 ${formatDuration(session.totalSpanMs, false)})`;
+      }
+    }
+    const durationLabel = session.isIdle ? t('status.sessionDuration') : t('status.runningDuration');
+
     // Header with visual progress bar and cost
     md.appendMarkdown('### 🤖 ' + session.projectName + ' · ' + stateBadge + '\n\n');
     md.appendMarkdown(
@@ -269,6 +286,10 @@ export class StatusBarController implements vscode.Disposable {
         limitK +
         ' Tokens) · 费用: **' +
         cost +
+        '** · ⏱️ ' +
+        durationLabel +
+        ': **' +
+        durationText +
         '**\n\n',
     );
 

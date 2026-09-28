@@ -19,6 +19,9 @@ export interface ParsedTranscript {
   skills: string[];
   mcpServers: string[];
   wasCleared: boolean;
+  activeDurationMs: number;
+  currentTurnStartTime?: Date;
+  lastEntryTimestamp?: number;
 }
 
 interface CacheEntry {
@@ -170,6 +173,9 @@ function createEmptyTranscript(): ParsedTranscript {
     skills: [],
     mcpServers: [],
     wasCleared: false,
+    activeDurationMs: 0,
+    currentTurnStartTime: undefined,
+    lastEntryTimestamp: undefined,
   };
 }
 
@@ -199,6 +205,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   let lastClearIndex = -1;
   let userMessagesAfterClear = 0;
   let lineIndex = 0;
+  let lastEntryTimestamp: number | null = null;
+  let activeDurationMs = 0;
+  let currentTurnStartTime: Date | undefined;
 
   const usageByMessageId = new Map<string, {
     inputTokens: number;
@@ -221,6 +230,18 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     try {
       const entry = JSON.parse(line);
       const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
+      const tsMs = !isNaN(ts.getTime()) ? ts.getTime() : null;
+
+      if (tsMs !== null) {
+        if (lastEntryTimestamp !== null) {
+          const diff = tsMs - lastEntryTimestamp;
+          const maxThreshold = activeToolIds.size > 0 ? 30 * 60 * 1000 : 5 * 60 * 1000;
+          if (diff > 0 && diff <= maxThreshold) {
+            activeDurationMs += diff;
+          }
+        }
+        lastEntryTimestamp = tsMs;
+      }
 
       const closeActiveTools = (time: Date, fallbackStatus: 'completed' | 'error' = 'error') => {
         for (const tid of activeToolIds) {
@@ -282,6 +303,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             ));
         if (isUserPrompt) {
           closeActiveTools(ts, 'error');
+          if (tsMs !== null) {
+            currentTurnStartTime = new Date(tsMs);
+          }
         }
       }
 
@@ -464,5 +488,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     skills: Array.from(skillsSet),
     mcpServers: Array.from(mcpSet),
     wasCleared,
+    activeDurationMs,
+    currentTurnStartTime,
+    lastEntryTimestamp: lastEntryTimestamp ?? undefined,
   };
 }

@@ -67,6 +67,9 @@ export interface SessionInfo {
   gitBranch?: string;
   sessionCreated?: Date;
   lastUpdated: Date;
+  durationMs?: number;
+  totalSpanMs?: number;
+  currentTurnStartTime?: Date;
   isIdle: boolean;
   isCurrentWorkspace: boolean;
   wasCleared: boolean;
