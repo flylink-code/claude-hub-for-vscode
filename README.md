@@ -11,6 +11,8 @@ Monitor, manage, and visualize **Claude Code** sessions inside VS Code. Claude H
 ### Features
 
 - **Dashboard.** A vertical accordion replaces a tab bar. The live panel stays open and shows the session indicator, context-window progress, input / cache / write / output tokens, estimated cost, and the Git branch. Tool activity and the todo list expand only while they are in use.
+- **Todo & Task Workflows.** Automatically parses live task checklists from `TodoWrite`, `TaskCreate`/`TaskUpdate`, or assistant Markdown task lists (`- [ ]`, `- [/]`, `- [x]`). Displays progress ratios, status indicators, and safely clears tasks on `/clear`.
+- **Subagent Map.** Visualizes subagents launched by Claude Code with live execution status, duration chips, token usage, tool invocations, and git worktrees. Automatically keeps open when running and collapses when finished.
 - **Sessions.** Filter by all sessions, the current workspace, or active sessions. Search by project, title, or Git branch, and page through long histories. Fork copies a session’s full transcript into a new UUID so you can open it or resume it with `claude --resume`. Delete removes a session record.
 - **Workspace scope.** Current-workspace mode follows the folder open in VS Code. All-sessions mode lists every Claude Code session on the machine.
 - **MCP and skills.** Claude Hub lists configured MCP servers and can enable or disable them. Installed skills are listed, and `SKILL.md` opens in the editor.
@@ -113,6 +115,8 @@ npm test
 ### 功能
 
 - **仪表盘。** 用纵向手风琴代替横向标签。实时面板保持展开，显示会话指示、上下文进度、输入 / 缓存命中 / 写入 / 输出 Token、预估费用和 Git 分支。工具耗时和待办清单只在有内容时展开。
+- **待办任务工作流 (Todo)。** 自动实时捕获与解析 `TodoWrite`、`TaskCreate`/`TaskUpdate` 以及 Assistant Markdown 任务清单（待办 `[ ]`、进行中 `[/]`、已完成 `[x]`），实时呈现进度百分比与状态指示，并在 `/clear` 时自动重置清空。
+- **子代理拓扑图谱 (Agent Map)。** 深度追踪与呈现 Claude Code 启动的 Subagent（子代理），展示执行状态、实时运行时长、Token 开销、工具调用次数与 Git Worktree 分支，支持运行期间智能自动展开、全部完成后自动收起归档。
 - **会话。** 可按全部、当前工作区或活跃中过滤，并按项目名、标题或 Git 分支搜索，长列表分页浏览。分叉会把会话的完整记录复制为新的 UUID，可直接打开，或在终端用 `claude --resume` 继续。删除会移除一条会话记录。
 - **工作区范围。** 当前工作区模式跟随 VS Code 正在打开的文件夹。全部会话模式列出本机所有 Claude Code 会话。
 - **MCP 与技能。** 列出已配置的 MCP 服务，并可启停。已安装技能会列出来，`SKILL.md` 可在编辑器中打开。

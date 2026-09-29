@@ -43,8 +43,35 @@ export function generateForkTitle(originalTitle?: string): string {
   return `${base} (Fork)`;
 }
 
+const MAX_TRANSCRIPT_CACHE_SIZE = 500;
 const transcriptCache = new Map<string, CacheEntry>();
 const MCP_PATTERN = /^mcp__(.+?)__(.+)$/;
+
+export function clearTranscriptCache(filePath?: string): void {
+  if (filePath) {
+    transcriptCache.delete(filePath);
+  } else {
+    transcriptCache.clear();
+  }
+}
+
+export function extractBlockTextContent(content: unknown): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  if (Array.isArray(content)) {
+    return content
+      .map((item: any) => {
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        if (typeof item.text === 'string') return item.text;
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+  return '';
+}
 
 function rewriteSessionIdsInValue(value: unknown, oldSessionId: string, newSessionId: string, key?: string): unknown {
   if (key === 'sessionId' || key === 'parentSessionId') {
@@ -131,8 +158,11 @@ function normalizeTarget(toolName: string, input?: Record<string, unknown>): str
   return undefined;
 }
 
+const CHECKLIST_REGEX = new RegExp('^[-*+]\\s+\\x5b([ xX/\\-]?)\\x5d\\s+(.+)$');
+
 /**
  * Extracts markdown checklist todos from text (e.g. - [ ] task, - [x] done, - [/] in progress).
+ * Strictly requires GFM task list format to prevent false positives from markdown links (e.g. - [name](url)).
  */
 export function extractMarkdownTodos(text: string): TodoItem[] {
   if (!text || typeof text !== 'string') return [];
@@ -140,14 +170,13 @@ export function extractMarkdownTodos(text: string): TodoItem[] {
   const results: TodoItem[] = [];
   for (const rawLine of lines) {
     const trimmed = rawLine.trim();
-    if (!trimmed.startsWith('- [') && !trimmed.startsWith('* [') && !trimmed.startsWith('+ [')) {
-      continue;
-    }
-    const closeBracketIdx = trimmed.indexOf(']', 3);
-    if (closeBracketIdx === -1) continue;
-    const mark = trimmed.substring(3, closeBracketIdx).trim().toLowerCase();
-    const content = trimmed.substring(closeBracketIdx + 1).trim();
+    const match = CHECKLIST_REGEX.exec(trimmed);
+    if (!match) continue;
+
+    const mark = match[1].toLowerCase();
+    const content = match[2].trim();
     if (!content) continue;
+
     let status: 'pending' | 'in_progress' | 'completed' = 'pending';
     if (mark === 'x') {
       status = 'completed';
@@ -173,6 +202,12 @@ export async function parseTranscriptFile(filePath: string): Promise<ParsedTrans
   }
 
   const result = await parseTranscriptStream(filePath);
+  if (transcriptCache.size >= MAX_TRANSCRIPT_CACHE_SIZE) {
+    const oldestKey = transcriptCache.keys().next().value;
+    if (oldestKey) {
+      transcriptCache.delete(oldestKey);
+    }
+  }
   transcriptCache.set(filePath, {
     mtimeMs: stats.mtimeMs,
     size: stats.size,
@@ -314,9 +349,25 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
       // Check /clear
       if (entry.type === 'user' && entry.message?.content) {
         const c = entry.message.content;
-        if (typeof c === 'string' && c.includes('<command-name>/clear</command-name>')) {
+        const isClearCommand =
+          (typeof c === 'string' &&
+            (c.includes('<command-name>/clear</command-name>') || c.trim() === '/clear')) ||
+          (Array.isArray(c) &&
+            c.some(
+              (b: any) =>
+                b &&
+                b.type === 'text' &&
+                typeof b.text === 'string' &&
+                (b.text.includes('<command-name>/clear</command-name>') || b.text.trim() === '/clear'),
+            ));
+
+        if (isClearCommand) {
           lastClearIndex = lineIndex;
           userMessagesAfterClear = 0;
+          todos.length = 0;
+          tasksMap.clear();
+          latestMarkdownTodos = [];
+          agentMap.clear();
         } else {
           if (lastClearIndex !== -1) {
             userMessagesAfterClear++;
@@ -332,9 +383,28 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
                 b && b.type === 'text' && typeof b.text === 'string' && b.text.trim().length > 0,
             ));
         if (isUserPrompt) {
+          // If previous agents were all completed, auto-clear them when a new user prompt begins
+          const allAgentsCompleted =
+            agentMap.size > 0 && Array.from(agentMap.values()).every((a) => a.status === 'completed');
+          if (allAgentsCompleted) {
+            agentMap.clear();
+          }
+
           closeActiveTools(ts, 'error');
           if (tsMs !== null) {
             currentTurnStartTime = new Date(tsMs);
+          }
+
+          // Clear each source independently if all items in that source are completed,
+          // preventing one completed source from accidentally wiping out in-progress items in another source.
+          if (todos.length > 0 && todos.every((t) => t.status === 'completed')) {
+            todos.length = 0;
+          }
+          if (tasksMap.size > 0 && Array.from(tasksMap.values()).every((t) => t.status === 'completed')) {
+            tasksMap.clear();
+          }
+          if (latestMarkdownTodos.length > 0 && latestMarkdownTodos.every((t) => t.status === 'completed')) {
+            latestMarkdownTodos = [];
           }
         }
       }
@@ -511,17 +581,25 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             }
 
             const existingAgent = agentMap.get(toolId);
+            const blockText = extractBlockTextContent(block.content);
             if (existingAgent) {
               existingAgent.status = 'completed';
               existingAgent.endTime = ts;
+              if (blockText) {
+                const agentIdMatch = blockText.match(/agentId:\s*([a-zA-Z0-9_\-]+)/i);
+                if (agentIdMatch && agentIdMatch[1]) {
+                  existingAgent.id = agentIdMatch[1];
+                  existingAgent.toolUseId = toolId;
+                }
+              }
             }
 
             if (tasksMap.has(toolId)) {
               if (entry.toolUseResult?.task?.id) {
                 const tId = String(entry.toolUseResult.task.id);
                 tasksMap.set(tId, tasksMap.get(toolId)!);
-              } else if (typeof block.content === 'string') {
-                const match = block.content.match(/Task #(\d+) created/i);
+              } else if (blockText) {
+                const match = blockText.match(/Task #(\d+) created/i);
                 if (match && match[1]) {
                   tasksMap.set(match[1], tasksMap.get(toolId)!);
                 }
@@ -544,6 +622,10 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   }
 
   const wasCleared = lastClearIndex !== -1 && userMessagesAfterClear === 0;
+  if (wasCleared) {
+    todos.length = 0;
+    agentMap.clear();
+  }
   const totalTokens = wasCleared
     ? 0
     : latestUsage.inputTokens + latestUsage.cacheReadTokens + latestUsage.cacheCreationTokens;
@@ -749,6 +831,7 @@ export async function parseSubagentsDir(
 
     agents.push({
       id: agentId,
+      toolUseId: meta.toolUseId,
       name,
       type: meta.agentType || 'agent',
       model: meta.model,

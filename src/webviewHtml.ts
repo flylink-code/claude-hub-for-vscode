@@ -38,6 +38,12 @@ export function getWebviewContent(): string {
       overflow-x: hidden;
     }
 
+    /* Container Queries Root */
+    #app.hub-container {
+      width: 100%;
+      container-type: inline-size;
+    }
+
     /* Top Bar */
     .top-bar {
       display: flex;
@@ -119,6 +125,16 @@ export function getWebviewContent(): string {
       display: flex;
       align-items: center;
       gap: 6px;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-sub {
+      opacity: 0.7;
+      font-weight: 400;
+      font-size: 10.5px;
     }
 
     .caret {
@@ -223,6 +239,24 @@ export function getWebviewContent(): string {
       color: var(--text-main);
     }
 
+    .hud-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .hud-info-row > span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     /* Running Tool Banner */
     .running-bar {
       background: rgba(224, 122, 95, 0.12);
@@ -288,6 +322,7 @@ export function getWebviewContent(): string {
     /* Session Manager Filters */
     .filter-chips-row {
       display: flex;
+      flex-wrap: wrap;
       gap: 4px;
       margin-bottom: 8px;
     }
@@ -300,6 +335,7 @@ export function getWebviewContent(): string {
       padding: 2px 8px;
       font-size: 10px;
       cursor: pointer;
+      white-space: nowrap;
       transition: all 0.15s;
     }
 
@@ -313,6 +349,10 @@ export function getWebviewContent(): string {
       color: #fff;
       border-color: var(--claude-accent);
       font-weight: 600;
+    }
+
+    .chip-label-short {
+      display: none;
     }
 
     .search-box {
@@ -354,9 +394,10 @@ export function getWebviewContent(): string {
     .session-header-row {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       margin-bottom: 3px;
       gap: 6px;
+      min-width: 0;
     }
 
     .session-project-name {
@@ -365,7 +406,31 @@ export function getWebviewContent(): string {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      flex: 1;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .session-header-badges {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .session-header-badges .status-pill {
+      font-size: 9px;
+      padding: 1.5px 5px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .session-header-badges .status-pill.agents {
+      background: rgba(224, 122, 95, 0.15);
+      color: var(--claude-accent);
+      border: 1px solid rgba(224, 122, 95, 0.3);
+      font-weight: 600;
     }
 
     .session-title-text {
@@ -396,17 +461,31 @@ export function getWebviewContent(): string {
     }
 
     .session-act-btn {
+      flex: 1 1 0;
+      min-width: 0;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text-main);
       border-radius: 3px;
-      padding: 2px 6px;
+      padding: 2.5px 4px;
       font-size: 10px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 3px;
+      white-space: nowrap;
       transition: all 0.15s ease;
+    }
+
+    .session-act-btn .btn-icon {
+      font-size: 10px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .session-act-btn .btn-text {
+      white-space: nowrap;
     }
 
     .session-act-btn:hover {
@@ -430,6 +509,134 @@ export function getWebviewContent(): string {
       background: rgba(244, 71, 71, 0.2);
       border-color: #f44747;
       color: #f44747;
+    }
+
+    .doc-btn-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    /* Responsive Breakpoints (Container Queries & Media Query Fallbacks) */
+    @container (max-width: 250px) {
+      .header-sub {
+        display: none;
+      }
+      .session-header-badges .status-pill.focused .badge-text,
+      .session-header-badges .status-pill.active .badge-text,
+      .session-header-badges .status-pill.idle .badge-text {
+        display: none;
+      }
+      .session-header-badges .status-pill {
+        padding: 1px 4px;
+      }
+      .session-act-btn {
+        padding: 2.5px 2px;
+        font-size: 9.5px;
+        gap: 2px;
+      }
+    }
+    @media (max-width: 250px) {
+      .header-sub {
+        display: none;
+      }
+      .session-header-badges .status-pill.focused .badge-text,
+      .session-header-badges .status-pill.active .badge-text,
+      .session-header-badges .status-pill.idle .badge-text {
+        display: none;
+      }
+      .session-header-badges .status-pill {
+        padding: 1px 4px;
+      }
+      .session-act-btn {
+        padding: 2.5px 2px;
+        font-size: 9.5px;
+        gap: 2px;
+      }
+    }
+
+    @container (max-width: 240px) {
+      .chip-label-long {
+        display: none;
+      }
+      .chip-label-short {
+        display: inline;
+      }
+      .filter-chip {
+        padding: 2px 6px;
+        font-size: 9.5px;
+      }
+      .metrics-row {
+        gap: 4px;
+      }
+      .metric-bubble {
+        flex: 1 1 calc(50% - 4px);
+        justify-content: space-between;
+        padding: 2px 5px;
+        font-size: 10px;
+      }
+    }
+    @media (max-width: 240px) {
+      .chip-label-long {
+        display: none;
+      }
+      .chip-label-short {
+        display: inline;
+      }
+      .filter-chip {
+        padding: 2px 6px;
+        font-size: 9.5px;
+      }
+      .metrics-row {
+        gap: 4px;
+      }
+      .metric-bubble {
+        flex: 1 1 calc(50% - 4px);
+        justify-content: space-between;
+        padding: 2px 5px;
+        font-size: 10px;
+      }
+    }
+
+    @container (max-width: 220px) {
+      .session-act-btn {
+        padding: 4px 0;
+      }
+      .session-act-btn .btn-text {
+        display: none;
+      }
+      .hud-info-row {
+        flex-direction: column;
+        gap: 1px;
+        align-items: flex-start;
+      }
+      .hud-info-row > span {
+        text-align: left !important;
+        max-width: 100%;
+      }
+      .doc-btn-group {
+        flex-direction: column !important;
+      }
+    }
+    @media (max-width: 220px) {
+      .session-act-btn {
+        padding: 4px 0;
+      }
+      .session-act-btn .btn-text {
+        display: none;
+      }
+      .hud-info-row {
+        flex-direction: column;
+        gap: 1px;
+        align-items: flex-start;
+      }
+      .hud-info-row > span {
+        text-align: left !important;
+        max-width: 100%;
+      }
+      .doc-btn-group {
+        flex-direction: column !important;
+      }
     }
 
     /* Pagination Bar */
@@ -589,6 +796,19 @@ export function getWebviewContent(): string {
       border-color: rgba(224, 122, 95, 0.4);
     }
 
+    .agent-item.running {
+      border-color: rgba(78, 201, 176, 0.4);
+      background: rgba(78, 201, 176, 0.04);
+    }
+
+    .agent-item.completed {
+      opacity: 0.85;
+    }
+
+    .agent-item.completed:hover {
+      opacity: 1;
+    }
+
     .agent-item.nested {
       margin-left: 16px;
       border-left: 2px solid var(--claude-accent);
@@ -705,6 +925,7 @@ export function getWebviewContent(): string {
   </style>
 </head>
 <body>
+  <div id="app" class="hub-container">
 
   <!-- Top Action Bar -->
   <div class="top-bar">
@@ -748,12 +969,12 @@ export function getWebviewContent(): string {
         <div class="metric-bubble"><span class="metric-bubble-lbl">输出</span><span id="m-out" class="metric-bubble-val">0</span></div>
       </div>
 
-      <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+      <div class="hud-info-row">
         <span id="model-tag">模型: --</span>
         <span id="branch-tag">🌿 --</span>
       </div>
 
-      <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+      <div class="hud-info-row" style="margin-top: 2px;">
         <span id="cost-label">预估消耗: &lt; $0.001</span>
         <span id="session-dur-label" style="text-align: right;">⏱️ 对话时长: --</span>
       </div>
@@ -768,10 +989,13 @@ export function getWebviewContent(): string {
         <span id="running-tool-dur" class="status-pill">0s</span>
       </div>
 
-      <!-- Tasks Checklist (Auto collapsed when empty) -->
+      <!-- Tasks Checklist (Auto collapsed when empty, collapsible header) -->
       <div id="todos-container" style="margin-top: 8px; display: none;">
-        <div style="display: flex; justify-content: space-between; font-weight: 500; font-size: 11px; margin-bottom: 2px;">
-          <span>📋 待办任务</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 11px; margin-bottom: 4px; cursor: pointer;" onclick="toggleTodosList()">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span id="todos-caret" class="caret" style="display: inline-block; font-size: 9px; transition: transform 0.2s;">▼</span>
+            <span>📋 待办任务</span>
+          </div>
           <span id="todos-counter" class="status-pill">0/0</span>
         </div>
         <div class="todo-progress-track">
@@ -785,7 +1009,7 @@ export function getWebviewContent(): string {
         <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 11px; margin-bottom: 5px; cursor: pointer;" onclick="toggleAgentsList()">
           <div style="display: flex; align-items: center; gap: 4px;">
             <span id="agents-caret" class="caret" style="display: inline-block; font-size: 9px; transition: transform 0.2s;">▼</span>
-            <span>🤖 协作代理拓扑 (Agent Map)</span>
+            <span>🤖 协作代理拓扑<span class="header-sub"> (Agent Map)</span></span>
           </div>
           <span id="agents-counter" class="status-pill">0</span>
         </div>
@@ -811,7 +1035,7 @@ export function getWebviewContent(): string {
     <div class="section-header" onclick="toggleSection('sec-sessions')">
       <span class="section-header-title">
         <span class="caret">▼</span>
-        <span>🕒 会话历史 (Session Manager)</span>
+        <span>🕒 会话历史<span class="header-sub"> (Session Manager)</span></span>
       </span>
       <span id="sessions-total-badge" class="status-pill">0 个会话</span>
     </div>
@@ -820,7 +1044,7 @@ export function getWebviewContent(): string {
       <!-- Filter Chips -->
       <div class="filter-chips-row">
         <button class="filter-chip active" id="chip-all" onclick="setSessionFilter('all')">全部</button>
-        <button class="filter-chip" id="chip-ws" onclick="setSessionFilter('workspace')">当前工作区</button>
+        <button class="filter-chip" id="chip-ws" onclick="setSessionFilter('workspace')"><span class="chip-label-long">当前工作区</span><span class="chip-label-short">工作区</span></button>
         <button class="filter-chip" id="chip-active" onclick="setSessionFilter('active')">活跃中</button>
       </div>
 
@@ -847,7 +1071,7 @@ export function getWebviewContent(): string {
     <div class="section-header" onclick="toggleSection('sec-extensions')">
       <span class="section-header-title">
         <span class="caret">▼</span>
-        <span>🧩 扩展能力 (MCP &amp; Skills)</span>
+        <span>🧩 扩展能力<span class="header-sub"> (MCP &amp; Skills)</span></span>
       </span>
       <span id="ext-count-badge" class="status-pill">0 项</span>
     </div>
@@ -896,6 +1120,8 @@ export function getWebviewContent(): string {
     </div>
   </div>
 
+  </div><!-- end #app.hub-container -->
+
   <script>
     const vscode = acquireVsCodeApi();
 
@@ -916,23 +1142,56 @@ export function getWebviewContent(): string {
       } catch (e) {}
     });
 
-    function toggleAgentsList() {
-      const list = document.getElementById('agents-list');
-      const caret = document.getElementById('agents-caret');
+    let userToggledAgents = false;
+    let userManuallyOpened = false;
+    let userToggledTodos = false;
+    let userManuallyOpenedTodos = false;
+    const expandedAgentKeys = new Set();
+
+    function toggleTodosList() {
+      const list = document.getElementById('todos-list');
+      const caret = document.getElementById('todos-caret');
       if (!list) return;
+      userToggledTodos = true;
       if (list.style.display === 'none') {
-        list.style.display = 'flex';
+        list.style.display = 'block';
+        userManuallyOpenedTodos = true;
         if (caret) caret.style.transform = 'rotate(0deg)';
       } else {
         list.style.display = 'none';
+        userManuallyOpenedTodos = false;
         if (caret) caret.style.transform = 'rotate(-90deg)';
       }
     }
 
-    function toggleAgentDetail(detailId) {
+    function toggleAgentsList() {
+      const list = document.getElementById('agents-list');
+      const caret = document.getElementById('agents-caret');
+      if (!list) return;
+      userToggledAgents = true;
+      if (list.style.display === 'none') {
+        list.style.display = 'flex';
+        userManuallyOpened = true;
+        if (caret) caret.style.transform = 'rotate(0deg)';
+      } else {
+        list.style.display = 'none';
+        userManuallyOpened = false;
+        if (caret) caret.style.transform = 'rotate(-90deg)';
+      }
+    }
+
+    function toggleAgentDetail(detailId, agentKey) {
       const el = document.getElementById(detailId);
       if (!el) return;
-      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'flex' : 'none';
+      const isHidden = (el.style.display === 'none' || !el.style.display);
+      el.style.display = isHidden ? 'flex' : 'none';
+      if (agentKey) {
+        if (isHidden) {
+          expandedAgentKeys.add(agentKey);
+        } else {
+          expandedAgentKeys.delete(agentKey);
+        }
+      }
     }
 
     function sendMessage(type, data = {}) {
@@ -1198,8 +1457,8 @@ export function getWebviewContent(): string {
 
       container.innerHTML = pageSessions.map(s => {
         const isFocused = s.sessionId === focusedSessionId;
-        const focusedTag = isFocused ? '<span class="status-pill focused" style="font-size: 9px;">当前聚焦</span>' : '';
-        const activeTag = !s.isIdle ? '<span class="status-pill active" style="font-size: 9px;">⚡ 活跃</span>' : '<span class="status-pill idle" style="font-size: 9px;">💤 闲置</span>';
+        const focusedTag = isFocused ? '<span class="status-pill focused" style="font-size: 9px;"><span class="badge-icon">📍</span><span class="badge-text">当前聚焦</span></span>' : '';
+        const activeTag = !s.isIdle ? '<span class="status-pill active" style="font-size: 9px;"><span class="badge-icon">⚡</span><span class="badge-text">活跃</span></span>' : '<span class="status-pill idle" style="font-size: 9px;"><span class="badge-icon">💤</span><span class="badge-text">闲置</span></span>';
         const cardClass = isFocused ? 'session-card focused' : 'session-card';
         const timeStr = formatRelativeTime(s.lastUpdated);
         const tokens = s.tokenUsage ? formatTokenCount(s.tokenUsage.totalTokens) : '0';
@@ -1215,7 +1474,7 @@ export function getWebviewContent(): string {
 
         const isFork = titleStr.includes('(Fork');
         const forkBadge = isFork ? ' <span style="background: rgba(78, 201, 176, 0.15); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Fork</span>' : '';
-        const agentsBadge = (s.agentsCount && s.agentsCount > 0) ? ' <span title="包含 ' + s.agentsCount + ' 个协作代理" style="background: rgba(224, 122, 95, 0.15); color: var(--claude-accent); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">🤖 ' + s.agentsCount + '</span>' : '';
+        const agentsBadge = (s.agentsCount && s.agentsCount > 0) ? ' <span title="包含 ' + s.agentsCount + ' 个协作代理" style="background: rgba(224, 122, 95, 0.15); color: var(--claude-accent); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;"><span class="badge-icon">🤖</span><span class="badge-text"> ' + s.agentsCount + '</span></span>' : '';
 
         const durationMs = s.durationMs !== undefined ? s.durationMs : 0;
         const durationStr = durationMs > 0 ? formatDuration(durationMs, false) : '';
@@ -1239,7 +1498,7 @@ export function getWebviewContent(): string {
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
             '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + '</span>' +
-            '<div style="display:flex; gap: 4px;">' + focusedTag + activeTag + agentsBadge + '</div>' +
+            '<div class="session-header-badges">' + focusedTag + activeTag + agentsBadge + '</div>' +
           '</div>' +
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
@@ -1247,10 +1506,10 @@ export function getWebviewContent(): string {
             '<span>' + rightMetaHtml + '</span>' +
           '</div>' +
           '<div class="session-actions-row">' +
-            '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '">👀 聚焦</button>' +
-            '<button class="session-act-btn fork" data-action="forkSession" data-session-id="' + sessionIdAttr + '">🌿 分叉 Fork</button>' +
-            '<button class="session-act-btn" data-action="openSessionFile" data-file-path="' + sessionFileAttr + '">📄 日志</button>' +
-            '<button class="session-act-btn delete" data-action="deleteSession" data-session-id="' + sessionIdAttr + '">🗑️ 删除</button>' +
+            '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '" title="聚焦此会话"><span class="btn-icon">👀</span><span class="btn-text">聚焦</span></button>' +
+            '<button class="session-act-btn fork" data-action="forkSession" data-session-id="' + sessionIdAttr + '" title="分叉此会话 (Fork)"><span class="btn-icon">🌿</span><span class="btn-text">分叉</span></button>' +
+            '<button class="session-act-btn" data-action="openSessionFile" data-file-path="' + sessionFileAttr + '" title="查看原始 JSONL 日志"><span class="btn-icon">📄</span><span class="btn-text">日志</span></button>' +
+            '<button class="session-act-btn delete" data-action="deleteSession" data-session-id="' + sessionIdAttr + '" title="删除此会话"><span class="btn-icon">🗑️</span><span class="btn-text">删除</span></button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -1356,15 +1615,38 @@ export function getWebviewContent(): string {
             const done = s.todos.filter(x => x.status === 'completed').length;
             const inProg = s.todos.filter(x => x.status === 'in_progress').length;
             const pct = Math.round((done / s.todos.length) * 100);
+            const isAllCompleted = done === s.todos.length;
 
             const counterEl = document.getElementById('todos-counter');
+            const caret = document.getElementById('todos-caret');
             if (counterEl) {
-              const summaryText = done + '/' + s.todos.length + ' (' + pct + '%)';
-              counterEl.innerText = inProg > 0 ? summaryText + ' · 🔄' : summaryText;
+              if (isAllCompleted) {
+                counterEl.className = 'status-pill idle';
+                counterEl.innerText = '✓ ' + done + '/' + s.todos.length + ' (已完成)';
+              } else {
+                counterEl.className = inProg > 0 ? 'status-pill active' : 'status-pill';
+                const summaryText = done + '/' + s.todos.length + ' (' + pct + '%)';
+                counterEl.innerText = inProg > 0 ? summaryText + ' · 🔄' : summaryText;
+              }
             }
             const progBar = document.getElementById('todos-progress-bar');
             if (progBar) {
               progBar.style.width = pct + '%';
+            }
+
+            // 全部已完成：若用户未手动点击过，自动折叠收起
+            if (isAllCompleted) {
+              if (!userToggledTodos) {
+                todosList.style.display = 'none';
+                if (caret) caret.style.transform = 'rotate(-90deg)';
+              } else {
+                todosList.style.display = userManuallyOpenedTodos ? 'block' : 'none';
+                if (caret) caret.style.transform = userManuallyOpenedTodos ? 'rotate(0deg)' : 'rotate(-90deg)';
+              }
+            } else {
+              // 存在未完成任务，自动展开
+              todosList.style.display = 'block';
+              if (caret) caret.style.transform = 'rotate(0deg)';
             }
 
             todosList.innerHTML = s.todos.map(td => {
@@ -1386,6 +1668,9 @@ export function getWebviewContent(): string {
             }).join('');
           } else {
             todosWrap.style.display = 'none';
+            if (todosList) todosList.innerHTML = '';
+            userToggledTodos = false;
+            userManuallyOpenedTodos = false;
           }
 
           // Agents Map (Subagents List)
@@ -1394,12 +1679,36 @@ export function getWebviewContent(): string {
           if (s.agents && s.agents.length > 0) {
             agentsWrap.style.display = 'block';
             const runningCount = s.agents.filter(a => a.status === 'running').length;
-            const counterText = runningCount > 0 ? runningCount + ' 运行中 · 共 ' + s.agents.length : s.agents.length + ' 个代理';
-            document.getElementById('agents-counter').innerText = counterText;
+            const counterEl = document.getElementById('agents-counter');
+            const caret = document.getElementById('agents-caret');
+
+            if (runningCount > 0) {
+              if (counterEl) {
+                counterEl.className = 'status-pill active';
+                counterEl.innerText = runningCount + ' 运行中 · 共 ' + s.agents.length;
+              }
+              // 运行中有活跃任务，自动保持展开
+              agentsList.style.display = 'flex';
+              if (caret) caret.style.transform = 'rotate(0deg)';
+            } else {
+              if (counterEl) {
+                counterEl.className = 'status-pill idle';
+                counterEl.innerText = '✓ ' + s.agents.length + ' 个代理 (已完成)';
+              }
+              // 全部已完成：若用户未手动点击过，自动折叠收起
+              if (!userToggledAgents) {
+                agentsList.style.display = 'none';
+                if (caret) caret.style.transform = 'rotate(-90deg)';
+              } else {
+                agentsList.style.display = userManuallyOpened ? 'flex' : 'none';
+                if (caret) caret.style.transform = userManuallyOpened ? 'rotate(0deg)' : 'rotate(-90deg)';
+              }
+            }
 
             agentsList.innerHTML = s.agents.map((a, idx) => {
               const isNested = (a.spawnDepth && a.spawnDepth > 1) || !!a.parentAgentId;
-              const cardClass = isNested ? 'agent-item nested' : 'agent-item';
+              const statusClass = a.status === 'completed' ? ' completed' : (a.status === 'running' ? ' running' : '');
+              const cardClass = (isNested ? 'agent-item nested' : 'agent-item') + statusClass;
               const dotClass = a.status === 'running' ? 'agent-dot running' : (a.status === 'error' ? 'agent-dot error' : 'agent-dot completed');
               const nameText = a.name || (a.type ? '/' + a.type : '子代理 #' + (idx + 1));
               const nameDisplay = escapeHtml(nameText);
@@ -1424,15 +1733,17 @@ export function getWebviewContent(): string {
 
               const descHtml = a.description ? '<div class="agent-desc" title="' + escapeAttribute(a.description) + '">' + escapeHtml(a.description) + '</div>' : '';
 
+              const agentKey = a.id || a.toolUseId || ('agent-' + idx);
               const agentDetailId = 'agent-detail-' + idx;
               const details = [];
               if (a.id) details.push('<div><strong>ID:</strong> ' + escapeHtml(a.id) + '</div>');
               if (a.model) details.push('<div><strong>模型:</strong> ' + escapeHtml(a.model) + '</div>');
               if (a.parentAgentId) details.push('<div><strong>父代理:</strong> ' + escapeHtml(a.parentAgentId) + '</div>');
               if (a.worktreePath) details.push('<div><strong>工作区:</strong> ' + escapeHtml(a.worktreePath) + '</div>');
-              const detailContent = details.length > 0 ? '<div id="' + agentDetailId + '" class="agent-detail-body" style="display: none;">' + details.join('') + '</div>' : '';
+              const isExpanded = expandedAgentKeys.has(agentKey);
+              const detailContent = details.length > 0 ? '<div id="' + agentDetailId + '" class="agent-detail-body" style="display: ' + (isExpanded ? 'flex' : 'none') + ';">' + details.join('') + '</div>' : '';
 
-              return '<div class="' + cardClass + '" onclick="toggleAgentDetail(\\'' + agentDetailId + '\\')">' +
+              return '<div class="' + cardClass + '" onclick="toggleAgentDetail(\\'' + agentDetailId + '\\', \\'' + escapeAttribute(agentKey) + '\\')">' +
                 '<div class="agent-item-header">' +
                   '<div class="agent-title-row">' +
                     '<span class="' + dotClass + '"></span>' +
@@ -1446,11 +1757,28 @@ export function getWebviewContent(): string {
               '</div>';
             }).join('');
           } else {
-            agentsWrap.style.display = 'none';
+            if (agentsWrap) agentsWrap.style.display = 'none';
+            if (agentsList) agentsList.innerHTML = '';
+            userToggledAgents = false;
+            userManuallyOpened = false;
           }
         } else {
+          const todosWrap = document.getElementById('todos-container');
+          if (todosWrap) todosWrap.style.display = 'none';
+          const todosList = document.getElementById('todos-list');
+          if (todosList) todosList.innerHTML = '';
+          const counterEl = document.getElementById('todos-counter');
+          if (counterEl) counterEl.innerText = '0/0';
+          const progBar = document.getElementById('todos-progress-bar');
+          if (progBar) progBar.style.width = '0%';
+          userToggledTodos = false;
+          userManuallyOpenedTodos = false;
           const agentsWrap = document.getElementById('agents-container');
           if (agentsWrap) agentsWrap.style.display = 'none';
+          const agentsList = document.getElementById('agents-list');
+          if (agentsList) agentsList.innerHTML = '';
+          userToggledAgents = false;
+          userManuallyOpened = false;
         }
 
         updateLiveSessionDuration();

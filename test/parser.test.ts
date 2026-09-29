@@ -3,7 +3,7 @@ import test from 'node:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, extractMarkdownTodos } from '../src/transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, extractMarkdownTodos, clearTranscriptCache, extractBlockTextContent } from '../src/transcriptParser.js';
 import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
 import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
@@ -144,6 +144,15 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('updateLiveSessionDuration'));
   assert.ok(html.includes('setFilterMode'));
   assert.ok(html.includes('event.target instanceof Element'));
+  assert.ok(html.includes('id="app" class="hub-container"'));
+  assert.ok(html.includes('@container'));
+  assert.ok(html.includes('btn-icon'));
+  assert.ok(html.includes('btn-text'));
+  assert.ok(html.includes('chip-label-short'));
+  assert.ok(html.includes('header-sub'));
+  assert.ok(html.includes('hud-info-row'));
+  const extBadgeMatches = html.match(/id="ext-count-badge"/g);
+  assert.strictEqual(extBadgeMatches ? extBadgeMatches.length : 0, 1);
 });
 
 test('ClaudeFeaturesManager reads skills and calculates cost safely', () => {
@@ -665,6 +674,7 @@ test('parseSubagentsDir parses and sorts root and nested subagents properly', as
       model: 'claude-haiku-4-5',
       spawnDepth: 1,
       worktreeBranch: 'feature/agent-review',
+      toolUseId: 'call_123456',
     };
     fs.writeFileSync(path.join(subagentsDir, 'agent-root1.meta.json'), JSON.stringify(root1Meta), 'utf8');
 
@@ -751,6 +761,7 @@ test('parseSubagentsDir parses and sorts root and nested subagents properly', as
 
     // Root1 should be followed immediately by its child nested1
     assert.strictEqual(agents[0].id, 'root1');
+    assert.strictEqual(agents[0].toolUseId, 'call_123456');
     assert.strictEqual(agents[0].name, '审查系统代理实现');
     assert.strictEqual(agents[0].status, 'completed');
     assert.strictEqual(agents[0].durationMs, 120000);
@@ -867,16 +878,31 @@ test('parseTranscriptFile parses TaskCreate and TaskUpdate into todos properly',
   }
 });
 
-test('extractMarkdownTodos extracts checklists accurately', () => {
+test('extractMarkdownTodos extracts checklists accurately and ignores markdown links', () => {
   const text = `
 Here is our execution plan:
 - [x] Step 1: Implement basic layout
 * [x] Step 2: Add theme support
 - [/] Step 3: Run integration test
 + [ ] Step 4: Release v0.2.10
+- [-] Step 5: Legacy in-progress format
+  - [ ] Nested indented task
+- [ ] Task with embedded link: check [PR #100](https://github.com/example/repo/pull/100) now
+
+重点文件（普通 Markdown 链接列表，绝不能误判为待办）：
+- [ProxyBridge.exe](Windows/output_latest/ProxyBridge.exe)
+- [ProxyBridgeCore.dll](Windows/output_latest/ProxyBridgeCore.dll)
+- [ProxyBridge_CLI.exe](Windows/output_latest/ProxyBridge_CLI.exe)
+* [README.md](README.md)
++ [Docs](https://docs.anthropic.com)
+- [x](https://shortlink.org)
+
+无效待办（空内容或格式不符）：
+- [ ]
+- [ ]
   `;
   const todos = extractMarkdownTodos(text);
-  assert.strictEqual(todos.length, 4);
+  assert.strictEqual(todos.length, 7);
   assert.strictEqual(todos[0].content, 'Step 1: Implement basic layout');
   assert.strictEqual(todos[0].status, 'completed');
   assert.strictEqual(todos[1].content, 'Step 2: Add theme support');
@@ -885,6 +911,51 @@ Here is our execution plan:
   assert.strictEqual(todos[2].status, 'in_progress');
   assert.strictEqual(todos[3].content, 'Step 4: Release v0.2.10');
   assert.strictEqual(todos[3].status, 'pending');
+  assert.strictEqual(todos[4].content, 'Step 5: Legacy in-progress format');
+  assert.strictEqual(todos[4].status, 'in_progress');
+  assert.strictEqual(todos[5].content, 'Nested indented task');
+  assert.strictEqual(todos[5].status, 'pending');
+  assert.strictEqual(todos[6].content, 'Task with embedded link: check [PR #100](https://github.com/example/repo/pull/100) now');
+  assert.strictEqual(todos[6].status, 'pending');
+});
+
+test('parseTranscriptFile clears todos when /clear command is executed', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-clear-task-test-'));
+  const filePath = path.join(tempDir, 'clear-session.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'clear-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: '前期任务：\n- [ ] 临时规划任务A',
+            },
+          ],
+        },
+      }),
+      JSON.stringify({
+        sessionId: 'clear-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '<command-name>/clear</command-name>',
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+
+    assert.strictEqual(parsed.wasCleared, true);
+    assert.strictEqual(parsed.todos.length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test('parseTranscriptFile parses markdown checklists from assistant message as fallback todos', async () => {
@@ -920,6 +991,588 @@ test('parseTranscriptFile parses markdown checklists from assistant message as f
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test('parseTranscriptFile ignores markdown links in assistant summary and leaves todos empty', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-md-link-test-'));
+  const filePath = path.join(tempDir, 'link-summary-session.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'link-summary-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: '## 最新测试文件\n\n重点文件：\n\n- [ProxyBridge.exe](Windows/output_latest/ProxyBridge.exe)\n- [ProxyBridgeCore.dll](Windows/output_latest/ProxyBridgeCore.dll)\n- [ProxyBridge_CLI.exe](Windows/output_latest/ProxyBridge_CLI.exe)\n- `WinDivert.dll`',
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+
+    // Markdown file links must NEVER be parsed as todo items
+    assert.strictEqual(parsed.todos.length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile handles Agent tools and clears them on /clear command', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-agent-test-'));
+  const filePath = path.join(tempDir, 'agent-session.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'agent-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_agent_01',
+              name: 'Agent',
+              input: {
+                description: 'Explore workspace structure',
+                subagent_type: 'Explore',
+              },
+            },
+          ],
+        },
+      }),
+      JSON.stringify({
+        sessionId: 'agent-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'toolu_agent_01',
+              content: 'Found files. agentId: a1b2c3d4e5',
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+
+    assert.strictEqual(parsed.agents.length, 1);
+    assert.strictEqual(parsed.agents[0].id, 'a1b2c3d4e5');
+    assert.strictEqual(parsed.agents[0].toolUseId, 'toolu_agent_01');
+    assert.strictEqual(parsed.agents[0].type, 'Explore');
+    assert.strictEqual(parsed.agents[0].status, 'completed');
+
+    // Now test that /clear removes agents
+    lines.push(
+      JSON.stringify({
+        sessionId: 'agent-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '<command-name>/clear</command-name>',
+        },
+      })
+    );
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const clearedParsed = await parseTranscriptFile(filePath);
+    assert.strictEqual(clearedParsed.wasCleared, true);
+    assert.strictEqual(clearedParsed.agents.length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile automatically clears completed todos when a new user prompt begins', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-autoclear-test-'));
+  const filePath = path.join(tempDir, 'autoclear-session.jsonl');
+
+  try {
+    const lines = [
+      // Turn 1: user asks something
+      JSON.stringify({
+        sessionId: 'autoclear-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '请帮我完成任务',
+        },
+      }),
+      // Turn 1: assistant does work with markdown todos and finishes them all
+      JSON.stringify({
+        sessionId: 'autoclear-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: '任务清单：\n- [x] 第一步：修改代码\n- [x] 第二步：验证功能',
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    let parsed = await parseTranscriptFile(filePath);
+    assert.strictEqual(parsed.todos.length, 2);
+    assert.strictEqual(parsed.todos.every((t) => t.status === 'completed'), true);
+
+    // Turn 2: user enters a new prompt ("初步看没什么问题了，发布0.2.11版本")
+    lines.push(
+      JSON.stringify({
+        sessionId: 'autoclear-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '初步看没什么问题了，发布0.2.11版本',
+        },
+      })
+    );
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    parsed = await parseTranscriptFile(filePath);
+    // Completed todos should now be auto-cleared upon new user prompt
+    assert.strictEqual(parsed.todos.length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile retains incomplete todos when a new user prompt begins', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-retain-test-'));
+  const filePath = path.join(tempDir, 'retain-session.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'retain-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: '任务清单：\n- [x] 第一步：修改代码\n- [ ] 第二步：验证功能',
+            },
+          ],
+        },
+      }),
+      JSON.stringify({
+        sessionId: 'retain-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '继续执行第二步',
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+    // Incomplete todos should NOT be cleared
+    assert.strictEqual(parsed.todos.length, 2);
+    assert.strictEqual(parsed.todos[0].status, 'completed');
+    assert.strictEqual(parsed.todos[1].status, 'pending');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile automatically clears completed agents when a new user prompt begins', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-agent-autoclear-test-'));
+  const filePath = path.join(tempDir, 'autoclear-agent-session.jsonl');
+
+  try {
+    const lines = [
+      // Turn 1: user asks something
+      JSON.stringify({
+        sessionId: 'agent-autoclear-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '请派生子代理执行任务',
+        },
+      }),
+      // Turn 1: assistant spawns an agent
+      JSON.stringify({
+        sessionId: 'agent-autoclear-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_subagent_01',
+              name: 'Agent',
+              input: {
+                description: 'Analyze codebase',
+                subagent_type: 'Explore',
+              },
+            },
+          ],
+        },
+      }),
+      // Turn 1: tool_result completes the agent
+      JSON.stringify({
+        sessionId: 'agent-autoclear-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'toolu_subagent_01',
+              content: 'Completed task. agentId: explore-123',
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    let parsed = await parseTranscriptFile(filePath);
+    assert.strictEqual(parsed.agents.length, 1);
+    assert.strictEqual(parsed.agents[0].status, 'completed');
+
+    // Turn 2: user sends a new conversation prompt
+    lines.push(
+      JSON.stringify({
+        sessionId: 'agent-autoclear-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '好的，现在帮我做下一步',
+        },
+      })
+    );
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    parsed = await parseTranscriptFile(filePath);
+    // Completed agents should now be auto-cleared upon new user prompt
+    assert.strictEqual(parsed.agents.length, 0);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile retains running agents when a new user prompt begins', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-agent-retain-test-'));
+  const filePath = path.join(tempDir, 'retain-agent-session.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'agent-retain-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_running_agent',
+              name: 'Agent',
+              input: {
+                description: 'Long running task',
+                subagent_type: 'general-purpose',
+              },
+            },
+          ],
+        },
+      }),
+      JSON.stringify({
+        sessionId: 'agent-retain-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '现在状态如何？',
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+    // Running agent should NOT be cleared by new user prompt
+    assert.strictEqual(parsed.agents.length, 1);
+    assert.strictEqual(parsed.agents[0].id, 'toolu_running_agent');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('subagent completed in prior turn is filtered out when current turn started after completion', () => {
+  const t0 = new Date('2026-03-30T10:00:00Z');
+  const t1 = new Date('2026-03-30T10:01:00Z');
+  const t2 = new Date('2026-03-30T10:05:00Z');
+
+  const allAgents = [
+    {
+      id: 'subagent-1',
+      name: 'Agent 1',
+      type: 'Explore',
+      status: 'completed' as 'completed' | 'running',
+      startTime: t0,
+      endTime: t1,
+      totalTokens: 1500,
+    },
+  ];
+
+  const currentTurnStartTime = t2;
+  const hasRunning = allAgents.some((a) => a.status === 'running');
+  assert.strictEqual(hasRunning, false);
+
+  const turnStartMs = currentTurnStartTime.getTime();
+  const activeAgents = allAgents.filter((a) => {
+    const agentEndMs = a.endTime
+      ? a.endTime.getTime()
+      : a.startTime
+      ? a.startTime.getTime()
+      : 0;
+    return agentEndMs >= turnStartMs;
+  });
+
+  assert.strictEqual(activeAgents.length, 0);
+  assert.strictEqual(allAgents.length, 1);
+  assert.strictEqual(allAgents[0].totalTokens, 1500);
+});
+
+test('parseTranscriptFile keeps in-progress TodoWrite todos even when prior markdown checklist was fully completed', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-task-isolation-test-'));
+  const filePath = path.join(tempDir, 'task-isolation-session.jsonl');
+
+  try {
+    const lines = [
+      // Turn 1: user prompt
+      JSON.stringify({
+        sessionId: 'task-isolation-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '请先完成准备工作',
+        },
+      }),
+      // Turn 1: assistant writes markdown todos that are all completed
+      JSON.stringify({
+        sessionId: 'task-isolation-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'text',
+              text: '准备工作：\n- [x] 依赖安装\n- [x] 配置检查',
+            },
+          ],
+        },
+      }),
+      // Turn 2: assistant calls TodoWrite with an in-progress task
+      JSON.stringify({
+        sessionId: 'task-isolation-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'call_todowrite_1',
+              name: 'TodoWrite',
+              input: {
+                todos: [
+                  { id: '1', content: '核心业务改造', status: 'in_progress' },
+                  { id: '2', content: '编写单元测试', status: 'pending' },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+      // Turn 3: user enters next prompt - this must NOT wipe out in-progress TodoWrite todos!
+      JSON.stringify({
+        sessionId: 'task-isolation-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '继续执行',
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+
+    // In-progress TodoWrite items must be preserved!
+    assert.strictEqual(parsed.todos.length, 2);
+    assert.strictEqual(parsed.todos[0].content, '核心业务改造');
+    assert.strictEqual(parsed.todos[0].status, 'in_progress');
+    assert.strictEqual(parsed.todos[1].content, '编写单元测试');
+    assert.strictEqual(parsed.todos[1].status, 'pending');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('extractBlockTextContent handles strings, text blocks, and structured arrays', () => {
+  assert.strictEqual(extractBlockTextContent('hello world'), 'hello world');
+  assert.strictEqual(extractBlockTextContent(['line 1', 'line 2']), 'line 1\nline 2');
+  assert.strictEqual(
+    extractBlockTextContent([{ type: 'text', text: 'agentId: sub_999' }]),
+    'agentId: sub_999',
+  );
+  assert.strictEqual(extractBlockTextContent(null), '');
+  assert.strictEqual(extractBlockTextContent(undefined), '');
+});
+
+test('parseTranscriptFile extracts agentId and Task # from array content block in tool_result', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-array-block-test-'));
+  const filePath = path.join(tempDir, 'array-block-session.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'array-block-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_array_agent',
+              name: 'Agent',
+              input: { description: 'Search patterns', subagent_type: 'Explore' },
+            },
+            {
+              type: 'tool_use',
+              id: 'toolu_task_create',
+              name: 'TaskCreate',
+              input: { subject: '修复数组解析缺陷' },
+            },
+          ],
+        },
+      }),
+      JSON.stringify({
+        sessionId: 'array-block-session',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'toolu_array_agent',
+              content: [
+                { type: 'text', text: 'Subagent completed. Details: agentId: matrix_sub_999' },
+              ],
+            },
+            {
+              type: 'tool_result',
+              tool_use_id: 'toolu_task_create',
+              content: [
+                { type: 'text', text: 'Task #77 created successfully: 修复数组解析缺陷' },
+              ],
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+
+    assert.strictEqual(parsed.agents.length, 1);
+    assert.strictEqual(parsed.agents[0].id, 'matrix_sub_999');
+    assert.strictEqual(parsed.agents[0].toolUseId, 'toolu_array_agent');
+    assert.strictEqual(parsed.todos.length, 1);
+    assert.strictEqual(parsed.todos[0].content, '修复数组解析缺陷');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('activeAgents anti-flicker keeps running agents without re-surfacing older turn completed agents', () => {
+  const t0 = new Date('2026-03-30T10:00:00Z');
+  const t1 = new Date('2026-03-30T10:01:00Z'); // older agent finished
+  const tTurn = new Date('2026-03-30T10:05:00Z'); // current turn started
+  const tNow = new Date('2026-03-30T10:06:00Z'); // currently running
+
+  const allAgents: Array<{
+    id: string;
+    name: string;
+    type: string;
+    status: 'completed' | 'running';
+    startTime?: Date;
+    endTime?: Date;
+  }> = [
+    {
+      id: 'subagent-old',
+      name: 'Agent Old',
+      type: 'Explore',
+      status: 'completed',
+      startTime: t0,
+      endTime: t1,
+    },
+    {
+      id: 'subagent-active',
+      name: 'Agent Active',
+      type: 'general-purpose',
+      status: 'running',
+      startTime: tNow,
+    },
+  ];
+
+  const turnStartMs = tTurn.getTime();
+  const activeAgents = allAgents.filter((a) => {
+    if (a.status === 'running') return true;
+    const agentEndMs = a.endTime
+      ? a.endTime.getTime()
+      : a.startTime
+      ? a.startTime.getTime()
+      : 0;
+    return agentEndMs >= turnStartMs;
+  });
+
+  // Old agent must stay filtered out, active agent must be kept
+  assert.strictEqual(activeAgents.length, 1);
+  assert.strictEqual(activeAgents[0].id, 'subagent-active');
+});
+
+test('clearTranscriptCache properly invalidates cache', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-cache-test-'));
+  const filePath = path.join(tempDir, 'cache-session.jsonl');
+
+  try {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        sessionId: 'cache-session',
+        type: 'user',
+        message: { role: 'user', content: 'test cache' },
+      }),
+      'utf8',
+    );
+
+    const parsed1 = await parseTranscriptFile(filePath);
+    assert.strictEqual(parsed1.sessionId, 'cache-session');
+
+    // Test clear by path
+    clearTranscriptCache(filePath);
+    // Test clear all
+    clearTranscriptCache();
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+
+
 
 
 

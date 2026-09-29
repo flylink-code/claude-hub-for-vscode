@@ -9,7 +9,6 @@ import { ClaudeConfigDirProvider } from './configDir.js';
 export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'claudeHub.dashboardView';
   private _view?: vscode.WebviewView;
-  private timer: NodeJS.Timeout | null = null;
   private featuresManager: ClaudeFeaturesManager;
 
   constructor(
@@ -23,13 +22,6 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     sessionManager.onDidUpdateSessions(() => this.sendSessionUpdate());
     sessionManager.onDidUpdateSubscription(() => this.sendSessionUpdate());
     configManager.onDidChange(() => this.sendConfigUpdate());
-
-    this.timer = setInterval(() => {
-      const active = this.sessionManager.focusedSession;
-      if (active && active.activeTools.length > 0 && this._view?.visible) {
-        this.sendSessionUpdate();
-      }
-    }, 1000);
   }
 
   public async show(): Promise<void> {
@@ -233,7 +225,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       isCurrentWorkspace: s.isCurrentWorkspace,
       sessionFile: s.sessionFile,
       gitBranch: s.gitBranch,
-      agentsCount: s.agents?.length || 0,
+      agentsCount: s.totalAgentsCount ?? (s.agents?.length || 0),
       subagentsTotalTokens: s.subagentsTotalTokens,
     }));
 
@@ -277,6 +269,6 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
   }
 
   public dispose(): void {
-    if (this.timer) clearInterval(this.timer);
+    // Resources cleanup
   }
 }

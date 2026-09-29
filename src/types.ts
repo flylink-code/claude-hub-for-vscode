@@ -19,6 +19,7 @@ export interface ToolEntry {
 
 export interface AgentEntry {
   id: string;
+  toolUseId?: string;
   name?: string;
   type: string;
   model?: string;
@@ -70,6 +71,7 @@ export interface SessionInfo {
   tools: ToolEntry[];
   activeTools: ToolEntry[];
   agents: AgentEntry[];
+  totalAgentsCount?: number;
   subagentsTotalTokens?: number;
   todos: TodoItem[];
   skills: string[];

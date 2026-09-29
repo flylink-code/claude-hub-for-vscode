@@ -10,7 +10,7 @@ import {
   resolveClaudeConfigDir,
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
-import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir } from './transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
@@ -185,6 +185,7 @@ export class SessionManager implements vscode.Disposable {
       if (fs.existsSync(session.sessionFile)) {
         fs.unlinkSync(session.sessionFile);
       }
+      clearTranscriptCache(session.sessionFile);
 
       // 2. Delete subagents folder if exists (e.g. <dir>/<sessionId>/)
       const dir = path.dirname(session.sessionFile);
@@ -445,12 +446,33 @@ export class SessionManager implements vscode.Disposable {
             }
           }
 
-          // Merge subagents with parsed.agents from the main transcript
+          // Merge subagents with parsed.agents from the main transcript with robust deduplication
           const mergedAgents: AgentEntry[] = [...subagents];
           for (const mainAgent of parsed.agents) {
-            const alreadyExists = mergedAgents.some(
-              (a) => a.id === mainAgent.id || (mainAgent.id && a.id.startsWith(mainAgent.id)),
-            );
+            const alreadyExists = mergedAgents.some((a) => {
+              // 1. Strict ID / ToolUseId matching
+              if (a.id === mainAgent.id) return true;
+              if (a.toolUseId && mainAgent.toolUseId && a.toolUseId === mainAgent.toolUseId) return true;
+              if (a.toolUseId && a.toolUseId === mainAgent.id) return true;
+              if (mainAgent.toolUseId && a.id === mainAgent.toolUseId) return true;
+              if (mainAgent.id && a.id && (a.id.startsWith(mainAgent.id) || mainAgent.id.startsWith(a.id))) return true;
+
+              // 2. Conflict safeguard: If both have explicit different toolUseIds, do not merge
+              if (a.toolUseId && mainAgent.toolUseId && a.toolUseId !== mainAgent.toolUseId) {
+                return false;
+              }
+
+              // 3. Fallback fuzzy match: only if at least one lacks toolUseId and timestamps are tightly aligned (within 10s)
+              const descMatch =
+                Boolean(a.description) &&
+                a.description === mainAgent.description &&
+                a.type === mainAgent.type &&
+                a.startTime &&
+                mainAgent.startTime &&
+                Math.abs(a.startTime.getTime() - mainAgent.startTime.getTime()) < 10000;
+
+              return Boolean(descMatch);
+            });
             if (!alreadyExists) {
               mergedAgents.push(
                 isIdle && mainAgent.status === 'running'
@@ -460,7 +482,7 @@ export class SessionManager implements vscode.Disposable {
             }
           }
 
-          const agents = isIdle
+          const allAgents = isIdle
             ? mergedAgents.map((a) =>
                 a.status === 'running'
                   ? { ...a, status: 'completed' as const, endTime: a.endTime || fileStat.mtime }
@@ -468,7 +490,28 @@ export class SessionManager implements vscode.Disposable {
               )
             : mergedAgents;
 
-          const subagentsTotalTokens = agents.reduce((sum, a) => sum + (a.totalTokens || 0), 0);
+          const totalAgentsCount = allAgents.length;
+          const subagentsTotalTokens = allAgents.reduce((sum, a) => sum + (a.totalTokens || 0), 0);
+
+          // Determine active/current-turn agents for live monitoring
+          let activeAgents: AgentEntry[] = allAgents;
+          if (parsed.wasCleared) {
+            activeAgents = [];
+          } else if (allAgents.length > 0 && parsed.currentTurnStartTime) {
+            const turnStartMs = parsed.currentTurnStartTime.getTime();
+            activeAgents = allAgents.filter((a) => {
+              if (a.status === 'running') {
+                return true;
+              }
+              const agentEndMs = a.endTime
+                ? a.endTime.getTime()
+                : a.startTime
+                ? a.startTime.getTime()
+                : 0;
+              // If agent finished or started during or after current turn, keep it; otherwise it belongs to previous turn
+              return agentEndMs >= turnStartMs;
+            });
+          }
 
           const sessionCreated =
             parsed.sessionCreated && !isNaN(parsed.sessionCreated.getTime())
@@ -504,7 +547,8 @@ export class SessionManager implements vscode.Disposable {
             tokenUsage: parsed.tokenUsage,
             tools,
             activeTools,
-            agents,
+            agents: activeAgents,
+            totalAgentsCount: totalAgentsCount > 0 ? totalAgentsCount : undefined,
             subagentsTotalTokens: subagentsTotalTokens > 0 ? subagentsTotalTokens : undefined,
             todos: parsed.todos,
             skills: parsed.skills,
@@ -560,5 +604,6 @@ export class SessionManager implements vscode.Disposable {
     this.debounceTimer = null;
     this._onDidUpdateSessions.dispose();
     this._onDidUpdateSubscription.dispose();
+    clearTranscriptCache();
   }
 }
