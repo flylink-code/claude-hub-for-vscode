@@ -40,13 +40,13 @@ jobs:
         run: npm test
 
       - name: Package VSIX
-        run: npx @vscode/vsce package --no-git-tag-version
+        run: npx @vscode/vsce package --no-dependencies --out dist/
 
       - name: Upload VSIX Artifact
         uses: actions/upload-artifact@v4
         with:
           name: claude-hub-vsix
-          path: '*.vsix'
+          path: 'dist/*.vsix'
           if-no-files-found: error
 
       - name: Check publishing credentials
@@ -71,11 +71,12 @@ jobs:
         run: |
           PUBLISHER=$(node -p "require('./package.json').publisher")
           npx ovsx create-namespace "$PUBLISHER" || true
-          npx ovsx publish *.vsix
+          npx ovsx publish dist/*.vsix
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: '*.vsix'
-          generate_release_notes: true
+          files: 'dist/*.vsix'
+          body_path: CHANGELOG.md
+          generate_release_notes: false

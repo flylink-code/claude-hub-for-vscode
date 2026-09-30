@@ -227,6 +227,16 @@ export class SessionManager implements vscode.Disposable {
     return this._subscriptionUsage;
   }
 
+  public clearSessionTodos(sessionId?: string): void {
+    const targetId = sessionId || this._focusedSessionId;
+    if (!targetId) return;
+    const session = this._sessions.find((s: SessionInfo) => s.sessionId === targetId);
+    if (session) {
+      session.todos = [];
+      this._onDidUpdateSessions.fire(this.getFilteredSessions());
+    }
+  }
+
   private getConfigDir(): string {
     if (this.configDirProvider) {
       return this.configDirProvider();

@@ -158,7 +158,293 @@ function normalizeTarget(toolName: string, input?: Record<string, unknown>): str
   return undefined;
 }
 
-const CHECKLIST_REGEX = new RegExp('^[-*+]\\s+\\x5b([ xX/\\-]?)\\x5d\\s+(.+)$');
+const CHECKLIST_REGEX = /^[-*+]\s+\[([ xX/\-]?)]\s+(.+)/;
+const PHASE_HEADING_REGEX = /^#{2,4}\s+(?:Phase|阶段|Step|步骤)\s*([0-9一二三四五六七八九十]+)?[:：\-.\s]+(.+)/i;
+const ORDERED_STEP_REGEX = /^\s*(?:(?:\d+|[一二三四五六七八九十])[.、\)]|(?:\d+|[一二三四五六七八九十]))\s+(.+)/;
+const UNORDERED_STEP_REGEX = /^\s*[-*+]\s+(.+)/;
+const PLAN_SECTION_HEADER_REGEX = /^#{1,4}\s+.*(?:implementation|execution|steps?|tasks?|plan|action items?|实施|执行|步骤|任务|计划|方案|落地|验证).*$/i;
+
+/**
+ * Strips markdown code blocks and inline code to avoid parsing code lines as tasks.
+ * Uses a robust line-by-line fence parser supporting arbitrary backtick/tilde lengths and indentation.
+ */
+export function stripCodeBlocks(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  const lines = text.split('\n');
+  const result: string[] = [];
+  let inCodeBlock = false;
+  let codeBlockFence = '';
+
+  for (const line of lines) {
+    const trimmed = line.trimStart();
+    const fenceMatch = trimmed.match(/^(`{3,}|~{3,})/);
+
+    if (inCodeBlock) {
+      if (fenceMatch && fenceMatch[1][0] === codeBlockFence[0] && fenceMatch[1].length >= codeBlockFence.length) {
+        inCodeBlock = false;
+        codeBlockFence = '';
+      }
+      continue;
+    }
+
+    if (fenceMatch) {
+      inCodeBlock = true;
+      codeBlockFence = fenceMatch[1];
+      continue;
+    }
+
+    result.push(line);
+  }
+
+  return result.join('\n');
+}
+
+/**
+ * Cleans markdown formatting (bold, italic, inline code, links) from task text.
+ */
+export function cleanPlanText(text: string): string {
+  let cleaned = text
+    .replace(/\*\*([^*]+)\*\*/g, (_, m) => m)
+    .replace(/\*([^*]+)\*/g, (_, m) => m)
+    .replace(/__([^_]+)__/g, (_, m) => m)
+    .replace(/_([^_]+)_/g, (_, m) => m)
+    .replace(/`([^`]+)`/g, (_, m) => m)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, (_, m) => m)
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // If text is very long (e.g. detailed paragraphs), truncate to first sentence or max 100 chars
+  if (cleaned.length > 100) {
+    const endOfFirstSentence = cleaned.search(/[。！？\n;；]/);
+    if (endOfFirstSentence > 10 && endOfFirstSentence <= 100) {
+      cleaned = cleaned.slice(0, endOfFirstSentence);
+    } else {
+      cleaned = cleaned.slice(0, 97).trim() + '...';
+    }
+  }
+  return cleaned;
+}
+
+/**
+ * Extracts structured todo items from Plan text (e.g. ExitPlanMode, plan files, or plan attachments).
+ * Falls back across checklist -> plan sections -> ordered steps -> phase headings.
+ */
+export function extractPlanTodos(text: string): TodoItem[] {
+  if (!text || typeof text !== 'string') return [];
+
+  // 1. If standard GFM checklist exists, it takes highest precedence
+  const checklist = extractMarkdownTodos(text);
+  if (checklist.length > 0) {
+    return checklist;
+  }
+
+  // 2. Strip code blocks to avoid noise
+  const stripped = stripCodeBlocks(text);
+  const lines = stripped.split('\n');
+
+  const phaseItems: TodoItem[] = [];
+  const orderedSteps: TodoItem[] = [];
+  const sectionSteps: TodoItem[] = [];
+
+  let inPlanSection = false;
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    if (!trimmed) continue;
+
+    // Check heading
+    if (trimmed.startsWith('#')) {
+      if (PLAN_SECTION_HEADER_REGEX.test(trimmed)) {
+        inPlanSection = true;
+      } else if (/^#{1,2}\s+/.test(trimmed)) {
+        inPlanSection = false;
+      }
+
+      const phaseMatch = PHASE_HEADING_REGEX.exec(trimmed);
+      if (phaseMatch) {
+        const title = cleanPlanText(phaseMatch[2] || trimmed.replace(/^#+\s*/, ''));
+        if (title.length >= 3 && !title.startsWith('|') && !title.startsWith('---')) {
+          const numPrefix = phaseMatch[1] ? `Phase ${phaseMatch[1]}: ` : '';
+          const display = title.toLowerCase().startsWith('phase') ? title : `${numPrefix}${title}`;
+          phaseItems.push({
+            content: display,
+            status: 'pending',
+          });
+        }
+      }
+      continue;
+    }
+
+    // Skip table rows, blockquotes, separators
+    if (trimmed.startsWith('|') || trimmed.startsWith('>') || trimmed.startsWith('---')) {
+      continue;
+    }
+
+    // Check ordered step
+    const orderedMatch = ORDERED_STEP_REGEX.exec(trimmed);
+    if (orderedMatch) {
+      const content = cleanPlanText(orderedMatch[1]);
+      if (content.length >= 3) {
+        orderedSteps.push({
+          content,
+          status: 'pending',
+        });
+        if (inPlanSection) {
+          sectionSteps.push({
+            content,
+            status: 'pending',
+          });
+        }
+      }
+      continue;
+    }
+
+    // Check unordered step under a plan section
+    if (inPlanSection) {
+      const unorderedMatch = UNORDERED_STEP_REGEX.exec(trimmed);
+      if (unorderedMatch) {
+        const content = cleanPlanText(unorderedMatch[1]);
+        if (content.length >= 3) {
+          sectionSteps.push({
+            content,
+            status: 'pending',
+          });
+        }
+      }
+    }
+  }
+
+  // Determine which collection to use based on relevance and quality
+  let candidates: TodoItem[] = [];
+  if (sectionSteps.length >= 2) {
+    candidates = sectionSteps;
+  } else if (orderedSteps.length >= 2) {
+    candidates = orderedSteps;
+  } else if (phaseItems.length >= 2) {
+    candidates = phaseItems;
+  } else if (sectionSteps.length === 1) {
+    candidates = sectionSteps;
+  } else if (orderedSteps.length === 1) {
+    candidates = orderedSteps;
+  } else if (phaseItems.length === 1) {
+    candidates = phaseItems;
+  }
+
+  // Deduplicate by content
+  const seen = new Set<string>();
+  const results: TodoItem[] = [];
+  for (const item of candidates) {
+    if (!seen.has(item.content)) {
+      seen.add(item.content);
+      results.push(item);
+    }
+    if (results.length >= 25) break;
+  }
+
+  return results;
+}
+
+/**
+ * Advances plan todos based on tool executions (Edit, Write, Bash, Agent, etc.).
+ */
+export function advancePlanProgress(
+  planTodos: TodoItem[],
+  toolName: string,
+  input: any,
+  isToolCompleted: boolean,
+): void {
+  if (!planTodos || planTodos.length === 0) return;
+
+  // Plan generation tools must never advance execution progress
+  if (toolName === 'ExitPlanMode') return;
+  // 计划文件维护不代表执行任务，状态由成功的 checklist 编辑单独同步。
+  if ((toolName === 'Write' || toolName === 'Edit') && input && typeof input.file_path === 'string') {
+    const fp = input.file_path.replace(/\\/g, '/');
+    if (fp.includes('.claude/plans/')) return;
+  }
+
+  const execTools = ['Edit', 'Write', 'Bash', 'Agent', 'Task'];
+  if (!execTools.includes(toolName)) return;
+
+  // 1. Try to extract target identifiers from input
+  const targets: string[] = [];
+  if (input) {
+    if (typeof input.file_path === 'string') {
+      const fp = input.file_path.replace(/\\/g, '/');
+      const base = fp.split('/').pop() || '';
+      targets.push(fp.toLowerCase());
+      if (base) {
+        targets.push(base.toLowerCase());
+        const withoutExt = base.replace(/\.[^.]+$/, '');
+        if (withoutExt.length > 2) targets.push(withoutExt.toLowerCase());
+      }
+    }
+    if (typeof input.command === 'string') {
+      targets.push(input.command.toLowerCase());
+      const words = input.command.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+      targets.push(...words);
+    }
+    if (typeof input.description === 'string') {
+      targets.push(input.description.toLowerCase());
+    }
+    if (typeof input.prompt === 'string') {
+      targets.push(input.prompt.slice(0, 100).toLowerCase());
+    }
+  }
+
+  // 2. Check if any todo matches the target (prioritize incomplete tasks and longer targets)
+  targets.sort((a, b) => b.length - a.length);
+
+  let matchedIndex = -1;
+  // First pass: match among pending or in_progress tasks
+  for (let i = 0; i < planTodos.length; i++) {
+    if (planTodos[i].status === 'completed') continue;
+    const itemContent = planTodos[i].content.toLowerCase();
+    const hasMatch = targets.some((t) => t.length > 2 && itemContent.includes(t));
+    if (hasMatch) {
+      matchedIndex = i;
+      break;
+    }
+  }
+
+  // Second pass: if no incomplete task matched, match any task
+  if (matchedIndex === -1) {
+    for (let i = 0; i < planTodos.length; i++) {
+      const itemContent = planTodos[i].content.toLowerCase();
+      const hasMatch = targets.some((t) => t.length > 2 && itemContent.includes(t));
+      if (hasMatch) {
+        matchedIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (matchedIndex !== -1) {
+    const targetItem = planTodos[matchedIndex];
+    if (isToolCompleted) {
+      targetItem.status = 'completed';
+      // Mark preceding items as completed
+      for (let j = 0; j < matchedIndex; j++) {
+        if (planTodos[j].status === 'pending' || planTodos[j].status === 'in_progress') {
+          planTodos[j].status = 'completed';
+        }
+      }
+    } else {
+      if (targetItem.status === 'pending') {
+        targetItem.status = 'in_progress';
+      }
+    }
+    return;
+  }
+
+  // 3. Fallback: only update if an item is already in_progress and an execution tool completes
+  if (isToolCompleted) {
+    const currentInProgress = planTodos.find((t) => t.status === 'in_progress');
+    if (currentInProgress) {
+      currentInProgress.status = 'completed';
+    }
+  }
+}
 
 /**
  * Extracts markdown checklist todos from text (e.g. - [ ] task, - [x] done, - [/] in progress).
@@ -166,7 +452,8 @@ const CHECKLIST_REGEX = new RegExp('^[-*+]\\s+\\x5b([ xX/\\-]?)\\x5d\\s+(.+)$');
  */
 export function extractMarkdownTodos(text: string): TodoItem[] {
   if (!text || typeof text !== 'string') return [];
-  const lines = text.split('\n');
+  const stripped = stripCodeBlocks(text);
+  const lines = stripped.split('\n');
   const results: TodoItem[] = [];
   for (const rawLine of lines) {
     const trimmed = rawLine.trim();
@@ -250,6 +537,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   });
 
   const toolMap = new Map<string, ToolEntry>();
+  const toolInputMap = new Map<string, any>();
   const agentMap = new Map<string, AgentEntry>();
   const pendingToolResults = new Map<string, { isError: boolean; endTime: Date }>();
   const activeToolIds = new Set<string>();
@@ -257,7 +545,44 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   const mcpSet = new Set<string>();
   const todos: TodoItem[] = [];
   const tasksMap = new Map<string, TodoItem>();
+  const planTodos: TodoItem[] = [];
+  const planContents = new Map<string, string>();
+  let activePlanPath: string | undefined;
   let latestMarkdownTodos: TodoItem[] = [];
+
+  // 仅重放 JSONL 中已成功的计划编辑，不读取文件当前内容覆盖历史状态。
+  const syncPlanFile = (name: string, input: any): void => {
+    if (typeof input.file_path !== 'string') return;
+    const planPath = input.file_path.replace(/\\/g, '/');
+    if (!planPath.includes('.claude/plans/')) return;
+    if (name === 'Write' && typeof input.content === 'string') {
+      planContents.set(planPath, input.content);
+      return;
+    }
+    if (name !== 'Edit' || typeof input.old_string !== 'string' ||
+        typeof input.new_string !== 'string' || !input.old_string) return;
+    const previous = planContents.get(planPath);
+    if (previous === undefined || !previous.includes(input.old_string)) return;
+    if (!input.replace_all && previous.indexOf(input.old_string) !== previous.lastIndexOf(input.old_string)) return;
+    const updated = input.replace_all
+      ? previous.split(input.old_string).join(input.new_string)
+      : previous.replace(input.old_string, () => input.new_string);
+    planContents.set(planPath, updated);
+    if (activePlanPath !== planPath || planTodos.length === 0) return;
+    const oldItems = extractMarkdownTodos(previous);
+    const newItems = extractMarkdownTodos(updated);
+    if (newItems.length === 0) return;
+    const previousStates = new Map(oldItems.map(item => [item.content, item.status]));
+    const currentStates = new Map(planTodos.map(item => [item.content, item.status]));
+    planTodos.length = 0;
+    for (const item of newItems) {
+      // 未改动的 checkbox 保留工具推断进度；显式改动的 checkbox 优先。
+      if (previousStates.get(item.content) === item.status && currentStates.has(item.content)) {
+        item.status = currentStates.get(item.content)!;
+      }
+      planTodos.push(item);
+    }
+  };
 
   let sessionId: string | undefined;
   let cwd: string | undefined;
@@ -367,6 +692,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
           todos.length = 0;
           tasksMap.clear();
           latestMarkdownTodos = [];
+          planTodos.length = 0;
+          activePlanPath = undefined;
+          planContents.clear();
           agentMap.clear();
         } else {
           if (lastClearIndex !== -1) {
@@ -406,6 +734,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
           if (latestMarkdownTodos.length > 0 && latestMarkdownTodos.every((t) => t.status === 'completed')) {
             latestMarkdownTodos = [];
           }
+          if (planTodos.length > 0 && planTodos.every((t) => t.status === 'completed')) {
+            planTodos.length = 0;
+          }
         }
       }
 
@@ -419,6 +750,16 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
         const id = entry.attachment.identity?.modelId;
         if (typeof id === 'string' && id.trim()) {
           lastDeclaredModel = id.trim();
+        }
+      }
+
+      // Check plan attachment from CLI plan mode
+      if (entry.attachment?.type === 'plan_mode' && entry.attachment.plan) {
+        const extracted = extractPlanTodos(String(entry.attachment.plan));
+        if (extracted.length > 0) {
+          activePlanPath = undefined;
+          planTodos.length = 0;
+          planTodos.push(...extracted);
         }
       }
 
@@ -489,6 +830,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             }
 
             const target = normalizeTarget(name, input);
+            toolInputMap.set(block.id, input);
             const pending = pendingToolResults.get(block.id);
             const status: 'running' | 'completed' | 'error' = pending
               ? (pending.isError ? 'error' : 'completed')
@@ -514,6 +856,47 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
               activeToolIds.add(block.id);
             } else if (pending) {
               pendingToolResults.delete(block.id);
+            }
+
+            if (name === 'ExitPlanMode') {
+              let planContent = input.plan ? String(input.plan) : '';
+              if (!planContent && input.planFilePath && typeof input.planFilePath === 'string') {
+                try {
+                  if (fs.existsSync(input.planFilePath)) {
+                    planContent = fs.readFileSync(input.planFilePath, 'utf-8');
+                  }
+                } catch {
+                  // Ignore read error
+                }
+              }
+              if (planContent) {
+                activePlanPath = typeof input.planFilePath === 'string'
+                  ? input.planFilePath.replace(/\\/g, '/')
+                  : undefined;
+                if (activePlanPath) planContents.set(activePlanPath, planContent);
+                const extracted = extractPlanTodos(planContent);
+                if (extracted.length > 0) {
+                  planTodos.length = 0;
+                  planTodos.push(...extracted);
+                }
+              }
+            } else if (name === 'Write' && input.file_path && typeof input.file_path === 'string') {
+              const normPath = input.file_path.replace(/\\/g, '/');
+              if (normPath.includes('.claude/plans') && input.content && typeof input.content === 'string') {
+                const extracted = extractPlanTodos(input.content);
+                if (extracted.length > 0) {
+                  activePlanPath = normPath;
+                  planTodos.length = 0;
+                  planTodos.push(...extracted);
+                }
+              }
+            }
+
+            if (status === 'completed') syncPlanFile(name, input);
+            if (planTodos.length > 0) {
+              advancePlanProgress(planTodos, name, input, status === 'completed');
+            } else if (latestMarkdownTodos.length > 0) {
+              advancePlanProgress(latestMarkdownTodos, name, input, status === 'completed');
             }
 
             if (name === 'Task' || name === 'Agent') {
@@ -573,6 +956,17 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
               existingTool.endTime = ts;
               existingTool.durationMs = Math.max(0, ts.getTime() - existingTool.startTime.getTime());
               activeToolIds.delete(toolId);
+
+              if (!block.is_error) {
+                const savedInput = toolInputMap.get(toolId);
+                const toolInput = savedInput || { file_path: existingTool.target };
+                syncPlanFile(existingTool.name, toolInput);
+                if (planTodos.length > 0) {
+                  advancePlanProgress(planTodos, existingTool.name, toolInput, true);
+                } else if (latestMarkdownTodos.length > 0) {
+                  advancePlanProgress(latestMarkdownTodos, existingTool.name, toolInput, true);
+                }
+              }
             } else {
               pendingToolResults.set(toolId, {
                 isError: Boolean(block.is_error),
@@ -617,6 +1011,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     const uniqueTasks = Array.from(new Set(tasksMap.values()));
     todos.push(...uniqueTasks);
   }
+  if (todos.length === 0 && planTodos.length > 0) {
+    todos.push(...planTodos);
+  }
   if (todos.length === 0 && latestMarkdownTodos.length > 0) {
     todos.push(...latestMarkdownTodos);
   }
@@ -624,6 +1021,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   const wasCleared = lastClearIndex !== -1 && userMessagesAfterClear === 0;
   if (wasCleared) {
     todos.length = 0;
+    planTodos.length = 0;
     agentMap.clear();
   }
   const totalTokens = wasCleared

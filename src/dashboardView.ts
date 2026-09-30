@@ -137,6 +137,11 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           }
           break;
 
+        case 'clearTodos':
+          this.sessionManager.clearSessionTodos(msg.sessionId);
+          this.sendSessionUpdate();
+          break;
+
         case 'openSessionFile':
           if (msg.filePath) {
             try {

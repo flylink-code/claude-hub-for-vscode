@@ -42,6 +42,7 @@ export function getWebviewContent(): string {
     #app.hub-container {
       width: 100%;
       container-type: inline-size;
+      container-name: hub;
     }
 
     /* Top Bar */
@@ -174,6 +175,8 @@ export function getWebviewContent(): string {
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
       background: rgba(255, 255, 255, 0.06);
       color: var(--text-muted);
     }
@@ -275,6 +278,26 @@ export function getWebviewContent(): string {
       animation: spin 1.5s linear infinite;
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* 待办进行中使用细线圆环，保留动画以明确表示任务仍在运行。 */
+    .todo-spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+      border: 1.5px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      vertical-align: middle;
+      -webkit-animation: spin 0.9s linear infinite;
+      animation: spin 0.9s linear infinite;
+      animation-play-state: running;
+      will-change: transform;
+    }
+
+    .todo-badge-icon .todo-spinner {
+      color: #58a6ff;
+    }
 
     /* Enhanced Todo Card in Hub Dashboard */
     .todo-item-card {
@@ -511,52 +534,71 @@ export function getWebviewContent(): string {
       color: #f44747;
     }
 
+    /* 待办头部保持单行，窄屏通过隐藏次要标签释放空间。 */
+    .todos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 11px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    .todos-header-title {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      white-space: nowrap;
+    }
+
+    .todos-header-title > span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .todos-header-title .caret {
+      flex-shrink: 0;
+    }
+
+    .todos-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .todos-clear-btn {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      font: inherit;
+      font-size: 10px;
+      opacity: 0.75;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    .todos-clear-btn:hover {
+      opacity: 1;
+      background: var(--card-hover);
+    }
+
     .doc-btn-group {
       display: flex;
       gap: 6px;
       margin-top: 6px;
     }
 
-    /* Responsive Breakpoints (Container Queries & Media Query Fallbacks) */
-    @container (max-width: 250px) {
-      .header-sub {
-        display: none;
-      }
-      .session-header-badges .status-pill.focused .badge-text,
-      .session-header-badges .status-pill.active .badge-text,
-      .session-header-badges .status-pill.idle .badge-text {
-        display: none;
-      }
-      .session-header-badges .status-pill {
-        padding: 1px 4px;
-      }
-      .session-act-btn {
-        padding: 2.5px 2px;
-        font-size: 9.5px;
-        gap: 2px;
-      }
-    }
-    @media (max-width: 250px) {
-      .header-sub {
-        display: none;
-      }
-      .session-header-badges .status-pill.focused .badge-text,
-      .session-header-badges .status-pill.active .badge-text,
-      .session-header-badges .status-pill.idle .badge-text {
-        display: none;
-      }
-      .session-header-badges .status-pill {
-        padding: 1px 4px;
-      }
-      .session-act-btn {
-        padding: 2.5px 2px;
-        font-size: 9.5px;
-        gap: 2px;
-      }
-    }
-
-    @container (max-width: 240px) {
-      .chip-label-long {
+    /* 使用命名容器，避免意外匹配其他嵌套容器。 */
+    @container hub (max-width: 290px) {
+      .header-sub, .chip-label-long, .todos-clear-text, .todo-counter-detail {
         display: none;
       }
       .chip-label-short {
@@ -566,45 +608,24 @@ export function getWebviewContent(): string {
         padding: 2px 6px;
         font-size: 9.5px;
       }
+      .session-header-badges .badge-text {
+        display: none;
+      }
+      .session-header-badges .status-pill {
+        padding: 1px 4px;
+      }
       .metrics-row {
-        gap: 4px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .metric-bubble {
-        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
         justify-content: space-between;
         padding: 2px 5px;
         font-size: 10px;
       }
     }
-    @media (max-width: 240px) {
-      .chip-label-long {
-        display: none;
-      }
-      .chip-label-short {
-        display: inline;
-      }
-      .filter-chip {
-        padding: 2px 6px;
-        font-size: 9.5px;
-      }
-      .metrics-row {
-        gap: 4px;
-      }
-      .metric-bubble {
-        flex: 1 1 calc(50% - 4px);
-        justify-content: space-between;
-        padding: 2px 5px;
-        font-size: 10px;
-      }
-    }
-
-    @container (max-width: 220px) {
-      .session-act-btn {
-        padding: 4px 0;
-      }
-      .session-act-btn .btn-text {
-        display: none;
-      }
+    @container hub (max-width: 260px) {
       .hud-info-row {
         flex-direction: column;
         gap: 1px;
@@ -615,27 +636,95 @@ export function getWebviewContent(): string {
         max-width: 100%;
       }
       .doc-btn-group {
-        flex-direction: column !important;
+        flex-direction: column;
+      }
+      .session-act-btn {
+        padding: 2.5px 2px;
+        font-size: 9.5px;
+        gap: 2px;
       }
     }
-    @media (max-width: 220px) {
+    @container hub (max-width: 230px) {
       .session-act-btn {
         padding: 4px 0;
       }
       .session-act-btn .btn-text {
         display: none;
       }
-      .hud-info-row {
-        flex-direction: column;
-        gap: 1px;
-        align-items: flex-start;
+      .top-bar {
+        flex-wrap: wrap;
+        gap: 4px;
       }
-      .hud-info-row > span {
-        text-align: left !important;
-        max-width: 100%;
+      .top-actions .icon-btn {
+        padding: 2px 4px;
+        font-size: 10px;
       }
-      .doc-btn-group {
-        flex-direction: column !important;
+    }
+
+    /* 旧版 Webview 才使用 viewport fallback；补偿 body 两侧共 16px padding。 */
+    @supports not (container-type: inline-size) {
+      @media (max-width: 306px) {
+        .header-sub, .chip-label-long, .todos-clear-text, .todo-counter-detail {
+          display: none;
+        }
+        .chip-label-short {
+          display: inline;
+        }
+        .filter-chip {
+          padding: 2px 6px;
+          font-size: 9.5px;
+        }
+        .session-header-badges .badge-text {
+          display: none;
+        }
+        .session-header-badges .status-pill {
+          padding: 1px 4px;
+        }
+        .metrics-row {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .metric-bubble {
+          min-width: 0;
+          justify-content: space-between;
+          padding: 2px 5px;
+          font-size: 10px;
+        }
+      }
+      @media (max-width: 276px) {
+        .hud-info-row {
+          flex-direction: column;
+          gap: 1px;
+          align-items: flex-start;
+        }
+        .hud-info-row > span {
+          text-align: left !important;
+          max-width: 100%;
+        }
+        .doc-btn-group {
+          flex-direction: column;
+        }
+        .session-act-btn {
+          padding: 2.5px 2px;
+          font-size: 9.5px;
+          gap: 2px;
+        }
+      }
+      @media (max-width: 246px) {
+        .session-act-btn {
+          padding: 4px 0;
+        }
+        .session-act-btn .btn-text {
+          display: none;
+        }
+        .top-bar {
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+        .top-actions .icon-btn {
+          padding: 2px 4px;
+          font-size: 10px;
+        }
       }
     }
 
@@ -991,12 +1080,15 @@ export function getWebviewContent(): string {
 
       <!-- Tasks Checklist (Auto collapsed when empty, collapsible header) -->
       <div id="todos-container" style="margin-top: 8px; display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 11px; margin-bottom: 4px; cursor: pointer;" onclick="toggleTodosList()">
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <span id="todos-caret" class="caret" style="display: inline-block; font-size: 9px; transition: transform 0.2s;">▼</span>
+        <div class="todos-header" onclick="toggleTodosList()">
+          <div class="todos-header-title">
+            <span id="todos-caret" class="caret">▼</span>
             <span>📋 待办任务</span>
           </div>
-          <span id="todos-counter" class="status-pill">0/0</span>
+          <div class="todos-header-actions">
+            <button type="button" id="todos-clear-btn" class="todos-clear-btn" style="display: none;" title="清除已完成待办" aria-label="清除已完成待办" onclick="clearCompletedTodos(event)">✕<span class="todos-clear-text"> 清除</span></button>
+            <span id="todos-counter" class="status-pill">0/0</span>
+          </div>
         </div>
         <div class="todo-progress-track">
           <div id="todos-progress-bar" class="todo-progress-fill" style="width: 0%;"></div>
@@ -1112,7 +1204,7 @@ export function getWebviewContent(): string {
       <div id="save-toast" class="toast">✓ 配置已保存更新</div>
 
       <button class="btn btn-secondary" onclick="sendMessage('openSettingsJson')">⚙️ 打开 Claude settings.json</button>
-      <div style="display: flex; gap: 6px; margin-top: 6px;">
+      <div class="doc-btn-group">
         <button class="btn btn-secondary" id="btn-open-agents-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'AGENTS' })" title="打开或创建项目根目录 AGENTS.md (支持新版 Agent 规范)">🤖 打开 AGENTS.md</button>
         <button class="btn btn-secondary" id="btn-open-claude-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'CLAUDE' })" title="打开或创建项目根目录 CLAUDE.md (经典项目说明)">📝 打开 CLAUDE.md</button>
       </div>
@@ -1146,7 +1238,25 @@ export function getWebviewContent(): string {
     let userManuallyOpened = false;
     let userToggledTodos = false;
     let userManuallyOpenedTodos = false;
+    let userDismissedTodosSessionId = '';
     const expandedAgentKeys = new Set();
+
+    function clearCompletedTodos(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      const wrap = document.getElementById('todos-container');
+      if (wrap) wrap.style.display = 'none';
+      const list = document.getElementById('todos-list');
+      if (list) list.innerHTML = '';
+      userToggledTodos = false;
+      userManuallyOpenedTodos = false;
+      if (currentSession && currentSession.sessionId) {
+        userDismissedTodosSessionId = currentSession.sessionId;
+        sendMessage('clearTodos', { sessionId: currentSession.sessionId });
+      }
+    }
 
     function toggleTodosList() {
       const list = document.getElementById('todos-list');
@@ -1619,14 +1729,32 @@ export function getWebviewContent(): string {
 
             const counterEl = document.getElementById('todos-counter');
             const caret = document.getElementById('todos-caret');
+            const clearBtn = document.getElementById('todos-clear-btn');
+
+            if (!isAllCompleted) {
+              userDismissedTodosSessionId = '';
+            }
+
+            if (userDismissedTodosSessionId === s.sessionId && isAllCompleted) {
+              todosWrap.style.display = 'none';
+            } else {
+              todosWrap.style.display = 'block';
+            }
+
+            if (clearBtn) {
+              clearBtn.style.display = isAllCompleted ? 'inline-block' : 'none';
+            }
+
             if (counterEl) {
               if (isAllCompleted) {
                 counterEl.className = 'status-pill idle';
-                counterEl.innerText = '✓ ' + done + '/' + s.todos.length + ' (已完成)';
+                counterEl.innerHTML = '<span>✓ ' + done + '/' + s.todos.length + '</span><span class="todo-counter-detail">(已完成)</span>';
+                counterEl.title = '✓ ' + done + '/' + s.todos.length + ' (已完成)';
               } else {
                 counterEl.className = inProg > 0 ? 'status-pill active' : 'status-pill';
-                const summaryText = done + '/' + s.todos.length + ' (' + pct + '%)';
-                counterEl.innerText = inProg > 0 ? summaryText + ' · 🔄' : summaryText;
+                const summaryText = done + '/' + s.todos.length;
+                counterEl.innerHTML = '<span>' + summaryText + '</span><span class="todo-counter-detail">(' + pct + '%)</span>' + (inProg > 0 ? '<span class="todo-spinner" role="img" title="进行中" aria-label="进行中"></span>' : '');
+                counterEl.title = summaryText + ' (' + pct + '%)' + (inProg > 0 ? ' · 进行中' : '');
               }
             }
             const progBar = document.getElementById('todos-progress-bar');
@@ -1657,7 +1785,7 @@ export function getWebviewContent(): string {
                 iconHtml = '<span style="color: #2ea043; font-weight: bold;">☑</span>';
                 strike = 'style="text-decoration: line-through; opacity: 0.65;"';
               } else if (td.status === 'in_progress') {
-                iconHtml = '<span class="spin" style="color: #58a6ff; font-weight: bold;">🔄</span>';
+                iconHtml = '<span class="todo-spinner" role="img" title="进行中" aria-label="进行中"></span>';
               } else {
                 iconHtml = '<span style="opacity: 0.5;">☐</span>';
               }
@@ -1768,7 +1896,11 @@ export function getWebviewContent(): string {
           const todosList = document.getElementById('todos-list');
           if (todosList) todosList.innerHTML = '';
           const counterEl = document.getElementById('todos-counter');
-          if (counterEl) counterEl.innerText = '0/0';
+          if (counterEl) {
+            counterEl.innerText = '0/0';
+            counterEl.className = 'status-pill';
+            counterEl.title = '';
+          }
           const progBar = document.getElementById('todos-progress-bar');
           if (progBar) progBar.style.width = '0%';
           userToggledTodos = false;

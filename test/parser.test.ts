@@ -3,7 +3,19 @@ import test from 'node:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, extractMarkdownTodos, clearTranscriptCache, extractBlockTextContent } from '../src/transcriptParser.js';
+import { Script } from 'node:vm';
+import {
+  parseTranscriptFile,
+  generateForkTitle,
+  rewriteTranscriptSessionIds,
+  parseSubagentsDir,
+  extractMarkdownTodos,
+  extractPlanTodos,
+  cleanPlanText,
+  advancePlanProgress,
+  clearTranscriptCache,
+  extractBlockTextContent,
+} from '../src/transcriptParser.js';
 import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
 import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
@@ -878,7 +890,190 @@ test('parseTranscriptFile parses TaskCreate and TaskUpdate into todos properly',
   }
 });
 
-test('extractMarkdownTodos extracts checklists accurately and ignores markdown links', () => {
+test('cleanPlanText removes markdown styling and limits length cleanly', () => {
+  assert.strictEqual(cleanPlanText('**核心逻辑**与`代码`实现'), '核心逻辑与代码实现');
+  assert.strictEqual(cleanPlanText('[测试链接](https://example.com) 验证'), '测试链接 验证');
+  assert.strictEqual(cleanPlanText('   多余   空白    字符  '), '多余 空白 字符');
+
+  const longText = '这是一个非常长的句子。'.repeat(10);
+  const cleaned = cleanPlanText(longText);
+  assert.ok(cleaned.length <= 100);
+});
+
+test('extractPlanTodos extracts items from various plan markdown formats', () => {
+  // 1. GFM checklist
+  const gfmPlan = `
+# Plan
+- [x] 初始化工程结构
+- [/] 实现解析器
+- [ ] 编写测试用例
+`;
+  const gfmTodos = extractPlanTodos(gfmPlan);
+  assert.strictEqual(gfmTodos.length, 3);
+  assert.strictEqual(gfmTodos[0].status, 'completed');
+  assert.strictEqual(gfmTodos[1].status, 'in_progress');
+  assert.strictEqual(gfmTodos[2].status, 'pending');
+
+  // 2. Numbered steps with code blocks (code blocks should be ignored)
+  const stepPlan = `
+## Implementation Steps
+\`\`\`ts
+1. console.log("this code should not be parsed as a task");
+2. return true;
+\`\`\`
+1. **重构** \`src/transcriptParser.ts\` 支持 Plan 模式提取
+2. 在 \`test/parser.test.ts\` 中补充完整单元测试
+3. 运行 \`npm test\` 与 \`npm run compile\` 验证
+`;
+  const stepTodos = extractPlanTodos(stepPlan);
+  assert.strictEqual(stepTodos.length, 3);
+  assert.strictEqual(stepTodos[0].content, '重构 src/transcriptParser.ts 支持 Plan 模式提取');
+  assert.strictEqual(stepTodos[1].content, '在 test/parser.test.ts 中补充完整单元测试');
+  assert.strictEqual(stepTodos[2].content, '运行 npm test 与 npm run compile 验证');
+
+  // 3. Phase headings
+  const phasePlan = `
+# 架构重构方案
+### Phase 1: 数据模型升级
+详见架构设计文档...
+### Phase 2: 解析与进度跟踪机制
+包含工具事件联动...
+### Phase 3: 侧边栏与状态栏展示验证
+`;
+  const phaseTodos = extractPlanTodos(phasePlan);
+  assert.strictEqual(phaseTodos.length, 3);
+  assert.strictEqual(phaseTodos[0].content, 'Phase 1: 数据模型升级');
+  assert.strictEqual(phaseTodos[1].content, 'Phase 2: 解析与进度跟踪机制');
+  assert.strictEqual(phaseTodos[2].content, 'Phase 3: 侧边栏与状态栏展示验证');
+});
+
+test('advancePlanProgress updates plan todos dynamically as tools execute', () => {
+  const todos = [
+    { content: '更新 src/transcriptParser.ts 支持 plan 模式', status: 'pending' as const },
+    { content: '在 test/parser.test.ts 中编写测试', status: 'pending' as const },
+    { content: '运行 npm test 验证', status: 'pending' as const },
+  ];
+
+  // Tool Edit starts on transcriptParser.ts
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/src/transcriptParser.ts' }, false);
+  assert.strictEqual(todos[0].status, 'in_progress');
+  assert.strictEqual(todos[1].status, 'pending');
+
+  // Tool Edit completes
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/src/transcriptParser.ts' }, true);
+  assert.strictEqual(todos[0].status, 'completed');
+
+  // Tool Edit starts on parser.test.ts
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/test/parser.test.ts' }, false);
+  assert.strictEqual(todos[1].status, 'in_progress');
+
+  // Tool Edit completes on parser.test.ts
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/test/parser.test.ts' }, true);
+  assert.strictEqual(todos[1].status, 'completed');
+
+  // Tool Bash runs npm test and completes
+  advancePlanProgress(todos, 'Bash', { command: 'npm test' }, true);
+  assert.strictEqual(todos[2].status, 'completed');
+});
+
+test('parseTranscriptFile automatically parses ExitPlanMode and tracks execution progress', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-plan-mode-test-'));
+  const filePath = path.join(tempDir, 'plan-session.jsonl');
+
+  try {
+    const lines = [
+      // 1. Claude exits plan mode with plan content
+      JSON.stringify({
+        sessionId: 'session-plan-auto',
+        type: 'assistant',
+        timestamp: '2026-09-29T10:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'call_exit_plan',
+              name: 'ExitPlanMode',
+              input: {
+                plan: `
+## Implementation Plan
+1. 修改 src/transcriptParser.ts 逻辑
+2. 在 test/parser.test.ts 补充单测
+3. 执行 npm test 校验
+`,
+              },
+            },
+          ],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        timestamp: '2026-09-29T10:00:01.000Z',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'call_exit_plan',
+              content: 'Plan approved. Proceeding with execution.',
+            },
+          ],
+        },
+      }),
+      // 2. Claude switches to auto mode and executes tool Edit on transcriptParser.ts
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-09-29T10:00:02.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'call_edit_1',
+              name: 'Edit',
+              input: {
+                file_path: 'E:/W-AI_WorkSpace/claude_hub_for_vscode/src/transcriptParser.ts',
+                old_string: 'foo',
+                new_string: 'bar',
+              },
+            },
+          ],
+        },
+      }),
+      // 3. Edit completes
+      JSON.stringify({
+        type: 'user',
+        timestamp: '2026-09-29T10:00:03.000Z',
+        message: {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'call_edit_1',
+              content: 'File updated successfully.',
+            },
+          ],
+        },
+      }),
+    ];
+
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    const parsed = await parseTranscriptFile(filePath);
+
+    // Verify todos extracted from ExitPlanMode and progress advanced
+    assert.strictEqual(parsed.todos.length, 3);
+    assert.strictEqual(parsed.todos[0].content, '修改 src/transcriptParser.ts 逻辑');
+    assert.strictEqual(parsed.todos[0].status, 'completed', 'Step 1 should be completed after Edit completes');
+    assert.strictEqual(parsed.todos[1].content, '在 test/parser.test.ts 补充单测');
+    assert.strictEqual(parsed.todos[1].status, 'pending');
+    assert.strictEqual(parsed.todos[2].content, '执行 npm test 校验');
+    assert.strictEqual(parsed.todos[2].status, 'pending');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('extractMarkdownTodos extracts checklists accurately and ignores markdown links and code block examples', () => {
   const text = `
 Here is our execution plan:
 - [x] Step 1: Implement basic layout
@@ -888,6 +1083,20 @@ Here is our execution plan:
 - [-] Step 5: Legacy in-progress format
   - [ ] Nested indented task
 - [ ] Task with embedded link: check [PR #100](https://github.com/example/repo/pull/100) now
+
+下面是解释说明代码块中的示范任务（包含4个反引号、缩进以及行内反引号，绝不能误解析为当前会话待办）：
+\`\`\`markdown
+- [x] 分析当前项目结构
+- [/] 重构数据解析模块
+- [ ] 运行单元测试
+\`\`\`
+
+\`\`\`\`markdown
+     - [x] 四反引号示范任务1
+     - [ ] 四反引号示范任务2
+\`\`\`\`
+
+这里是行内引用 \`- [ ] 行内任务示范\`，也不应当被提取。
 
 重点文件（普通 Markdown 链接列表，绝不能误判为待办）：
 - [ProxyBridge.exe](Windows/output_latest/ProxyBridge.exe)
@@ -1184,6 +1393,111 @@ test('parseTranscriptFile retains incomplete todos when a new user prompt begins
     assert.strictEqual(parsed.todos.length, 2);
     assert.strictEqual(parsed.todos[0].status, 'completed');
     assert.strictEqual(parsed.todos[1].status, 'pending');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('advancePlanProgress ignores plan file writing and ExitPlanMode to keep newly generated plan in pending status', () => {
+  const planTodos = [
+    { content: '审查 src/transcriptParser.ts 中的代码块剥离', status: 'pending' as const },
+    { content: '审查 src/dashboardView.ts 的待办任务状态展示', status: 'pending' as const },
+    { content: '运行 npm test 验证全量单元测试', status: 'pending' as const },
+  ];
+
+  // 1. Tool Write to .claude/plans/xxx.md (running and completed) must not touch plan status
+  advancePlanProgress(planTodos, 'Write', { file_path: 'C:/Users/admin/.claude/plans/test-plan.md' }, false);
+  assert.strictEqual(planTodos[0].status, 'pending', 'Plan step 1 must remain pending during plan Write');
+  advancePlanProgress(planTodos, 'Write', { file_path: 'C:/Users/admin/.claude/plans/test-plan.md' }, true);
+  assert.strictEqual(planTodos[0].status, 'pending', 'Plan step 1 must remain pending after plan Write completes');
+
+  // 2. Tool ExitPlanMode must not advance progress
+  advancePlanProgress(planTodos, 'ExitPlanMode', {}, false);
+  assert.strictEqual(planTodos[0].status, 'pending', 'Plan step 1 must remain pending during ExitPlanMode');
+  advancePlanProgress(planTodos, 'ExitPlanMode', {}, true);
+  assert.strictEqual(planTodos[0].status, 'pending', 'Plan step 1 must remain pending after ExitPlanMode');
+
+  for (const completed of [false, true]) {
+    advancePlanProgress(planTodos, 'Edit', {
+      file_path: 'C:/Users/admin/.claude/plans/test-plan.md',
+      old_string: '- [ ] 任务', new_string: '- [x] 任务',
+    }, completed);
+    assert.ok(planTodos.every(item => item.status === 'pending'), 'Plan Edit must not infer task progress');
+  }
+
+  // 3. Tool Edit on transcriptParser.ts starts running -> matches step 1 -> in_progress
+  advancePlanProgress(planTodos, 'Edit', { file_path: 'E:/W-AI_WorkSpace/claude_hub_for_vscode/src/transcriptParser.ts' }, false);
+  assert.strictEqual(planTodos[0].status, 'in_progress', 'Step 1 becomes in_progress when its target tool starts');
+  assert.strictEqual(planTodos[1].status, 'pending');
+
+  // 4. Tool Edit on transcriptParser.ts completes -> completed
+  advancePlanProgress(planTodos, 'Edit', { file_path: 'E:/W-AI_WorkSpace/claude_hub_for_vscode/src/transcriptParser.ts' }, true);
+  assert.strictEqual(planTodos[0].status, 'completed', 'Step 1 becomes completed when its tool completes');
+});
+
+
+test('parseTranscriptFile replays successful plan checkbox edits and clears completed plans on the next prompt', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-plan-edit-'));
+  const filePath = path.join(tempDir, 'session.jsonl');
+  const planPath = 'C:\\Users\\admin\\.claude\\plans\\replay.md';
+  const tool = (id: string, name: string, input: object) => JSON.stringify({
+    type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] },
+  });
+  const result = (id: string, is_error = false) => JSON.stringify({
+    type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, is_error, content: 'result' }] },
+  });
+  const lines = [
+    tool('write', 'Write', { file_path: planPath, content: '# Plan\n- [ ] 修改代码\n- [ ] 打包验证\n' }),
+    result('write'),
+  ];
+  const replay = async () => {
+    fs.writeFileSync(filePath, lines.join('\n'));
+    clearTranscriptCache(filePath);
+    return parseTranscriptFile(filePath);
+  };
+  try {
+    const editInput = { file_path: planPath, old_string: '- [ ] 修改代码', new_string: '- [x] 修改代码' };
+    lines.push(tool('failed', 'Edit', editInput), result('failed', true));
+    assert.deepStrictEqual((await replay()).todos.map(t => t.status), ['pending', 'pending']);
+    lines.push(tool('edit1', 'Edit', editInput));
+    assert.deepStrictEqual((await replay()).todos.map(t => t.status), ['pending', 'pending']);
+    lines.push(result('edit1'));
+    assert.deepStrictEqual((await replay()).todos.map(t => t.status), ['completed', 'pending']);
+    // 修改无关说明不应推进剩余任务。
+    lines.push(tool('note', 'Edit', { file_path: planPath, old_string: '# Plan', new_string: '# 计划' }), result('note'));
+    assert.deepStrictEqual((await replay()).todos.map(t => t.status), ['completed', 'pending']);
+    lines.push(tool('edit2', 'Edit', { file_path: planPath, old_string: '- [ ] 打包验证', new_string: '- [x] 打包验证' }), result('edit2'));
+    assert.deepStrictEqual((await replay()).todos.map(t => t.status), ['completed', 'completed']);
+    // 冷启动重新解析，不依赖真实计划文件或内存缓存。
+    clearTranscriptCache();
+    assert.deepStrictEqual((await parseTranscriptFile(filePath)).todos.map(t => t.status), ['completed', 'completed']);
+    lines.push(JSON.stringify({ type: 'user', message: { content: '下一项工作' } }));
+    assert.deepStrictEqual((await replay()).todos, []);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile handles out-of-order plan Edit results and preserves unrelated inferred progress', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-plan-edit-ooo-'));
+  const filePath = path.join(tempDir, 'session.jsonl');
+  const planPath = '/home/user/.claude/plans/tasks.md';
+  const tool = (id: string, name: string, input: object) => JSON.stringify({
+    type: 'assistant', message: { content: [{ type: 'tool_use', id, name, input }] },
+  });
+  const result = (id: string) => JSON.stringify({
+    type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: id, content: 'success' }] },
+  });
+  try {
+    const lines = [
+      tool('write', 'Write', { file_path: planPath, content: '- [ ] 修改 module.ts\n- [ ] 打包验证\n' }), result('write'),
+      tool('code', 'Edit', { file_path: '/project/module.ts' }), result('code'),
+      result('edit'),
+      tool('edit', 'Edit', { file_path: planPath, old_string: '- [ ] 打包验证', new_string: '- [x] 打包验证', replace_all: true }),
+    ];
+    fs.writeFileSync(filePath, lines.join('\n'));
+    const parsed = await parseTranscriptFile(filePath);
+    assert.deepStrictEqual(parsed.todos.map(t => t.status), ['completed', 'completed']);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -1571,8 +1885,63 @@ test('clearTranscriptCache properly invalidates cache', async () => {
   }
 });
 
+test('getWebviewContent keeps narrow layout rules scoped and consistent', () => {
+  const html = getWebviewContent();
+  assert.ok(html.includes('container-name: hub;'));
+  for (const width of [290, 260, 230]) {
+    assert.ok(html.includes('@container hub (max-width: ' + width + 'px)'));
+    assert.ok(html.includes('@media (max-width: ' + (width + 16) + 'px)'));
+  }
+  assert.ok(html.includes('@supports not (container-type: inline-size)'));
+  assert.ok(html.includes('grid-template-columns: repeat(2, minmax(0, 1fr));'));
+  assert.ok(html.includes('class="doc-btn-group"'));
+  assert.ok(html.includes('class="todos-header-title"'));
+  assert.ok(html.includes('class="todos-header-actions"'));
+  assert.ok(html.includes('class="todos-clear-text"'));
+  assert.match(html, /<button[^>]+id="todos-clear-btn"[^>]+aria-label="清除已完成待办"/);
+  assert.match(html, /\.status-pill\s*\{[^}]*white-space: nowrap;[^}]*flex-shrink: 0;/);
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script);
+  assert.doesNotThrow(() => new Script(script));
+});
 
+test('getWebviewContent renders compact todo counters with full tooltips', () => {
+  const html = getWebviewContent();
+  // 执行实际状态更新分支，防止 className 或文本更新丢掉窄屏标签。
+  const start = html.indexOf('            if (counterEl) {', html.indexOf("const clearBtn = document.getElementById('todos-clear-btn');"));
+  const end = html.indexOf("            const progBar = document.getElementById('todos-progress-bar');", start);
+  assert.ok(start >= 0 && end > start);
+  const script = new Script(html.slice(start, end));
+  for (const state of [
+    { done: 4, total: 4, inProg: 0, pct: 100, isAllCompleted: true, status: 'idle', detail: '(已完成)' },
+    { done: 1, total: 4, inProg: 1, pct: 25, isAllCompleted: false, status: 'active', detail: '(25%)' },
+    { done: 0, total: 4, inProg: 0, pct: 0, isAllCompleted: false, status: '', detail: '(0%)' },
+  ]) {
+    const counterEl = { className: '', innerHTML: '', title: '' };
+    script.runInNewContext({ ...state, counterEl, s: { todos: Array(state.total) } });
+    assert.ok(counterEl.innerHTML.includes(state.done + '/' + state.total));
+    assert.ok(counterEl.innerHTML.includes('class="todo-counter-detail">' + state.detail));
+    assert.ok(counterEl.title.includes(state.detail));
+    assert.strictEqual(counterEl.className, 'status-pill' + (state.status ? ' ' + state.status : ''));
+    assert.strictEqual(counterEl.innerHTML.includes('class="todo-spinner"'), state.inProg > 0);
+    assert.ok(!counterEl.innerHTML.includes('🔄'));
+  }
+});
 
+test('getWebviewContent uses a circular spinner for in-progress todos', () => {
+  const html = getWebviewContent();
+  assert.match(html, /\.todo-spinner\s*\{[^}]*width: 10px;[^}]*height: 10px;[^}]*border: 1\.5px solid currentColor;[^}]*border-right-color: transparent;[^}]*border-radius: 50%;[^}]*-webkit-animation: spin 0\.9s linear infinite;[^}]*animation: spin 0\.9s linear infinite;[^}]*animation-play-state: running;/);
+  assert.doesNotMatch(html, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.todo-spinner\s*\{\s*animation: none;/);
+  const branch = html.match(/else if \(td\.status === 'in_progress'\) \{([\s\S]*?)\} else/);
+  assert.ok(branch);
+  assert.ok(branch[1].includes('class="todo-spinner"'));
+  assert.ok(branch[1].includes('aria-label="进行中"'));
+  assert.ok(!branch[1].includes('🔄'));
+});
 
-
-
+test('getWebviewContent includes clear button and clearCompletedTodos handler', () => {
+  const html = getWebviewContent();
+  assert.ok(html.includes('id="todos-clear-btn"'), 'Webview HTML must have #todos-clear-btn element');
+  assert.ok(html.includes('clearCompletedTodos'), 'Webview HTML must define clearCompletedTodos handler');
+  assert.ok(html.includes('userDismissedTodosSessionId'), 'Webview HTML must handle userDismissedTodosSessionId');
+});
