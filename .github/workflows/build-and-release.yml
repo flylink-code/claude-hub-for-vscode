@@ -40,7 +40,9 @@ jobs:
         run: npm test
 
       - name: Package VSIX
-        run: npx @vscode/vsce package --no-dependencies --out dist/
+        run: |
+          mkdir -p dist
+          npx @vscode/vsce package --no-dependencies --out dist/
 
       - name: Upload VSIX Artifact
         uses: actions/upload-artifact@v4
