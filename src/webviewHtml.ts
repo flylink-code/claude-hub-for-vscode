@@ -927,6 +927,7 @@ export function getWebviewContent(): string {
       gap: 6px;
       min-width: 0;
       flex: 1;
+      overflow: hidden;
     }
 
     .agent-dot {
@@ -962,6 +963,8 @@ export function getWebviewContent(): string {
       font-size: 11px;
       font-weight: 500;
       color: var(--text-main);
+      min-width: 0;
+      flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -980,7 +983,10 @@ export function getWebviewContent(): string {
       display: flex;
       align-items: center;
       gap: 4px;
-      flex-shrink: 0;
+      min-width: 0;
+      max-width: 100%;
+      flex-wrap: wrap;
+      overflow: hidden;
       font-size: 10px;
       color: var(--text-muted);
     }
@@ -990,6 +996,11 @@ export function getWebviewContent(): string {
       padding: 1px 4px;
       border-radius: 3px;
       font-size: 9.5px;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .agent-desc {
@@ -1010,6 +1021,45 @@ export function getWebviewContent(): string {
       display: flex;
       flex-direction: column;
       gap: 2px;
+    }
+
+    /* Narrow sidebars use two rows so long worktree chips cannot overlap the
+       agent name or push the card outside the Webview viewport. */
+    @container hub (max-width: 290px) {
+      .agent-item-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 3px;
+      }
+
+      .agent-title-row,
+      .agent-badges {
+        width: 100%;
+      }
+
+      .agent-badges {
+        justify-content: flex-start;
+      }
+    }
+
+    /* Fallback for Webviews without Container Query support. */
+    @supports not (container-type: inline-size) {
+      @media (max-width: 306px) {
+        .agent-item-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 3px;
+        }
+
+        .agent-title-row,
+        .agent-badges {
+          width: 100%;
+        }
+
+        .agent-badges {
+          justify-content: flex-start;
+        }
+      }
     }
   </style>
 </head>
@@ -1086,7 +1136,7 @@ export function getWebviewContent(): string {
             <span>📋 待办任务</span>
           </div>
           <div class="todos-header-actions">
-            <button type="button" id="todos-clear-btn" class="todos-clear-btn" style="display: none;" title="清除已完成待办" aria-label="清除已完成待办" onclick="clearCompletedTodos(event)">✕<span class="todos-clear-text"> 清除</span></button>
+            <button type="button" id="todos-clear-btn" class="todos-clear-btn" style="display: none;" title="隐藏当前待办（不删除任务文件）" aria-label="隐藏当前待办" onclick="clearCompletedTodos(event)">✕<span class="todos-clear-text"> 清除</span></button>
             <span id="todos-counter" class="status-pill">0/0</span>
           </div>
         </div>
@@ -1238,7 +1288,6 @@ export function getWebviewContent(): string {
     let userManuallyOpened = false;
     let userToggledTodos = false;
     let userManuallyOpenedTodos = false;
-    let userDismissedTodosSessionId = '';
     const expandedAgentKeys = new Set();
 
     function clearCompletedTodos(event) {
@@ -1253,7 +1302,6 @@ export function getWebviewContent(): string {
       userToggledTodos = false;
       userManuallyOpenedTodos = false;
       if (currentSession && currentSession.sessionId) {
-        userDismissedTodosSessionId = currentSession.sessionId;
         sendMessage('clearTodos', { sessionId: currentSession.sessionId });
       }
     }
@@ -1731,18 +1779,8 @@ export function getWebviewContent(): string {
             const caret = document.getElementById('todos-caret');
             const clearBtn = document.getElementById('todos-clear-btn');
 
-            if (!isAllCompleted) {
-              userDismissedTodosSessionId = '';
-            }
-
-            if (userDismissedTodosSessionId === s.sessionId && isAllCompleted) {
-              todosWrap.style.display = 'none';
-            } else {
-              todosWrap.style.display = 'block';
-            }
-
             if (clearBtn) {
-              clearBtn.style.display = isAllCompleted ? 'inline-block' : 'none';
+              clearBtn.style.display = 'inline-block';
             }
 
             if (counterEl) {

@@ -15,6 +15,7 @@ export interface ToolEntry {
   startTime: Date;
   endTime?: Date;
   durationMs?: number;
+  background?: boolean;
 }
 
 export interface AgentEntry {
@@ -41,6 +42,25 @@ export interface AgentEntry {
 export interface TodoItem {
   content: string;
   status: 'pending' | 'in_progress' | 'completed';
+  id?: string;
+  description?: string;
+  blockedBy?: string[];
+  blocks?: string[];
+}
+
+export type TaskSource = 'native' | 'tasks' | 'todoWrite' | 'plan' | 'markdown' | 'none';
+
+export interface SessionPlan {
+  path?: string;
+  items: TodoItem[];
+  isChecklist: boolean;
+}
+
+export interface LastActivity {
+  name: string;
+  target?: string;
+  status: 'running' | 'completed' | 'error' | 'background';
+  timestamp: number;
 }
 
 export interface UsageMeter {
@@ -74,6 +94,11 @@ export interface SessionInfo {
   totalAgentsCount?: number;
   subagentsTotalTokens?: number;
   todos: TodoItem[];
+  plan?: SessionPlan;
+  taskSource?: TaskSource;
+  taskListId?: string;
+  lastActivity?: LastActivity;
+  taskToolsObserved?: boolean;
   skills: string[];
   mcpServers: string[];
   gitBranch?: string;

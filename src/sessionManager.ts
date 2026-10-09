@@ -10,10 +10,11 @@ import {
   resolveClaudeConfigDir,
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
-import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache } from './transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache, extractPlanTodos, extractMarkdownTodos } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
+import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot } from './nativeTasks.js';
 
 export { generateForkTitle };
 
@@ -34,6 +35,10 @@ export class SessionManager implements vscode.Disposable {
   private subscriptionTimer: NodeJS.Timeout | null = null;
   private debounceTimer: NodeJS.Timeout | null = null;
   private isScanning = false;
+  private scanQueued = false;
+  private disposed = false;
+  private taskReader = new NativeTaskReader();
+  private taskWatcher = new TaskDataWatcher(() => this.scheduleScan());
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -227,14 +232,37 @@ export class SessionManager implements vscode.Disposable {
     return this._subscriptionUsage;
   }
 
-  public clearSessionTodos(sessionId?: string): void {
+  public async clearSessionTodos(sessionId?: string): Promise<void> {
     const targetId = sessionId || this._focusedSessionId;
     if (!targetId) return;
     const session = this._sessions.find((s: SessionInfo) => s.sessionId === targetId);
-    if (session) {
-      session.todos = [];
-      this._onDidUpdateSessions.fire(this.getFilteredSessions());
-    }
+    if (!session || session.todos.length === 0) return;
+    const key = crypto.createHash('sha256').update(path.resolve(session.sessionFile)).digest('hex');
+    const dismissed = { ...this.context.globalState.get<Record<string, string>>('dismissedTaskSnapshots', {}) };
+    dismissed[key] = taskSnapshot(session.taskSource ?? 'none', session.taskListId ?? session.plan?.path, session.todos);
+    await this.context.globalState.update('dismissedTaskSnapshots', dismissed);
+    session.todos = [];
+    this._onDidUpdateSessions.fire(this.getFilteredSessions());
+    await this.scanSessions();
+  }
+
+  public get taskStorageDir(): string {
+    return this.context.globalStorageUri.fsPath;
+  }
+
+  public get claudeConfigDir(): string { return this.getConfigDir(); }
+
+  public get availableTaskLists(): string[] { return listTaskLists(this.getConfigDir()); }
+
+  public async selectTaskList(sessionId: string, listId?: string): Promise<void> {
+    if (!this._sessions.some(s => s.sessionId === sessionId)) throw new Error('Unknown session.');
+    if (listId && (!isSafeId(listId) || !this.availableTaskLists.includes(listId))) throw new Error('Invalid task list.');
+    const selections = { ...this.context.globalState.get<Record<string, string>>('taskListSelections', {}) };
+    const key = `${path.resolve(this.getConfigDir())}:${sessionId}`;
+    if (listId) selections[key] = listId;
+    else delete selections[key];
+    await this.context.globalState.update('taskListSelections', selections);
+    await this.scanSessions();
   }
 
   private getConfigDir(): string {
@@ -246,6 +274,8 @@ export class SessionManager implements vscode.Disposable {
   }
 
   private initWatchers(): void {
+    this.taskReader.clear();
+    this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir, []);
     if (this.fileWatcher) {
       try {
         this.fileWatcher.close();
@@ -273,6 +303,7 @@ export class SessionManager implements vscode.Disposable {
   }
 
   private scheduleScan(): void {
+    if (this.disposed) return;
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
@@ -336,7 +367,8 @@ export class SessionManager implements vscode.Disposable {
   }
 
   public async scanSessions(): Promise<void> {
-    if (this.isScanning) return;
+    if (this.disposed) return;
+    if (this.isScanning) { this.scanQueued = true; return; }
     this.isScanning = true;
 
     try {
@@ -346,6 +378,8 @@ export class SessionManager implements vscode.Disposable {
       const idleTimeout = config.get<number>('idleTimeout', 180);
 
       const projectsDir = getClaudeProjectsDir(this.getConfigDir());
+      this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir,
+        this._sessions.map(s => s.plan?.path).filter((p): p is string => !!p));
       if (!this.fileWatcher && fs.existsSync(projectsDir)) {
         this.initWatchers();
       }
@@ -359,6 +393,8 @@ export class SessionManager implements vscode.Disposable {
       const workspaceFolders = (vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath);
       const projectDirs = fs.readdirSync(projectsDir);
       const discoveredSessions: SessionInfo[] = [];
+      const dismissed = { ...this.context.globalState.get<Record<string, string>>('dismissedTaskSnapshots', {}) };
+      let dismissedChanged = false;
       const cutoffTime = idleTimeout > 0 ? Date.now() - idleTimeout * 1000 : 0;
 
       for (const pDir of projectDirs) {
@@ -400,6 +436,43 @@ export class SessionManager implements vscode.Disposable {
           const parsed = await parseTranscriptFile(filePath);
           const sessionId = parsed.sessionId || file.replace('.jsonl', '').substring(0, 8);
           const projectPath = parsed.cwd || decoded.fullPath;
+          const association = readTaskAssociation(this.taskStorageDir, sessionId, projectPath);
+          const selections = this.context.globalState.get<Record<string, string>>('taskListSelections', {});
+          const selectedList = selections[`${path.resolve(this.getConfigDir())}:${sessionId}`];
+          const candidateList = selectedList || association?.taskListId || sessionId;
+          let todos = parsed.todos;
+          let taskSource = parsed.taskSource ?? 'none';
+          let taskListId: string | undefined;
+          let plan = parsed.plan;
+          const planPath = plan?.path || (!parsed.hadClearCommand ? association?.planPath : undefined);
+          if (!parsed.wasCleared && planPath && isAllowedPlanPath(this.getConfigDir(), projectPath, planPath)) {
+            try {
+              const text = fs.readFileSync(planPath, 'utf8');
+              plan = { path: planPath, items: extractPlanTodos(text), isChecklist: extractMarkdownTodos(text).length > 0 };
+              if (['none', 'plan', 'markdown'].includes(taskSource)) {
+                todos = plan.items;
+                taskSource = plan.isChecklist ? 'markdown' : 'plan';
+              }
+            } catch { /* 文件暂时不可读时保留 transcript 快照 */ }
+          }
+          if (!parsed.wasCleared && (!parsed.hadClearCommand || parsed.taskToolsObserved) && isSafeId(candidateList)) {
+            const native = this.taskReader.read(this.getConfigDir(), candidateList);
+            if (native.exists && native.valid) {
+              todos = native.items;
+              taskSource = 'native';
+              taskListId = candidateList;
+            }
+          }
+          const dismissKey = crypto.createHash('sha256').update(path.resolve(filePath)).digest('hex');
+          if (dismissed[dismissKey]) {
+            const current = taskSnapshot(taskSource, taskListId ?? plan?.path, todos);
+            if (dismissed[dismissKey] === current) {
+              todos = [];
+            } else {
+              delete dismissed[dismissKey];
+              dismissedChanged = true;
+            }
+          }
           const isCurrentWorkspace = isPathInWorkspace(projectPath, workspaceFolders);
 
           // For current workspace sessions, prioritize currently configured model from settings
@@ -560,7 +633,12 @@ export class SessionManager implements vscode.Disposable {
             agents: activeAgents,
             totalAgentsCount: totalAgentsCount > 0 ? totalAgentsCount : undefined,
             subagentsTotalTokens: subagentsTotalTokens > 0 ? subagentsTotalTokens : undefined,
-            todos: parsed.todos,
+            todos,
+            plan,
+            taskSource,
+            taskListId,
+            lastActivity: parsed.lastActivity,
+            taskToolsObserved: parsed.taskToolsObserved || taskSource === 'native',
             skills: parsed.skills,
             mcpServers: parsed.mcpServers,
             gitBranch: parsed.gitBranch,
@@ -589,15 +667,22 @@ export class SessionManager implements vscode.Disposable {
       });
 
       this._sessions = discoveredSessions;
+      if (dismissedChanged) await this.context.globalState.update('dismissedTaskSnapshots', dismissed);
+      this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir,
+        discoveredSessions.map(s => s.plan?.path).filter((p): p is string => !!p));
       this._onDidUpdateSessions.fire(this.getFilteredSessions());
     } catch (err) {
       console.error('[Claude Hub] Error during scanSessions:', err);
     } finally {
       this.isScanning = false;
+      if (this.scanQueued) { this.scanQueued = false; this.scheduleScan(); }
     }
   }
 
   public dispose(): void {
+    this.disposed = true;
+    this.taskWatcher.dispose();
+    this.taskReader.clear();
     if (this.fileWatcher) {
       try {
         this.fileWatcher.close();

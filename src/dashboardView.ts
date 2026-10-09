@@ -4,12 +4,17 @@ import { ClaudeFeaturesManager } from './claudeFeatures.js';
 import { formatModelDisplayName } from './contextLimit.js';
 import { SessionManager } from './sessionManager.js';
 import { getWebviewContent } from './webviewHtml.js';
-import { ClaudeConfigDirProvider } from './configDir.js';
+import { ClaudeConfigDirProvider, isPathInWorkspace } from './configDir.js';
+import * as path from 'path';
+import { TaskIntegrationManager } from './taskIntegration.js';
+import { isAllowedPlanPath } from './nativeTasks.js';
+import { t, getCurrentLanguage } from './i18n.js';
 
 export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'claudeHub.dashboardView';
   private _view?: vscode.WebviewView;
   private featuresManager: ClaudeFeaturesManager;
+  private taskIntegration: TaskIntegrationManager;
 
   constructor(
     private readonly context: vscode.ExtensionContext,
@@ -18,8 +23,14 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     configDirProvider?: ClaudeConfigDirProvider,
   ) {
     this.featuresManager = new ClaudeFeaturesManager(configDirProvider);
+    this.taskIntegration = new TaskIntegrationManager(context.globalStorageUri.fsPath,
+      path.join(context.extensionUri.fsPath, 'resources', 'task-bridge.cjs'),
+      () => this.sessionManager.claudeConfigDir);
 
-    sessionManager.onDidUpdateSessions(() => this.sendSessionUpdate());
+    context.subscriptions.push(sessionManager.onDidUpdateSessions(() => {
+      this.sendSessionUpdate();
+      this.sendConfigUpdate();
+    }));
     sessionManager.onDidUpdateSubscription(() => this.sendSessionUpdate());
     configManager.onDidChange(() => this.sendConfigUpdate());
   }
@@ -101,6 +112,52 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           this.sendExtensionsUpdate();
           break;
 
+        case 'enableTaskIntegration':
+        case 'disableTaskIntegration': {
+          const folder = await this.pickWorkspace();
+          if (!folder) break;
+          try {
+            if (msg.type === 'enableTaskIntegration') this.taskIntegration.enable(folder.uri.fsPath);
+            else this.taskIntegration.disable(folder.uri.fsPath);
+            this.sendConfigUpdate();
+            vscode.window.showInformationMessage(t(msg.type === 'enableTaskIntegration' ? 'task.saved' : 'task.stopped'));
+          } catch (error) { vscode.window.showErrorMessage(t('task.error', { err: String(error) })); }
+          break;
+        }
+
+        case 'openSessionPlan': {
+          const session = this.sessionManager.focusedSession;
+          const file = session?.plan?.path;
+          if (session && file && isAllowedPlanPath(this.sessionManager.claudeConfigDir, session.projectPath, file)) {
+            await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(vscode.Uri.file(file)));
+          }
+          break;
+        }
+
+        case 'copyTaskSyncPrompt': {
+          const session = this.sessionManager.focusedSession;
+          if (!session) break;
+          const items = session.plan?.items ?? session.todos;
+          const names = items.map(item => `- ${item.content}`).join('\n');
+          const prompt = getCurrentLanguage() === 'zh-CN'
+            ? `请为本会话的执行计划建立或继续维护原生 Tasks。先查看已有任务，避免重复创建。按下面阶段核对已经完成的工作与验证结果，再用 TaskCreate/TaskUpdate 记录真实的 pending、in_progress、completed 状态；不要直接把所有阶段标记完成。若任务工具不可用，请明确说明。\n${session.plan?.path ? `计划：${session.plan.path}\n` : ''}${names}`
+            : `Create or maintain native Tasks for this session's execution plan. Inspect existing tasks to avoid duplicates. Verify prior work and validation before recording pending, in_progress, or completed using TaskCreate/TaskUpdate. Never mark all phases complete without checking. Report if task tools are unavailable.\n${session.plan?.path ? `Plan: ${session.plan.path}\n` : ''}${names}`;
+          await vscode.env.clipboard.writeText(prompt);
+          vscode.window.showInformationMessage(t('task.copyDone'));
+          break;
+        }
+
+        case 'selectTaskList': {
+          const session = this.sessionManager.focusedSession;
+          if (!session) break;
+          const selected = await vscode.window.showQuickPick([
+            { label: t('task.autoList'), listId: undefined as string | undefined },
+            ...this.sessionManager.availableTaskLists.map(listId => ({ label: listId, listId })),
+          ], { placeHolder: t('task.selectList') });
+          if (selected) await this.sessionManager.selectTaskList(session.sessionId, selected.listId);
+          break;
+        }
+
         case 'toggleMcp':
           if (msg.name !== undefined && msg.enabled !== undefined) {
             this.featuresManager.toggleMcpServer(msg.name, msg.enabled);
@@ -138,7 +195,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           break;
 
         case 'clearTodos':
-          this.sessionManager.clearSessionTodos(msg.sessionId);
+          await this.sessionManager.clearSessionTodos(msg.sessionId);
           this.sendSessionUpdate();
           break;
 
@@ -261,7 +318,23 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       type: 'loadConfig',
       config: this.configManager.getClaudeSettings(),
       projectDocs: this.configManager.getProjectDocStatus(),
+      taskIntegration: (vscode.workspace.workspaceFolders || []).map(folder => {
+        const observed = this.sessionManager.allSessions.some(session =>
+          session.taskToolsObserved && isPathInWorkspace(session.projectPath, [folder.uri.fsPath]));
+        return this.taskIntegration.status(folder.uri.fsPath, observed);
+      }),
     });
+  }
+
+  private async pickWorkspace(): Promise<vscode.WorkspaceFolder | undefined> {
+    if (!vscode.workspace.isTrusted) {
+      vscode.window.showErrorMessage(t('task.error', { err: 'Workspace trust is required.' }));
+      return undefined;
+    }
+    const folders = vscode.workspace.workspaceFolders || [];
+    if (folders.length === 0) { vscode.window.showInformationMessage(t('task.noProject')); return undefined; }
+    if (folders.length === 1) return folders[0];
+    return vscode.window.showWorkspaceFolderPick({ placeHolder: t('task.selectProject') });
   }
 
   public sendExtensionsUpdate(): void {
