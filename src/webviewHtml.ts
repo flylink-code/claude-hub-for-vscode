@@ -124,10 +124,18 @@ export function getWebviewContent(): string {
     }
 
     .icon-btn.active {
-      background: rgba(224, 122, 95, 0.12);
-      border-color: rgba(224, 122, 95, 0.35);
+      background: rgba(224, 122, 95, 0.14);
+      border-color: transparent;
       color: var(--claude-accent);
       font-weight: 500;
+    }
+    .icon-btn.active .icon-btn-icon {
+      filter: none;
+      opacity: 1;
+    }
+    /* Filter stays icon-only even when active (no short WS/All label). */
+    #top-filter-btn .icon-btn-text {
+      display: none !important;
     }
 
     .icon-btn.active .icon-btn-icon {
@@ -1390,7 +1398,7 @@ export function getWebviewContent(): string {
       <button class="icon-btn" type="button" data-i18n-title="tbSearch" title="" aria-label="" onclick="sendMessage(\'searchTranscript\')"><span class="icon-btn-icon" aria-hidden="true">🔍</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbCost" title="" aria-label="" onclick="sendMessage(\'workspaceCostReport\')"><span class="icon-btn-icon" aria-hidden="true">💵</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbTasks" title="" aria-label="" onclick="sendMessage(\'openBackgroundTasks\')"><span class="icon-btn-icon" aria-hidden="true">🧵</span><span class="icon-btn-text" data-role="label"></span></button>
-      <button class="icon-btn" id="top-filter-btn" type="button" data-i18n-title="tbFilter" title="" aria-label="" onclick="sendMessage(\'toggleFilter\')"><span class="icon-btn-icon" aria-hidden="true">📁</span><span class="icon-btn-text" data-role="label">过滤</span></button>
+      <button class="icon-btn" id="top-filter-btn" type="button" data-i18n-title="tbFilter" title="" aria-label="" onclick="sendMessage(\'toggleFilter\')"><span class="icon-btn-icon" aria-hidden="true">📁</span><span class="icon-btn-text" data-role="label"></span></button>
     </div>
   </div>
 
@@ -2181,15 +2189,14 @@ export function getWebviewContent(): string {
       if (!btn) return;
       const tipWs = hubUiStrings.tbFilterWs || 'Filter: current workspace (click for all sessions)';
       const tipAll = hubUiStrings.tbFilterAll || 'Filter: all sessions (click for current workspace)';
-      const labelWs = hubUiStrings.tbFilterWsShort || 'WS';
-      const labelAll = hubUiStrings.tbFilterAllShort || 'All';
+      // Icon-only: never show WS/工作区/All short text in the toolbar.
       if (mode === 'currentWorkspace') {
-        setIconBtnLabel(btn, '📁', labelWs);
+        setIconBtnLabel(btn, '📁', '');
         btn.className = 'icon-btn active';
         btn.title = tipWs;
         btn.setAttribute('aria-label', tipWs);
       } else {
-        setIconBtnLabel(btn, '🌐', labelAll);
+        setIconBtnLabel(btn, '🌐', '');
         btn.className = 'icon-btn';
         btn.title = tipAll;
         btn.setAttribute('aria-label', tipAll);

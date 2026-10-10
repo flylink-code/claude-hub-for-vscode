@@ -15,4 +15,10 @@ test('top-actions icon toolbar uses equal icon/label slots and narrow hide rule'
   assert.ok(html.includes('function applyToolbarI18n'));
   // no legacy plain text-only refresh chip
   assert.ok(!html.includes(">🔄 刷新</button>"));
+  // filter is icon-only (no short WS/工作区 label) with soft active (no accent border)
+  assert.ok(html.includes("#top-filter-btn .icon-btn-text"));
+  assert.ok(html.includes("setIconBtnLabel(btn, '📁', '')"));
+  assert.ok(html.includes("setIconBtnLabel(btn, '🌐', '')"));
+  assert.ok(html.includes("border-color: transparent"));
+  assert.ok(!html.includes('data-role="label">过滤</span>'));
 });
