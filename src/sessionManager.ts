@@ -12,9 +12,9 @@ import {
 import { getContextLimitForModel } from './contextLimit.js';
 import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache, extractPlanTodos, extractMarkdownTodos } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
-import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData } from './types.js';
+import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData, TaskSource, TodoItem, SessionPlan } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
-import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot } from './nativeTasks.js';
+import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot, mergeDiskPlanTodos } from './nativeTasks.js';
 
 export { generateForkTitle };
 
@@ -448,11 +448,11 @@ export class SessionManager implements vscode.Disposable {
           if (!parsed.wasCleared && planPath && isAllowedPlanPath(this.getConfigDir(), projectPath, planPath)) {
             try {
               const text = fs.readFileSync(planPath, 'utf8');
-              plan = { path: planPath, items: extractPlanTodos(text), isChecklist: extractMarkdownTodos(text).length > 0 };
-              if (['none', 'plan', 'markdown'].includes(taskSource)) {
-                todos = plan.items;
-                taskSource = plan.isChecklist ? 'markdown' : 'plan';
-              }
+              const diskPlan = { path: planPath, items: extractPlanTodos(text), isChecklist: extractMarkdownTodos(text).length > 0 };
+              const merged = mergeDiskPlanTodos(taskSource, todos, diskPlan);
+              todos = merged.todos;
+              taskSource = merged.taskSource;
+              plan = merged.plan;
             } catch { /* 文件暂时不可读时保留 transcript 快照 */ }
           }
           if (!parsed.wasCleared && (!parsed.hadClearCommand || parsed.taskToolsObserved) && isSafeId(candidateList)) {

@@ -44,6 +44,7 @@ export interface TodoItem {
   status: 'pending' | 'in_progress' | 'completed';
   id?: string;
   description?: string;
+  activeForm?: string;
   blockedBy?: string[];
   blocks?: string[];
 }

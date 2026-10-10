@@ -140,8 +140,8 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           const items = session.plan?.items ?? session.todos;
           const names = items.map(item => `- ${item.content}`).join('\n');
           const prompt = getCurrentLanguage() === 'zh-CN'
-            ? `请为本会话的执行计划建立或继续维护原生 Tasks。先查看已有任务，避免重复创建。按下面阶段核对已经完成的工作与验证结果，再用 TaskCreate/TaskUpdate 记录真实的 pending、in_progress、completed 状态；不要直接把所有阶段标记完成。若任务工具不可用，请明确说明。\n${session.plan?.path ? `计划：${session.plan.path}\n` : ''}${names}`
-            : `Create or maintain native Tasks for this session's execution plan. Inspect existing tasks to avoid duplicates. Verify prior work and validation before recording pending, in_progress, or completed using TaskCreate/TaskUpdate. Never mark all phases complete without checking. Report if task tools are unavailable.\n${session.plan?.path ? `Plan: ${session.plan.path}\n` : ''}${names}`;
+            ? `请核对本会话执行计划各阶段的实际进度和验证结果，先检查已有任务，避免重复创建。可用 TaskCreate/TaskUpdate 时，记录真实的 pending、in_progress、completed；仅在验证后标记 completed。若任务工具不可用，请明确说明当前阶段和证据；若计划文件可编辑，可在核验后更新其中的 checklist 状态。不要仅凭 Agent 结束推断阶段完成。\n${session.plan?.path ? `计划：${session.plan.path}\n` : ''}${names}`
+            : `Check actual progress and verification for each phase of this session's plan. Inspect existing tasks before creating new ones. If TaskCreate/TaskUpdate are available, record genuine pending, in_progress, and completed states; mark completed only after verification. Otherwise report the current phase and evidence, and update the plan checklist after verification if the plan file is editable. Do not infer phase completion from an Agent finishing.\n${session.plan?.path ? `Plan: ${session.plan.path}\n` : ''}${names}`;
           await vscode.env.clipboard.writeText(prompt);
           vscode.window.showInformationMessage(t('task.copyDone'));
           break;

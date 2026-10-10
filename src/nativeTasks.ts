@@ -1,12 +1,35 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { TodoItem } from './types.js';
+import { TodoItem, TaskSource, SessionPlan } from './types.js';
 
 export function taskSnapshot(source: string, listId: string | undefined, items: TodoItem[]): string {
   return crypto.createHash('sha256')
     .update(JSON.stringify({ source, listId, items }))
     .digest('hex');
+}
+
+
+/**
+ * Merge disk plan snapshot into session todos.
+ * Checklist on disk wins for none|plan|markdown; non-checklist phases keep parser todos
+ * when taskSource is already plan. Never overrides tasks/todoWrite/native.
+ */
+export function mergeDiskPlanTodos(
+  taskSource: TaskSource,
+  parsedTodos: TodoItem[],
+  diskPlan: SessionPlan,
+): { todos: TodoItem[]; taskSource: TaskSource; plan: SessionPlan } {
+  if (!['none', 'plan', 'markdown'].includes(taskSource)) {
+    return { todos: parsedTodos, taskSource, plan: diskPlan };
+  }
+  if (diskPlan.isChecklist) {
+    return { todos: diskPlan.items, taskSource: 'markdown', plan: diskPlan };
+  }
+  if (taskSource === 'plan' && parsedTodos.length > 0) {
+    return { todos: parsedTodos, taskSource: 'plan', plan: diskPlan };
+  }
+  return { todos: diskPlan.items, taskSource: 'plan', plan: diskPlan };
 }
 
 export function isSafeId(id: unknown): id is string {

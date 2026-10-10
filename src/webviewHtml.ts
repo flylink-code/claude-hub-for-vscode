@@ -572,7 +572,7 @@ export function getWebviewContent(): string {
       white-space: nowrap;
     }
 
-    .todos-clear-btn {
+    .todos-clear-btn, .todos-sync-btn {
       background: transparent;
       border: 0;
       color: var(--text-muted);
@@ -585,9 +585,17 @@ export function getWebviewContent(): string {
       white-space: nowrap;
     }
 
-    .todos-clear-btn:hover {
+    .todos-clear-btn:hover, .todos-sync-btn:hover {
       opacity: 1;
       background: var(--card-hover);
+    }
+
+    .todos-activity {
+      color: var(--text-muted);
+      font-size: 10px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      padding: 2px 0 5px;
     }
 
     .doc-btn-group {
@@ -598,7 +606,7 @@ export function getWebviewContent(): string {
 
     /* 使用命名容器，避免意外匹配其他嵌套容器。 */
     @container hub (max-width: 290px) {
-      .header-sub, .chip-label-long, .todos-clear-text, .todo-counter-detail {
+      .header-sub, .chip-label-long, .todos-clear-text, .todos-sync-text, .todo-counter-detail {
         display: none;
       }
       .chip-label-short {
@@ -664,7 +672,7 @@ export function getWebviewContent(): string {
     /* 旧版 Webview 才使用 viewport fallback；补偿 body 两侧共 16px padding。 */
     @supports not (container-type: inline-size) {
       @media (max-width: 306px) {
-        .header-sub, .chip-label-long, .todos-clear-text, .todo-counter-detail {
+        .header-sub, .chip-label-long, .todos-clear-text, .todos-sync-text, .todo-counter-detail {
           display: none;
         }
         .chip-label-short {
@@ -1136,6 +1144,7 @@ export function getWebviewContent(): string {
             <span>📋 待办任务</span>
           </div>
           <div class="todos-header-actions">
+            <button type="button" id="todos-sync-btn" class="todos-sync-btn" style="display: none;" title="复制任务同步提示，发送到当前 Claude 对话" aria-label="复制任务同步提示" onclick="copyTodoSyncPrompt(event)">⧉<span class="todos-sync-text"> 复制提示</span></button>
             <button type="button" id="todos-clear-btn" class="todos-clear-btn" style="display: none;" title="隐藏当前待办（不删除任务文件）" aria-label="隐藏当前待办" onclick="clearCompletedTodos(event)">✕<span class="todos-clear-text"> 清除</span></button>
             <span id="todos-counter" class="status-pill">0/0</span>
           </div>
@@ -1143,6 +1152,7 @@ export function getWebviewContent(): string {
         <div class="todo-progress-track">
           <div id="todos-progress-bar" class="todo-progress-fill" style="width: 0%;"></div>
         </div>
+        <div id="todos-activity" class="todos-activity" style="display: none;"></div>
         <div id="todos-list"></div>
       </div>
 
@@ -1304,6 +1314,36 @@ export function getWebviewContent(): string {
       if (currentSession && currentSession.sessionId) {
         sendMessage('clearTodos', { sessionId: currentSession.sessionId });
       }
+    }
+
+    function copyTodoSyncPrompt(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      if (currentSession) sendMessage('copyTaskSyncPrompt');
+    }
+
+    function getTodoActivityText(session) {
+      const agents = session.agents || [];
+      const running = agents.filter(a => a.status === 'running').length;
+      const ended = agents.length - running;
+      const parts = [];
+      if (agents.length) {
+        parts.push('Agent ' + (running ? running + ' 运行 · ' : '') + ended + '/' + agents.length + ' 已结束');
+      }
+      if (!session.isIdle && session.activeTools && session.activeTools.length) {
+        parts.push('工具 ' + session.activeTools[0].name + ' 运行中');
+      } else if (!session.isIdle && session.lastActivity &&
+          (!session.currentTurnStartTime ||
+            session.lastActivity.timestamp >= new Date(session.currentTurnStartTime).getTime())) {
+        parts.push('最近 ' + session.lastActivity.name);
+      }
+      if (parts.length && (session.taskSource === 'plan' || session.taskSource === 'markdown') &&
+          session.todos.every(t => t.status === 'pending')) {
+        parts.push('阶段待确认');
+      }
+      return parts.join(' · ');
     }
 
     function toggleTodosList() {
@@ -1778,9 +1818,19 @@ export function getWebviewContent(): string {
             const counterEl = document.getElementById('todos-counter');
             const caret = document.getElementById('todos-caret');
             const clearBtn = document.getElementById('todos-clear-btn');
+            const syncBtn = document.getElementById('todos-sync-btn');
+            const activityEl = document.getElementById('todos-activity');
 
             if (clearBtn) {
               clearBtn.style.display = 'inline-block';
+            }
+            if (syncBtn) {
+              syncBtn.style.display = s.taskSource === 'plan' || s.taskSource === 'markdown' ? 'inline-block' : 'none';
+            }
+            if (activityEl) {
+              const activity = getTodoActivityText(s);
+              activityEl.textContent = activity;
+              activityEl.style.display = activity ? 'block' : 'none';
             }
 
             if (counterEl) {
@@ -1835,6 +1885,11 @@ export function getWebviewContent(): string {
           } else {
             todosWrap.style.display = 'none';
             if (todosList) todosList.innerHTML = '';
+            const activityEl = document.getElementById('todos-activity');
+            if (activityEl) {
+              activityEl.textContent = '';
+              activityEl.style.display = 'none';
+            }
             userToggledTodos = false;
             userManuallyOpenedTodos = false;
           }

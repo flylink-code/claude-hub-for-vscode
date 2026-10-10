@@ -360,15 +360,34 @@ export function extractPlanTodos(text: string): TodoItem[] {
 }
 
 /**
+ * Resolves a TaskUpdate task id from streamed tool input.
+ * Claude Code may emit taskId, id, or task_id before CLI key repair.
+ */
+export function resolveTaskId(input: any): string | undefined {
+  if (!input || typeof input !== 'object') return undefined;
+  const raw = input.taskId ?? input.id ?? input.task_id;
+  if (raw === undefined || raw === null) return undefined;
+  const id = String(raw).trim();
+  return id.length > 0 ? id : undefined;
+}
+
+/**
  * Advances plan todos based on tool executions (Edit, Write, Bash, Agent, etc.).
+ *
+ * NOT wired into parseTranscriptStream. Production plan status comes from
+ * Task/TodoWrite tools, disk checklists (sessionManager), and syncPlanFile replay.
+ * When options.authoritative is true (taskToolsObserved or source tasks/todoWrite/native),
+ * this helper is a no-op — do not call it from the live parse loop.
  */
 export function advancePlanProgress(
   planTodos: TodoItem[],
   toolName: string,
   input: any,
   isToolCompleted: boolean,
+  options?: { authoritative?: boolean },
 ): void {
   if (!planTodos || planTodos.length === 0) return;
+  if (options?.authoritative) return;
 
   // Plan generation tools must never advance execution progress
   if (toolName === 'ExitPlanMode') return;
@@ -381,52 +400,51 @@ export function advancePlanProgress(
   const execTools = ['Edit', 'Write', 'Bash', 'Agent', 'Task'];
   if (!execTools.includes(toolName)) return;
 
-  // 1. Try to extract target identifiers from input
+  const MIN_TARGET_LEN = 5;
   const targets: string[] = [];
   if (input) {
     if (typeof input.file_path === 'string') {
       const fp = input.file_path.replace(/\\/g, '/');
       const base = fp.split('/').pop() || '';
-      targets.push(fp.toLowerCase());
       if (base) {
         targets.push(base.toLowerCase());
         const withoutExt = base.replace(/\.[^.]+$/, '');
-        if (withoutExt.length > 2) targets.push(withoutExt.toLowerCase());
+        if (withoutExt.length >= MIN_TARGET_LEN) targets.push(withoutExt.toLowerCase());
       }
+      if (fp.length >= MIN_TARGET_LEN) targets.push(fp.toLowerCase());
     }
     if (typeof input.command === 'string') {
-      targets.push(input.command.toLowerCase());
-      const words = input.command.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
-      targets.push(...words);
+      const cmd = input.command.toLowerCase().trim();
+      if (cmd.length >= MIN_TARGET_LEN) targets.push(cmd);
+      // Do not spray short command tokens (avoids matching "test" into unrelated todos).
     }
-    if (typeof input.description === 'string') {
+    if (typeof input.description === 'string' && input.description.length >= MIN_TARGET_LEN) {
       targets.push(input.description.toLowerCase());
     }
     if (typeof input.prompt === 'string') {
-      targets.push(input.prompt.slice(0, 100).toLowerCase());
+      const slice = input.prompt.slice(0, 100).toLowerCase();
+      if (slice.length >= MIN_TARGET_LEN) targets.push(slice);
     }
   }
 
-  // 2. Check if any todo matches the target (prioritize incomplete tasks and longer targets)
-  targets.sort((a, b) => b.length - a.length);
+  const usable = [...new Set(targets.filter((t) => t.length >= MIN_TARGET_LEN))];
+  usable.sort((a, b) => b.length - a.length);
 
   let matchedIndex = -1;
-  // First pass: match among pending or in_progress tasks
   for (let i = 0; i < planTodos.length; i++) {
     if (planTodos[i].status === 'completed') continue;
     const itemContent = planTodos[i].content.toLowerCase();
-    const hasMatch = targets.some((t) => t.length > 2 && itemContent.includes(t));
+    const hasMatch = usable.some((t) => itemContent.includes(t));
     if (hasMatch) {
       matchedIndex = i;
       break;
     }
   }
 
-  // Second pass: if no incomplete task matched, match any task
   if (matchedIndex === -1) {
     for (let i = 0; i < planTodos.length; i++) {
       const itemContent = planTodos[i].content.toLowerCase();
-      const hasMatch = targets.some((t) => t.length > 2 && itemContent.includes(t));
+      const hasMatch = usable.some((t) => itemContent.includes(t));
       if (hasMatch) {
         matchedIndex = i;
         break;
@@ -434,30 +452,14 @@ export function advancePlanProgress(
     }
   }
 
-  if (matchedIndex !== -1) {
-    const targetItem = planTodos[matchedIndex];
-    if (isToolCompleted) {
-      targetItem.status = 'completed';
-      // Mark preceding items as completed
-      for (let j = 0; j < matchedIndex; j++) {
-        if (planTodos[j].status === 'pending' || planTodos[j].status === 'in_progress') {
-          planTodos[j].status = 'completed';
-        }
-      }
-    } else {
-      if (targetItem.status === 'pending') {
-        targetItem.status = 'in_progress';
-      }
-    }
-    return;
-  }
+  if (matchedIndex === -1) return;
 
-  // 3. Fallback: only update if an item is already in_progress and an execution tool completes
+  const targetItem = planTodos[matchedIndex];
   if (isToolCompleted) {
-    const currentInProgress = planTodos.find((t) => t.status === 'in_progress');
-    if (currentInProgress) {
-      currentInProgress.status = 'completed';
-    }
+    targetItem.status = 'completed';
+    // Do not auto-complete preceding items (reduces false positives).
+  } else if (targetItem.status === 'pending') {
+    targetItem.status = 'in_progress';
   }
 }
 
@@ -580,11 +582,13 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     if (['pending', 'in_progress', 'completed'].includes(input.status)) item.status = input.status;
     if (typeof input.subject === 'string') item.content = input.subject;
     if (typeof input.description === 'string') item.description = input.description;
+    const active = input.activeForm ?? input.active_form;
+    if (typeof active === 'string') item.activeForm = active;
     for (const [field, addition] of [['blockedBy', 'addBlockedBy'], ['blocks', 'addBlocks']] as const) {
       if (Array.isArray(input[addition])) item[field] = Array.from(new Set([...(item[field] || []), ...input[addition].map(String)]));
     }
   };
-  const applyTaskResult = (name: string, input: any, toolId: string, response: any, text: string): void => {
+  const applyTaskResult = (name: string, input: any, _toolId: string, response: any, text: string): void => {
     if (!['TaskCreate', 'TaskUpdate', 'TodoWrite'].includes(name)) return;
     taskToolsObserved = true;
     if (name === 'TodoWrite' && Array.isArray(input.todos)) {
@@ -596,21 +600,30 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
         }
       }
     } else if (name === 'TaskCreate') {
-      explicitState.source = 'tasks';
+      // Assigned id comes only from tool result / prose — never tool_use id fallback.
       const match = /Task #([a-zA-Z0-9_.-]+) created/i.exec(text);
-      const id = String(response?.task?.id ?? response?.id ?? input.taskId ?? match?.[1] ?? toolId);
+      const rawId = response?.task?.id ?? response?.id ?? match?.[1];
+      if (rawId === undefined || rawId === null || String(rawId).trim() === '') return;
+      const id = String(rawId).trim();
+      explicitState.source = 'tasks';
+      const active = input.activeForm ?? input.active_form;
       tasksMap.set(id, {
-        id, content: String(input.subject || input.description || 'Task'), status: 'pending',
+        id,
+        content: String(input.subject || input.description || 'Task'),
+        status: 'pending',
         description: typeof input.description === 'string' ? input.description : undefined,
+        activeForm: typeof active === 'string' ? active : undefined,
       });
       const updates = queuedTaskUpdates.get(id) || [];
       queuedTaskUpdates.delete(id);
       for (const update of updates) updateTask(id, update);
-    } else if (name === 'TaskUpdate' && input.taskId !== undefined) {
+    } else if (name === 'TaskUpdate') {
+      const taskId = resolveTaskId(input);
+      if (!taskId) return;
       explicitState.source = 'tasks';
-      updateTask(String(input.taskId), input);
+      updateTask(taskId, input);
     }
-  };
+  };;
 
   // 仅重放 JSONL 中已成功的计划编辑，不读取文件当前内容覆盖历史状态。
   const syncPlanFile = (name: string, input: any): void => {

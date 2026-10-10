@@ -13,11 +13,12 @@ import {
   extractPlanTodos,
   cleanPlanText,
   advancePlanProgress,
+  resolveTaskId,
   clearTranscriptCache,
   extractBlockTextContent,
 } from '../src/transcriptParser.js';
 import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
-import { taskSnapshot } from '../src/nativeTasks.js';
+import { taskSnapshot, mergeDiskPlanTodos } from '../src/nativeTasks.js';
 import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
 import {
@@ -2054,6 +2055,48 @@ test('getWebviewContent includes clear button and clearCompletedTodos handler', 
   assert.ok(html.includes('不删除任务文件'), 'Clear action must explain that task files are retained');
 });
 
+test('getWebviewContent shows task activity separately from confirmed task status', () => {
+  const html = getWebviewContent();
+  assert.ok(html.includes('id="todos-activity"'));
+  assert.ok(html.includes('id="todos-sync-btn"'));
+  assert.ok(html.includes("sendMessage('copyTaskSyncPrompt')"));
+  assert.ok(html.includes('activityEl.textContent = activity'));
+  assert.ok(html.includes("s.taskSource === 'plan' || s.taskSource === 'markdown'"));
+
+  const start = html.indexOf('    function getTodoActivityText(session) {');
+  const end = html.indexOf('    function toggleTodosList() {', start);
+  assert.ok(start >= 0 && end > start);
+  const script = new Script(html.slice(start, end) + '\ngetTodoActivityText(session)');
+  const session = {
+    taskSource: 'plan',
+    todos: [{ content: '阶段 0', status: 'pending' }, { content: '阶段 1', status: 'pending' }],
+    agents: [{ status: 'completed' }, { status: 'completed' }, { status: 'running' }],
+    activeTools: [{ name: 'Edit' }],
+    isIdle: false,
+  };
+  const activity = script.runInNewContext({ session }) as string;
+  assert.ok(activity.includes('Agent 1 运行 · 2/3 已结束'));
+  assert.ok(activity.includes('工具 Edit 运行中'));
+  assert.ok(activity.includes('阶段待确认'));
+  assert.ok(session.todos.every(item => item.status === 'pending'));
+
+  const completed = script.runInNewContext({
+    session: { ...session, agents: [{ status: 'completed' }, { status: 'completed' }], activeTools: [] },
+  }) as string;
+  assert.ok(completed.includes('Agent 2/2 已结束'));
+  assert.ok(completed.includes('阶段待确认'));
+  assert.ok(!completed.includes('运行中'));
+
+  const stale = script.runInNewContext({
+    session: {
+      ...session, agents: [], activeTools: [],
+      currentTurnStartTime: '2026-10-09T09:00:00Z',
+      lastActivity: { name: 'Edit', timestamp: Date.parse('2026-10-09T08:00:00Z') },
+    },
+  });
+  assert.strictEqual(stale, '');
+});
+
 test('task snapshot stays stable across scans and changes with task progress or source', () => {
   const items = [{ id: '1', content: '阶段 0', status: 'pending' as const }];
   const snapshot = taskSnapshot('plan', undefined, items);
@@ -2061,4 +2104,188 @@ test('task snapshot stays stable across scans and changes with task progress or 
   assert.notStrictEqual(snapshot, taskSnapshot('plan', undefined, [{ ...items[0], status: 'completed' }]));
   assert.notStrictEqual(snapshot, taskSnapshot('native', 'list-1', items));
   assert.notStrictEqual(snapshot, taskSnapshot('plan', undefined, [{ ...items[0], content: '阶段 1' }]));
+});
+
+test('resolveTaskId accepts taskId, id, and task_id aliases', () => {
+  assert.strictEqual(resolveTaskId({ taskId: 'a1' }), 'a1');
+  assert.strictEqual(resolveTaskId({ id: 'b2' }), 'b2');
+  assert.strictEqual(resolveTaskId({ task_id: 'c3' }), 'c3');
+  assert.strictEqual(resolveTaskId({ taskId: 'a1', id: 'ignored' }), 'a1');
+  assert.strictEqual(resolveTaskId({}), undefined);
+  assert.strictEqual(resolveTaskId({ taskId: '  ' }), undefined);
+});
+
+test('parseTranscriptFile TaskUpdate accepts id/task_id aliases and captures activeForm', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-task-alias-'));
+  const filePath = path.join(tempDir, 'alias-session.jsonl');
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'alias-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'tool_use', id: 'call_create_a', name: 'TaskCreate',
+            input: { subject: '实现布局', activeForm: '正在实现布局' },
+          }],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [{ type: 'tool_result', tool_use_id: 'call_create_a', content: 'Task #42 created successfully' }],
+        },
+        toolUseResult: { task: { id: '42', subject: '实现布局' } },
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'tool_use', id: 'call_up_id', name: 'TaskUpdate',
+            input: { id: '42', status: 'in_progress', active_form: '调整布局细节' },
+          }],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'call_up_id', content: 'ok' }] },
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'tool_use', id: 'call_up_tid', name: 'TaskUpdate',
+            input: { task_id: '42', status: 'completed' },
+          }],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'call_up_tid', content: 'ok' }] },
+      }),
+    ];
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    clearTranscriptCache();
+    const parsed = await parseTranscriptFile(filePath);
+    assert.strictEqual(parsed.taskSource, 'tasks');
+    assert.strictEqual(parsed.todos.length, 1);
+    assert.strictEqual(parsed.todos[0].id, '42');
+    assert.strictEqual(parsed.todos[0].status, 'completed');
+    assert.strictEqual(parsed.todos[0].activeForm, '调整布局细节');
+    assert.notStrictEqual(String(parsed.todos[0].id), 'call_create_a');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile TaskCreate without assignable id does not invent tool_use id todos', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-task-noid-'));
+  const filePath = path.join(tempDir, 'noid-session.jsonl');
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'noid-session',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'tool_use', id: 'call_create_missing', name: 'TaskCreate',
+            input: { subject: '不应出现的任务' },
+          }],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [{ type: 'tool_result', tool_use_id: 'call_create_missing', content: 'created without id payload' }],
+        },
+      }),
+    ];
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    clearTranscriptCache();
+    const parsed = await parseTranscriptFile(filePath);
+    assert.strictEqual(parsed.todos.length, 0, 'must not insert under tool_use id');
+    assert.ok(parsed.taskToolsObserved);
+    assert.ok(!parsed.todos.some((t) => t.id === 'call_create_missing'));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('advancePlanProgress is a no-op when authoritative and does not complete preceding or unmatched tools', () => {
+  const todos = [
+    { content: '更新 src/transcriptParser.ts 支持 plan 模式', status: 'pending' as const },
+    { content: '在 test/parser.test.ts 中编写测试', status: 'pending' as const },
+    { content: '运行 npm test 验证', status: 'pending' as const },
+  ];
+
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/src/transcriptParser.ts' }, true, { authoritative: true });
+  assert.ok(todos.every((t) => t.status === 'pending'), 'authoritative must not mutate');
+
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/src/transcriptParser.ts' }, false);
+  assert.strictEqual(todos[0].status, 'in_progress');
+  assert.strictEqual(todos[1].status, 'pending');
+
+  // Completing item 0 must NOT auto-complete later items / preceding logic removed
+  advancePlanProgress(todos, 'Edit', { file_path: 'E:/project/test/parser.test.ts' }, true);
+  assert.strictEqual(todos[0].status, 'in_progress', 'unrelated complete must not finish other in_progress via loose fallback');
+  assert.strictEqual(todos[1].status, 'completed');
+  assert.strictEqual(todos[2].status, 'pending');
+
+  // Short filename stem must not false-positive into unrelated content
+  const other = [{ content: 'implement parser core', status: 'pending' as const }];
+  advancePlanProgress(other, 'Edit', { file_path: 'E:/project/readme.md' }, true);
+  assert.strictEqual(other[0].status, 'pending');
+
+  // Full command still matches
+  advancePlanProgress(todos, 'Bash', { command: 'npm test' }, true);
+  assert.strictEqual(todos[2].status, 'completed');
+});
+
+test('mergeDiskPlanTodos: checklist disk wins; non-checklist keeps parser plan; tools never overridden', () => {
+  const parserPlanTodos = [
+    { content: '阶段 0：解析', status: 'in_progress' as const },
+    { content: '阶段 1：测试', status: 'pending' as const },
+  ];
+  const diskPhases = {
+    path: '/tmp/plan.md',
+    isChecklist: false,
+    items: [
+      { content: '阶段 0：解析', status: 'pending' as const },
+      { content: '阶段 1：测试', status: 'pending' as const },
+    ],
+  };
+  const kept = mergeDiskPlanTodos('plan', parserPlanTodos, diskPhases);
+  assert.strictEqual(kept.todos[0].status, 'in_progress');
+  assert.strictEqual(kept.taskSource, 'plan');
+
+  const diskChecklist = {
+    path: '/tmp/check.md',
+    isChecklist: true,
+    items: [
+      { content: '初始化', status: 'completed' as const },
+      { content: '实现', status: 'pending' as const },
+    ],
+  };
+  const fromDisk = mergeDiskPlanTodos('plan', parserPlanTodos, diskChecklist);
+  assert.strictEqual(fromDisk.taskSource, 'markdown');
+  assert.strictEqual(fromDisk.todos[0].status, 'completed');
+  assert.strictEqual(fromDisk.todos.length, 2);
+
+  const toolTodos = [{ content: '来自 TodoWrite', status: 'in_progress' as const }];
+  const toolsWin = mergeDiskPlanTodos('todoWrite', toolTodos, diskChecklist);
+  assert.strictEqual(toolsWin.taskSource, 'todoWrite');
+  assert.deepStrictEqual(toolsWin.todos, toolTodos);
+
+  const tasksWin = mergeDiskPlanTodos('tasks', toolTodos, diskPhases);
+  assert.strictEqual(tasksWin.taskSource, 'tasks');
+  assert.deepStrictEqual(tasksWin.todos, toolTodos);
+
+  const nativeWin = mergeDiskPlanTodos('native', toolTodos, diskChecklist);
+  assert.strictEqual(nativeWin.taskSource, 'native');
 });
