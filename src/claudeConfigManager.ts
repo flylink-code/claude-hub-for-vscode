@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ClaudeConfigDirProvider, resolveClaudeConfigDir, getClaudeProjectsDir } from './configDir.js';
+import { getRecommendedTodoPolicySection, markdownHasTodoPolicySection, appendRecommendedTodoPolicySection } from './projectTodoPolicy.js';
+import { t } from './i18n.js';
 
 function getVsCode(): any {
   try {
@@ -556,10 +558,11 @@ export class ClaudeConfigManager {
 
     const targetPath = selectedType === 'AGENTS' ? agentsMdPath : claudeMdPath;
     if (!fs.existsSync(targetPath)) {
-      const defaultContent =
+      const stub =
         selectedType === 'AGENTS'
           ? `# AGENTS.md\n\nGuidelines for AI agents and Claude Code working on this project.\n\n## Project Overview\n\n## Build & Test Commands\n\n## Agent Rules & Guidelines\n\n`
           : `# CLAUDE.md\n\nGuidelines for Claude Code working on this project.\n\n## Build & Test\n\n`;
+      const defaultContent = stub + getRecommendedTodoPolicySection();
       fs.writeFileSync(targetPath, defaultContent, 'utf-8');
       if (vsc) {
         vsc.window.showInformationMessage(`已为项目生成根目录 ${selectedType}.md`);
@@ -576,6 +579,74 @@ export class ClaudeConfigManager {
     }
 
     return targetPath;
+  }
+
+
+  /**
+   * Append recommended Claude Hub Task Tracking section to AGENTS.md (preferred) or CLAUDE.md.
+   * Append-only when section missing; if present, open/copy only — never overwrite.
+   */
+  public async injectTodoPolicySection(customWorkspaceRoot?: string): Promise<'appended' | 'exists' | 'cancelled' | undefined> {
+    const vsc = getVsCode();
+    let rootPath = customWorkspaceRoot;
+    if (!rootPath && vsc) {
+      const wsFolders = vsc.workspace?.workspaceFolders;
+      if (wsFolders && wsFolders.length > 0) {
+        rootPath = wsFolders[0].uri.fsPath;
+      }
+    }
+    if (!rootPath) {
+      if (vsc) vsc.window.showWarningMessage(t('task.noWorkspace'));
+      return undefined;
+    }
+
+    const agentsMdPath = path.join(rootPath, 'AGENTS.md');
+    const claudeMdPath = path.join(rootPath, 'CLAUDE.md');
+    let targetPath = agentsMdPath;
+    if (!fs.existsSync(agentsMdPath) && fs.existsSync(claudeMdPath)) {
+      targetPath = claudeMdPath;
+    }
+
+    const existing = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '';
+    const fileLabel = path.basename(targetPath);
+
+    if (markdownHasTodoPolicySection(existing)) {
+      if (vsc) {
+        const choice = await vsc.window.showInformationMessage(
+          t('task.injectExists', { file: fileLabel }),
+          t('task.injectOpen'),
+          t('task.injectCopy'),
+        );
+        if (choice === t('task.injectOpen')) {
+          const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(targetPath));
+          await vsc.window.showTextDocument(doc);
+        } else if (choice === t('task.injectCopy')) {
+          await vsc.env.clipboard.writeText(getRecommendedTodoPolicySection());
+          vsc.window.showInformationMessage(t('task.injectCopied'));
+        }
+      }
+      return 'exists';
+    }
+
+    if (vsc) {
+      const confirm = await vsc.window.showWarningMessage(
+        t('task.injectConfirm', { file: fileLabel }),
+        { modal: true },
+        t('task.injectAppend'),
+        t('task.injectCancel'),
+      );
+      if (confirm !== t('task.injectAppend')) return 'cancelled';
+    }
+
+    const { content, appended } = appendRecommendedTodoPolicySection(existing);
+    if (!appended) return 'exists';
+    fs.writeFileSync(targetPath, content, 'utf-8');
+    if (vsc) {
+      const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(targetPath));
+      await vsc.window.showTextDocument(doc);
+      vsc.window.showInformationMessage(t('task.injectDone', { file: fileLabel }));
+    }
+    return 'appended';
   }
 
   public async openClaudeMdFile(): Promise<void> {

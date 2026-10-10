@@ -299,35 +299,125 @@ export function getWebviewContent(): string {
       color: #58a6ff;
     }
 
-    /* Enhanced Todo Card in Hub Dashboard */
+    /* Enhanced Todo Card in Hub Dashboard (T1–T4 display polish) */
     .todo-item-card {
       display: flex;
-      align-items: center;
-      gap: 7px;
+      align-items: flex-start;
+      gap: 8px;
       font-size: 11px;
-      padding: 4px 6px;
-      border-radius: 4px;
-      margin-bottom: 3px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
       background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       transition: background 0.15s;
     }
     .todo-item-card:hover {
       background: rgba(255, 255, 255, 0.06);
     }
     .todo-item-card.completed {
-      opacity: 0.65;
+      opacity: 0.7;
     }
     .todo-item-card.in_progress {
       background: rgba(56, 139, 253, 0.1);
-      border-color: rgba(56, 139, 253, 0.3);
-      font-weight: 500;
+      border-color: rgba(56, 139, 253, 0.32);
     }
     .todo-badge-icon {
       flex-shrink: 0;
-      font-size: 11px;
-      line-height: 1;
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 1px;
     }
+    .todo-card-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .todo-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
+    .todo-title {
+      flex: 1;
+      min-width: 0;
+      color: var(--text-main, inherit);
+      font-weight: 600;
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .todo-item-card.completed .todo-title {
+      text-decoration: line-through;
+      opacity: 0.75;
+      font-weight: 500;
+    }
+    .todo-status-chip {
+      flex-shrink: 0;
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 1;
+      padding: 3px 6px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .todo-status-chip.pending {
+      color: var(--text-muted, #8b949e);
+      background: rgba(139, 148, 158, 0.12);
+      border-color: rgba(139, 148, 158, 0.28);
+    }
+    .todo-status-chip.in_progress {
+      color: #58a6ff;
+      background: rgba(56, 139, 253, 0.16);
+      border-color: rgba(56, 139, 253, 0.4);
+    }
+    .todo-status-chip.completed {
+      color: var(--success-color, #2ea043);
+      background: rgba(46, 160, 67, 0.14);
+      border-color: rgba(46, 160, 67, 0.35);
+    }
+    .todo-body {
+      color: var(--text-muted, #8b949e);
+      font-size: 10px;
+      font-weight: 400;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+    .todo-body.clamped {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+    }
+    .todo-expand-btn {
+      align-self: flex-start;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: var(--claude-accent, #e07a5f);
+      font-size: 10px;
+      cursor: pointer;
+      opacity: 0.9;
+    }
+    .todo-expand-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .todo-active-form {
+      color: var(--text-muted, #8b949e);
+      font-size: 10px;
+      font-style: italic;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
     .todo-progress-track {
       height: 3px;
       border-radius: 2px;
@@ -591,11 +681,44 @@ export function getWebviewContent(): string {
     }
 
     .todos-activity {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 6px;
       color: var(--text-muted);
       font-size: 10px;
       line-height: 1.4;
       overflow-wrap: anywhere;
-      padding: 2px 0 5px;
+      padding: 4px 6px;
+      margin: 0 0 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .todos-activity-part {
+      color: var(--text-muted);
+    }
+    .todos-activity-sep {
+      color: rgba(139, 148, 158, 0.55);
+      user-select: none;
+    }
+    .todos-activity-warn {
+      color: var(--claude-amber, #d97706);
+      font-weight: 600;
+    }
+
+
+    .todos-plan-warn {
+      display: none;
+      margin: 0 0 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid color-mix(in srgb, var(--claude-amber, #d97706) 55%, transparent);
+      background: color-mix(in srgb, var(--claude-amber, #d97706) 14%, transparent);
+      color: var(--text-main, inherit);
+      font-size: 10px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
     }
 
     .doc-btn-group {
@@ -1153,6 +1276,7 @@ export function getWebviewContent(): string {
           <div id="todos-progress-bar" class="todo-progress-fill" style="width: 0%;"></div>
         </div>
         <div id="todos-activity" class="todos-activity" style="display: none;"></div>
+        <div id="todos-plan-warn" class="todos-plan-warn" role="status"></div>
         <div id="todos-list"></div>
       </div>
 
@@ -1268,6 +1392,7 @@ export function getWebviewContent(): string {
         <button class="btn btn-secondary" id="btn-open-agents-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'AGENTS' })" title="打开或创建项目根目录 AGENTS.md (支持新版 Agent 规范)">🤖 打开 AGENTS.md</button>
         <button class="btn btn-secondary" id="btn-open-claude-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'CLAUDE' })" title="打开或创建项目根目录 CLAUDE.md (经典项目说明)">📝 打开 CLAUDE.md</button>
       </div>
+      <button class="btn btn-secondary" id="btn-inject-todo-policy" style="margin-top: 6px;" onclick="sendMessage('injectTodoPolicy')" title="Append recommended Claude Hub task-tracking section to AGENTS.md or CLAUDE.md">📋 插入任务追踪段落</button>
 
     </div>
   </div>
@@ -1276,6 +1401,31 @@ export function getWebviewContent(): string {
 
   <script>
     const vscode = acquireVsCodeApi();
+    let hubUiStrings = {
+      planNoChecklistWarn: 'Plan has no GFM checklist — phase status may be inaccurate. Prefer checklist marks or TaskCreate/TaskUpdate.',
+      injectSection: 'Insert task-tracking section',
+      chipPending: 'Pending',
+      chipActive: 'In progress',
+      chipDone: 'Done',
+      expand: 'Expand',
+      collapse: 'Collapse',
+    };
+    function applyHubUiStrings(ui) {
+      if (!ui || typeof ui !== 'object') return;
+      if (typeof ui.planNoChecklistWarn === 'string') hubUiStrings.planNoChecklistWarn = ui.planNoChecklistWarn;
+      if (typeof ui.injectSection === 'string') hubUiStrings.injectSection = ui.injectSection;
+      if (typeof ui.chipPending === 'string') hubUiStrings.chipPending = ui.chipPending;
+      if (typeof ui.chipActive === 'string') hubUiStrings.chipActive = ui.chipActive;
+      if (typeof ui.chipDone === 'string') hubUiStrings.chipDone = ui.chipDone;
+      if (typeof ui.expand === 'string') hubUiStrings.expand = ui.expand;
+      if (typeof ui.collapse === 'string') hubUiStrings.collapse = ui.collapse;
+      const injectBtn = document.getElementById('btn-inject-todo-policy');
+      if (injectBtn) {
+        injectBtn.textContent = '📋 ' + hubUiStrings.injectSection;
+        injectBtn.title = hubUiStrings.injectSection;
+      }
+    }
+
 
     // Accordion State Memory
     function toggleSection(id) {
@@ -1324,26 +1474,186 @@ export function getWebviewContent(): string {
       if (currentSession) sendMessage('copyTaskSyncPrompt');
     }
 
-    function getTodoActivityText(session) {
+    function shouldWarnPlanWithoutChecklist(session) {
+      const policy = session && session.projectTodoPolicy;
+      if (!policy || !policy.warn_plan_without_checklist) return false;
+      const plan = session.plan;
+      if (!plan) return false;
+      return plan.isChecklist !== true;
+    }
+
+    function updateTodosPlanWarn(session) {
+      const el = document.getElementById('todos-plan-warn');
+      if (!el) return;
+      if (shouldWarnPlanWithoutChecklist(session)) {
+        el.textContent = '⚠️ ' + (hubUiStrings.planNoChecklistWarn || '');
+        el.style.display = 'block';
+      } else {
+        el.textContent = '';
+        el.style.display = 'none';
+      }
+    }
+
+    const todoExpandState = new Map();
+
+    function stripTodoMarkdownNoise(text) {
+      if (!text) return '';
+      let s = String(text).trim();
+      s = s.replace(/^\\*\\*\\s*/, '').replace(/\\s*\\*\\*$/, '');
+      s = s.replace(/\\*\\*/g, '');
+      return s.replace(/\\s+/g, ' ').trim();
+    }
+
+    function splitTodoDisplay(td) {
+      const rawContent = typeof td.content === 'string' ? td.content : '';
+      const content = stripTodoMarkdownNoise(rawContent);
+      const description = typeof td.description === 'string' ? td.description.trim() : '';
+      const key = (typeof td.id === 'string' && td.id) ? td.id : (content || rawContent || 'todo');
+      let title = content || 'Task';
+      let body = description;
+      if (!body) {
+        const lines = rawContent.replace(/\\r\\n/g, '\\n').split('\\n').map(function(l) {
+          return stripTodoMarkdownNoise(l);
+        }).filter(Boolean);
+        const first = lines[0] || content;
+        const taskTitle = first.match(/^任务\\s*\\d+\\s*[:：].+$/);
+        if (taskTitle && first.length <= 56) {
+          title = first;
+          body = lines.slice(1).join('\\n').trim();
+          if (!body && content.length > first.length) {
+            const idx = content.indexOf(first);
+            body = content.slice(idx >= 0 ? idx + first.length : first.length).trim();
+          }
+        } else if (lines.length > 1 && first.length <= 42) {
+          title = first;
+          body = lines.slice(1).join('\\n').trim();
+        } else if (content.length > 42) {
+          const sent = content.search(/[。！？\\n]/);
+          if (sent > 8 && sent <= 48) {
+            title = content.slice(0, sent);
+            body = content.slice(sent + 1).trim();
+          } else {
+            title = content.slice(0, 36).trim() + '…';
+            body = content;
+          }
+        }
+      } else {
+        title = content || title;
+      }
+      if (!title) title = 'Task';
+      if (!(body === content && title.endsWith('…')) && body.startsWith(title)) {
+        body = body.slice(title.length).replace(/^[\\s:：\\-—]+/, '').trim();
+      }
+      const subtitle = (td.status === 'in_progress' && typeof td.activeForm === 'string' && td.activeForm.trim())
+        ? td.activeForm.trim() : '';
+      return { title: title, body: body, subtitle: subtitle, key: key };
+    }
+
+    function todoNeedsClamp(body) {
+      if (!body) return false;
+      const lines = body.split(/\\n/).length;
+      return body.length > 90 || lines > 2;
+    }
+
+    function toggleTodoExpand(ev, key) {
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      todoExpandState.set(key, !todoExpandState.get(key));
+      if (currentSession) renderTodosList(currentSession);
+    }
+
+    function getTodoChipLabel(status) {
+      if (status === 'completed') return hubUiStrings.chipDone || 'Done';
+      if (status === 'in_progress') return hubUiStrings.chipActive || 'In progress';
+      return hubUiStrings.chipPending || 'Pending';
+    }
+
+    function getTodoActivityParts(session) {
       const agents = session.agents || [];
       const running = agents.filter(a => a.status === 'running').length;
       const ended = agents.length - running;
       const parts = [];
       if (agents.length) {
-        parts.push('Agent ' + (running ? running + ' 运行 · ' : '') + ended + '/' + agents.length + ' 已结束');
+        parts.push({
+          text: 'Agent ' + (running ? running + ' 运行 · ' : '') + ended + '/' + agents.length + ' 已结束',
+          warn: false
+        });
       }
       if (!session.isIdle && session.activeTools && session.activeTools.length) {
-        parts.push('工具 ' + session.activeTools[0].name + ' 运行中');
+        parts.push({ text: '工具 ' + session.activeTools[0].name + ' 运行中', warn: false });
       } else if (!session.isIdle && session.lastActivity &&
           (!session.currentTurnStartTime ||
             session.lastActivity.timestamp >= new Date(session.currentTurnStartTime).getTime())) {
-        parts.push('最近 ' + session.lastActivity.name);
+        parts.push({ text: '最近 ' + session.lastActivity.name, warn: false });
       }
       if (parts.length && (session.taskSource === 'plan' || session.taskSource === 'markdown') &&
           session.todos.every(t => t.status === 'pending')) {
-        parts.push('阶段待确认');
+        parts.push({ text: '阶段待确认', warn: true });
       }
-      return parts.join(' · ');
+      return parts;
+    }
+
+    function getTodoActivityText(session) {
+      return getTodoActivityParts(session).map(p => p.text).join(' · ');
+    }
+
+    function renderTodosActivity(activityEl, session) {
+      const parts = getTodoActivityParts(session);
+      if (!parts.length) {
+        activityEl.textContent = '';
+        activityEl.style.display = 'none';
+        return;
+      }
+      activityEl.innerHTML = parts.map(function(p, i) {
+        const sep = i === 0 ? '' : '<span class="todos-activity-sep">·</span>';
+        const cls = p.warn ? 'todos-activity-part todos-activity-warn' : 'todos-activity-part';
+        return sep + '<span class="' + cls + '">' + escapeHtml(p.text) + '</span>';
+      }).join('');
+      activityEl.style.display = 'flex';
+    }
+
+    function renderTodosList(s) {
+      const todosList = document.getElementById('todos-list');
+      if (!todosList || !s || !s.todos) return;
+      todosList.innerHTML = s.todos.map(function(td) {
+        const statusClass = td.status === 'completed' ? 'completed' : (td.status === 'in_progress' ? 'in_progress' : 'pending');
+        let iconHtml = '<span style="opacity: 0.5;">☐</span>';
+        if (td.status === 'completed') {
+          iconHtml = '<span style="color: #2ea043; font-weight: bold;">☑</span>';
+        } else if (td.status === 'in_progress') {
+          iconHtml = '<span class="todo-spinner" role="img" title="进行中" aria-label="进行中"></span>';
+        }
+        const parts = splitTodoDisplay(td);
+        const expanded = !!todoExpandState.get(parts.key);
+        const clamp = !expanded && todoNeedsClamp(parts.body);
+        const chip = '<span class="todo-status-chip ' + statusClass + '">' + escapeHtml(getTodoChipLabel(td.status)) + '</span>';
+        let bodyHtml = '';
+        if (parts.body) {
+          bodyHtml = '<div class="todo-body' + (clamp ? ' clamped' : '') + '">' + escapeHtml(parts.body) + '</div>';
+          if (todoNeedsClamp(parts.body)) {
+            const label = expanded ? (hubUiStrings.collapse || 'Collapse') : (hubUiStrings.expand || 'Expand');
+            bodyHtml += '<button type="button" class="todo-expand-btn" data-todo-key="' + escapeHtml(parts.key) + '">' + escapeHtml(label) + '</button>';
+          }
+        }
+        const subHtml = parts.subtitle
+          ? '<div class="todo-active-form">' + escapeHtml(parts.subtitle) + '</div>'
+          : '';
+        return '<div class="todo-item-card ' + statusClass + '" data-todo-id="' + escapeHtml(parts.key) + '">' +
+          '<span class="todo-badge-icon">' + iconHtml + '</span>' +
+          '<div class="todo-card-main">' +
+            '<div class="todo-title-row">' +
+              '<span class="todo-title">' + escapeHtml(parts.title) + '</span>' +
+              chip +
+            '</div>' +
+            bodyHtml +
+            subHtml +
+          '</div>' +
+        '</div>';
+      }).join('');
+      todosList.querySelectorAll('.todo-expand-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(ev) {
+          toggleTodoExpand(ev, btn.getAttribute('data-todo-key') || '');
+        });
+      });
     }
 
     function toggleTodosList() {
@@ -1727,6 +2037,7 @@ export function getWebviewContent(): string {
       if (!msg) return;
 
       if (msg.type === 'updateSession') {
+        applyHubUiStrings(msg.ui);
         const s = msg.session;
         currentSession = s || null;
         if (msg.allSessions) {
@@ -1808,6 +2119,7 @@ export function getWebviewContent(): string {
           // Todos List
           const todosWrap = document.getElementById('todos-container');
           const todosList = document.getElementById('todos-list');
+          const warnOnlyPlan = shouldWarnPlanWithoutChecklist(s);
           if (s.todos && s.todos.length > 0) {
             todosWrap.style.display = 'block';
             const done = s.todos.filter(x => x.status === 'completed').length;
@@ -1828,10 +2140,13 @@ export function getWebviewContent(): string {
               syncBtn.style.display = s.taskSource === 'plan' || s.taskSource === 'markdown' ? 'inline-block' : 'none';
             }
             if (activityEl) {
-              const activity = getTodoActivityText(s);
-              activityEl.textContent = activity;
-              activityEl.style.display = activity ? 'block' : 'none';
+              renderTodosActivity(activityEl, s);
+              if (s.projectTodoPolicy && s.projectTodoPolicy.activity_separate_from_status === false) {
+                activityEl.textContent = '';
+                activityEl.style.display = 'none';
+              }
             }
+            updateTodosPlanWarn(s);
 
             if (counterEl) {
               if (isAllCompleted) {
@@ -1865,23 +2180,21 @@ export function getWebviewContent(): string {
               if (caret) caret.style.transform = 'rotate(0deg)';
             }
 
-            todosList.innerHTML = s.todos.map(td => {
-              const statusClass = td.status === 'completed' ? 'completed' : (td.status === 'in_progress' ? 'in_progress' : 'pending');
-              let iconHtml = '☐';
-              let strike = '';
-              if (td.status === 'completed') {
-                iconHtml = '<span style="color: #2ea043; font-weight: bold;">☑</span>';
-                strike = 'style="text-decoration: line-through; opacity: 0.65;"';
-              } else if (td.status === 'in_progress') {
-                iconHtml = '<span class="todo-spinner" role="img" title="进行中" aria-label="进行中"></span>';
-              } else {
-                iconHtml = '<span style="opacity: 0.5;">☐</span>';
-              }
-              return '<div class="todo-item-card ' + statusClass + '">' +
-                '<span class="todo-badge-icon">' + iconHtml + '</span>' +
-                '<span ' + strike + ' style="word-break: break-word;">' + escapeHtml(td.content) + '</span>' +
-              '</div>';
-            }).join('');
+            renderTodosList(s);
+          } else if (warnOnlyPlan) {
+            todosWrap.style.display = 'block';
+            if (todosList) todosList.innerHTML = '';
+            const syncBtn = document.getElementById('todos-sync-btn');
+            if (syncBtn) syncBtn.style.display = s.taskSource === 'plan' || s.taskSource === 'markdown' ? 'inline-block' : 'none';
+            const clearBtn = document.getElementById('todos-clear-btn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            const activityEl = document.getElementById('todos-activity');
+            if (activityEl) { activityEl.textContent = ''; activityEl.style.display = 'none'; }
+            const counterEl = document.getElementById('todos-counter');
+            if (counterEl) { counterEl.className = 'status-pill'; counterEl.innerHTML = '0/0'; counterEl.title = '0/0'; }
+            const progBar = document.getElementById('todos-progress-bar');
+            if (progBar) progBar.style.width = '0%';
+            updateTodosPlanWarn(s);
           } else {
             todosWrap.style.display = 'none';
             if (todosList) todosList.innerHTML = '';
@@ -1890,6 +2203,8 @@ export function getWebviewContent(): string {
               activityEl.textContent = '';
               activityEl.style.display = 'none';
             }
+            const warnEl = document.getElementById('todos-plan-warn');
+            if (warnEl) { warnEl.textContent = ''; warnEl.style.display = 'none'; }
             userToggledTodos = false;
             userManuallyOpenedTodos = false;
           }
@@ -2018,6 +2333,7 @@ export function getWebviewContent(): string {
       }
 
       if (msg.type === 'loadConfig') {
+        applyHubUiStrings(msg.ui);
         const c = msg.config || {};
         if (c.apiBaseUrl) {
           document.getElementById('cfg-base-url').value = c.apiBaseUrl;

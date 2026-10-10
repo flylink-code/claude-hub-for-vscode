@@ -57,6 +57,19 @@ export interface SessionPlan {
   isChecklist: boolean;
 }
 
+/** Allowlisted todo preferences parsed from AGENTS.md / CLAUDE.md (see projectTodoPolicy.ts). */
+export interface ProjectTodoPolicyInfo {
+  sourceFile?: 'AGENTS.md' | 'CLAUDE.md';
+  sourcePath?: string;
+  prefer_source?: 'auto' | 'tasks' | 'checklist' | 'todoWrite';
+  plan_checklist?: 'required' | 'preferred' | 'optional';
+  sync_prompt_style?: 'verify' | 'brief' | 'custom';
+  warn_plan_without_checklist?: boolean;
+  activity_separate_from_status?: boolean;
+  sync_prompt_custom_zh?: string;
+  sync_prompt_custom_en?: string;
+}
+
 export interface LastActivity {
   name: string;
   target?: string;
@@ -100,6 +113,7 @@ export interface SessionInfo {
   taskListId?: string;
   lastActivity?: LastActivity;
   taskToolsObserved?: boolean;
+  projectTodoPolicy?: ProjectTodoPolicyInfo;
   skills: string[];
   mcpServers: string[];
   gitBranch?: string;

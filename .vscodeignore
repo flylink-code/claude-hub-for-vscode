@@ -14,3 +14,8 @@ tsconfig.json
 tsconfig.test.json
 *.vsix
 **/*.map
+
+*.py
+_*.txt
+_*.b64
+

@@ -9,6 +9,7 @@ import * as path from 'path';
 import { TaskIntegrationManager } from './taskIntegration.js';
 import { isAllowedPlanPath } from './nativeTasks.js';
 import { t, getCurrentLanguage } from './i18n.js';
+import { buildTaskSyncPrompt } from './projectTodoPolicy.js';
 
 export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'claudeHub.dashboardView';
@@ -139,9 +140,13 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           if (!session) break;
           const items = session.plan?.items ?? session.todos;
           const names = items.map(item => `- ${item.content}`).join('\n');
-          const prompt = getCurrentLanguage() === 'zh-CN'
-            ? `请核对本会话执行计划各阶段的实际进度和验证结果，先检查已有任务，避免重复创建。可用 TaskCreate/TaskUpdate 时，记录真实的 pending、in_progress、completed；仅在验证后标记 completed。若任务工具不可用，请明确说明当前阶段和证据；若计划文件可编辑，可在核验后更新其中的 checklist 状态。不要仅凭 Agent 结束推断阶段完成。\n${session.plan?.path ? `计划：${session.plan.path}\n` : ''}${names}`
-            : `Check actual progress and verification for each phase of this session's plan. Inspect existing tasks before creating new ones. If TaskCreate/TaskUpdate are available, record genuine pending, in_progress, and completed states; mark completed only after verification. Otherwise report the current phase and evidence, and update the plan checklist after verification if the plan file is editable. Do not infer phase completion from an Agent finishing.\n${session.plan?.path ? `Plan: ${session.plan.path}\n` : ''}${names}`;
+          const lang = getCurrentLanguage() === 'zh-CN' ? 'zh-CN' as const : 'en' as const;
+          const prompt = buildTaskSyncPrompt({
+            policy: session.projectTodoPolicy,
+            language: lang,
+            itemLines: names,
+            planPath: session.plan?.path,
+          });
           await vscode.env.clipboard.writeText(prompt);
           vscode.window.showInformationMessage(t('task.copyDone'));
           break;
@@ -236,6 +241,14 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           this.sendConfigUpdate();
           break;
 
+        case 'injectTodoPolicy': {
+          const folder = await this.pickWorkspace();
+          if (!folder) break;
+          await this.configManager.injectTodoPolicySection(folder.uri.fsPath);
+          this.sendConfigUpdate();
+          break;
+        }
+
         case 'newConversation': {
           try {
             await vscode.commands.executeCommand('claude-vscode.newConversation');
@@ -309,6 +322,15 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       filterMode: this.sessionManager.filterMode,
       subscription: this.sessionManager.subscriptionUsage,
       cost,
+      ui: {
+        planNoChecklistWarn: t('task.planNoChecklistWarn'),
+        injectSection: t('task.injectSection'),
+        chipPending: t('task.chipPending'),
+        chipActive: t('task.chipActive'),
+        chipDone: t('task.chipDone'),
+        expand: t('task.expand'),
+        collapse: t('task.collapse'),
+      },
     });
   }
 
@@ -323,6 +345,15 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           session.taskToolsObserved && isPathInWorkspace(session.projectPath, [folder.uri.fsPath]));
         return this.taskIntegration.status(folder.uri.fsPath, observed);
       }),
+      ui: {
+        planNoChecklistWarn: t('task.planNoChecklistWarn'),
+        injectSection: t('task.injectSection'),
+        chipPending: t('task.chipPending'),
+        chipActive: t('task.chipActive'),
+        chipDone: t('task.chipDone'),
+        expand: t('task.expand'),
+        collapse: t('task.collapse'),
+      },
     });
   }
 

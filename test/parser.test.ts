@@ -2060,10 +2060,11 @@ test('getWebviewContent shows task activity separately from confirmed task statu
   assert.ok(html.includes('id="todos-activity"'));
   assert.ok(html.includes('id="todos-sync-btn"'));
   assert.ok(html.includes("sendMessage('copyTaskSyncPrompt')"));
-  assert.ok(html.includes('activityEl.textContent = activity'));
+  assert.ok(html.includes('renderTodosActivity(activityEl, s)'));
+  assert.ok(html.includes('todos-activity-warn'));
   assert.ok(html.includes("s.taskSource === 'plan' || s.taskSource === 'markdown'"));
 
-  const start = html.indexOf('    function getTodoActivityText(session) {');
+  const start = html.indexOf('    function getTodoActivityParts(session) {');
   const end = html.indexOf('    function toggleTodosList() {', start);
   assert.ok(start >= 0 && end > start);
   const script = new Script(html.slice(start, end) + '\ngetTodoActivityText(session)');

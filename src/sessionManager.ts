@@ -15,6 +15,7 @@ import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData, TaskSource, TodoItem, SessionPlan } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
 import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot, mergeDiskPlanTodos } from './nativeTasks.js';
+import { readProjectTodoPolicy, projectTodoPolicyWatchPaths } from './projectTodoPolicy.js';
 
 export { generateForkTitle };
 
@@ -378,8 +379,11 @@ export class SessionManager implements vscode.Disposable {
       const idleTimeout = config.get<number>('idleTimeout', 180);
 
       const projectsDir = getClaudeProjectsDir(this.getConfigDir());
-      this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir,
-        this._sessions.map(s => s.plan?.path).filter((p): p is string => !!p));
+      const watchMd = [
+        ...this._sessions.map(s => s.plan?.path).filter((p): p is string => !!p),
+        ...this._sessions.flatMap(s => projectTodoPolicyWatchPaths(s.projectPath)),
+      ];
+      this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir, watchMd);
       if (!this.fileWatcher && fs.existsSync(projectsDir)) {
         this.initWatchers();
       }
@@ -639,6 +643,7 @@ export class SessionManager implements vscode.Disposable {
             taskListId,
             lastActivity: parsed.lastActivity,
             taskToolsObserved: parsed.taskToolsObserved || taskSource === 'native',
+            projectTodoPolicy: readProjectTodoPolicy(projectPath),
             skills: parsed.skills,
             mcpServers: parsed.mcpServers,
             gitBranch: parsed.gitBranch,
@@ -668,8 +673,11 @@ export class SessionManager implements vscode.Disposable {
 
       this._sessions = discoveredSessions;
       if (dismissedChanged) await this.context.globalState.update('dismissedTaskSnapshots', dismissed);
-      this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir,
-        discoveredSessions.map(s => s.plan?.path).filter((p): p is string => !!p));
+      const discoveredWatchMd = [
+        ...discoveredSessions.map(s => s.plan?.path).filter((p): p is string => !!p),
+        ...discoveredSessions.flatMap(s => projectTodoPolicyWatchPaths(s.projectPath)),
+      ];
+      this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir, discoveredWatchMd);
       this._onDidUpdateSessions.fire(this.getFilteredSessions());
     } catch (err) {
       console.error('[Claude Hub] Error during scanSessions:', err);

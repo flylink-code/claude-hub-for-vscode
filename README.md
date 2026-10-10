@@ -86,6 +86,11 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
 }
 ```
 
+
+### Project docs (AGENTS.md / CLAUDE.md)
+
+Add a **Claude Hub — Task Tracking** section so Claude and the extension share the same todo preferences. New files generated from the dashboard include a sample JSON block. Use **Insert task-tracking section** to append it to an existing file without overwriting.
+
 ### Development
 
 ```bash
@@ -190,6 +195,11 @@ npm test
   "claudeHub.language": "auto"
 }
 ```
+
+
+### 项目文档（AGENTS.md / CLAUDE.md）
+
+在文档中加入 **Claude Hub — Task Tracking / 任务追踪** 段落，让 Claude 与插件共享待办偏好。仪表盘新生成的文件会带上示例 JSON；也可用 **插入任务追踪段落** 仅追加、不覆盖已有内容。
 
 ### 本地开发
 
