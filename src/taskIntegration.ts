@@ -6,13 +6,29 @@ import { isWithin } from './nativeTasks.js';
 
 export const TASK_TOOL_ENV = 'CLAUDE_CODE_ENABLE_TODO_TOOLS';
 
+/** Treat common truthy env encodings as enabled. */
+export function isTodoToolsEnvEnabled(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  const s = String(value ?? '').trim().toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes' || s === 'on';
+}
+
+
 type JsonObject = Record<string, any>;
 
 export interface TaskIntegrationState {
   projectPath: string;
+  /** True when Hub env-only flag is set in settings.local.json OR full hook integration is configured. */
   configured: boolean;
+  /** settings.local.json has CLAUDE_CODE_ENABLE_TODO_TOOLS=1 (env-only or full). */
+  envEnabled: boolean;
+  /** Effective merged env (process + user + project + local) is 1. */
+  effectiveEnabled: boolean;
+  /** Full Hub hooks+bridge integration is present. */
+  hooksConfigured: boolean;
   observed: boolean;
   conflict?: boolean;
+  conflictReason?: string;
 }
 
 export function readJsonObject(file: string): JsonObject {
@@ -92,18 +108,133 @@ export class TaskIntegrationManager {
       const settings = readJsonObject(this.settingsFile(project));
       const env = this.effectiveEnv(project);
       const hooks = settings.hooks || {};
-      const configured = settings.env?.[TASK_TOOL_ENV] === '1' &&
-        ['SessionStart', 'UserPromptSubmit', 'PostToolUse'].every(event =>
-          Array.isArray(hooks[event]) && hooks[event].some((group: any) =>
-            Array.isArray(group.hooks) && group.hooks.some((h: any) => this.ownedHook(h))));
+      const envEnabled = isTodoToolsEnvEnabled(settings.env?.[TASK_TOOL_ENV]);
+      const effectiveEnabled = isTodoToolsEnvEnabled(env[TASK_TOOL_ENV]);
+      const hooksConfigured =
+        envEnabled &&
+        ['SessionStart', 'UserPromptSubmit', 'PostToolUse'].every(
+          (event) =>
+            Array.isArray(hooks[event]) &&
+            hooks[event].some(
+              (group: any) => Array.isArray(group.hooks) && group.hooks.some((h: any) => this.ownedHook(h)),
+            ),
+        );
+      const tasksDisabled = ['0', 'false'].includes(String(env.CLAUDE_CODE_ENABLE_TASKS).toLowerCase());
+      let conflict = false;
+      let conflictReason: string | undefined;
+      if (tasksDisabled) {
+        conflict = true;
+        conflictReason = 'CLAUDE_CODE_ENABLE_TASKS is disabled';
+      } else if (envEnabled && !effectiveEnabled) {
+        conflict = true;
+        conflictReason = 'Local env is on but effective env is overridden';
+      }
       return {
-        projectPath: project, configured, observed,
-        conflict: ['0', 'false'].includes(String(env.CLAUDE_CODE_ENABLE_TASKS).toLowerCase()) ||
-          !!readJsonObject(path.join(this.configDir(), 'settings.json')).disableAllHooks ||
-          !!settings.disableAllHooks ||
-          !!readJsonObject(path.join(project, '.claude', 'settings.json')).disableAllHooks,
+        projectPath: project,
+        configured: envEnabled || hooksConfigured,
+        envEnabled,
+        effectiveEnabled,
+        hooksConfigured,
+        observed,
+        conflict,
+        conflictReason,
       };
-    } catch { return { projectPath: project, configured: false, observed, conflict: true }; }
+    } catch {
+      return {
+        projectPath: project,
+        configured: false,
+        envEnabled: false,
+        effectiveEnabled: false,
+        hooksConfigured: false,
+        observed,
+        conflict: true,
+        conflictReason: 'Failed to read settings',
+      };
+    }
+  }
+
+  private ownershipEnvFile(project: string): string {
+    const key = crypto.createHash('sha256').update(path.resolve(project)).digest('hex');
+    return path.join(this.storageDir, 'projects', `${key}.env-only.json`);
+  }
+
+
+  /**
+   * Align settings.local.json with Hub setting desire for this project.
+   * If desiredEnabled and local env missing → write env-only on.
+   * If !desiredEnabled and Hub ownership says we own the key and env is on → clear.
+   * Returns whether a write occurred.
+   */
+  reconcileWithSetting(project: string, desiredEnabled: boolean): boolean {
+    const st = this.status(project);
+    if (desiredEnabled) {
+      if (st.envEnabled) return false;
+      if (st.conflict && st.conflictReason?.includes('CLAUDE_CODE_ENABLE_TASKS')) {
+        return false;
+      }
+      this.setTodoToolsEnv(project, true);
+      return true;
+    }
+    // desired off: only clear if Hub env-only ownership exists and env is on
+    const ownFile = this.ownershipEnvFile(project);
+    if (st.envEnabled && fs.existsSync(ownFile)) {
+      this.setTodoToolsEnv(project, false);
+      return true;
+    }
+    return false;
+  }
+
+  /** Env-only: set/clear CLAUDE_CODE_ENABLE_TODO_TOOLS in settings.local.json (no hooks). */
+  setTodoToolsEnv(project: string, enabled: boolean): void {
+    this.checkWriteTarget(project);
+    if (enabled) {
+      const st = this.status(project);
+      if (st.conflict && st.conflictReason?.includes('CLAUDE_CODE_ENABLE_TASKS')) {
+        throw new Error('Tasks are explicitly disabled (CLAUDE_CODE_ENABLE_TASKS). Resolve that before enabling.');
+      }
+    }
+    const file = this.settingsFile(project);
+    const original = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    const settings = readJsonObject(file);
+    if (settings.env !== undefined && (!settings.env || typeof settings.env !== 'object' || Array.isArray(settings.env))) {
+      throw new Error('The env setting must be an object.');
+    }
+    const ownFile = this.ownershipEnvFile(project);
+    fs.mkdirSync(path.dirname(ownFile), { recursive: true });
+    if (enabled) {
+      if (!fs.existsSync(ownFile)) {
+        atomicWriteJson(ownFile, {
+          projectPath: project,
+          hadEnv: settings.env !== undefined,
+          previousExists: Object.prototype.hasOwnProperty.call(settings.env || {}, TASK_TOOL_ENV),
+          previousValue: settings.env?.[TASK_TOOL_ENV],
+        } satisfies Ownership);
+      }
+      settings.env = { ...settings.env, [TASK_TOOL_ENV]: '1' };
+    } else {
+      const ownership = fs.existsSync(ownFile) ? (readJsonObject(ownFile) as Ownership) : undefined;
+      if (settings.env && typeof settings.env === 'object') {
+        if (ownership && isTodoToolsEnvEnabled(settings.env[TASK_TOOL_ENV])) {
+          if (ownership.previousExists) settings.env[TASK_TOOL_ENV] = ownership.previousValue;
+          else delete settings.env[TASK_TOOL_ENV];
+        } else if (isTodoToolsEnvEnabled(settings.env[TASK_TOOL_ENV])) {
+          delete settings.env[TASK_TOOL_ENV];
+        }
+        if (Object.keys(settings.env).length === 0) {
+          if (!ownership || !ownership.hadEnv) delete settings.env;
+        }
+      }
+      if (fs.existsSync(ownFile)) fs.unlinkSync(ownFile);
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    if (original) {
+      try {
+        fs.writeFileSync(`${file}.claude-hub-${Date.now()}.bak`, original, { flag: 'wx' });
+      } catch {
+        /* bak may exist */
+      }
+    }
+    atomicWriteJson(file, settings, original || undefined);
   }
 
   private checkWriteTarget(project: string): void {

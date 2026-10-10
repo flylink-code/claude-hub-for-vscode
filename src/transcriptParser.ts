@@ -5,6 +5,7 @@ import { AgentEntry, TodoItem, TokenUsage, ToolEntry, SessionPlan, TaskSource, L
 
 export interface ParsedTranscript {
   sessionId?: string;
+  parentSessionId?: string;
   cwd?: string;
   gitBranch?: string;
   sessionCreated?: Date;
@@ -20,6 +21,10 @@ export interface ParsedTranscript {
   taskSource?: TaskSource;
   lastActivity?: LastActivity;
   taskToolsObserved?: boolean;
+  /** In-flight TaskCreate tool_use ids — UI only; never durable todo ids. */
+  pendingTaskCreates?: PendingTaskCreate[];
+  /** List id hinted by TaskList/native association when known from transcript tools. */
+  observedTaskListId?: string;
   skills: string[];
   mcpServers: string[];
   wasCleared: boolean;
@@ -371,6 +376,86 @@ export function resolveTaskId(input: any): string | undefined {
   return id.length > 0 ? id : undefined;
 }
 
+
+export interface PendingTaskCreate {
+  toolUseId: string;
+  subject: string;
+  description?: string;
+}
+
+/** Normalize one official task object from TaskList/TaskGet/disk-like payloads. */
+export function normalizeOfficialTaskItem(raw: any): TodoItem | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const id = resolveTaskId(raw);
+  if (!id) return undefined;
+  const subject =
+    (typeof raw.subject === 'string' && raw.subject.trim()) ||
+    (typeof raw.content === 'string' && raw.content.trim()) ||
+    (typeof raw.title === 'string' && raw.title.trim()) ||
+    '';
+  if (!subject) return undefined;
+  if (raw.status === 'deleted') return undefined;
+  const status = ['pending', 'in_progress', 'completed'].includes(raw.status)
+    ? (raw.status as TodoItem['status'])
+    : 'pending';
+  const active = raw.activeForm ?? raw.active_form;
+  const description = typeof raw.description === 'string' ? raw.description : undefined;
+  const blockedBy = Array.isArray(raw.blockedBy)
+    ? raw.blockedBy.map(String).filter((x: string) => x.trim().length > 0)
+    : undefined;
+  const blocks = Array.isArray(raw.blocks)
+    ? raw.blocks.map(String).filter((x: string) => x.trim().length > 0)
+    : undefined;
+  return {
+    id,
+    content: subject,
+    status,
+    description,
+    activeForm: typeof active === 'string' && active.trim() ? active.trim() : undefined,
+    blockedBy: blockedBy && blockedBy.length ? blockedBy : undefined,
+    blocks: blocks && blocks.length ? blocks : undefined,
+  };
+}
+
+/** Extract task array from TaskList tool result shapes. */
+export function extractTaskListItems(response: any, text: string): any[] {
+  if (Array.isArray(response)) return response;
+  if (response && typeof response === 'object') {
+    for (const key of ['tasks', 'items', 'taskList', 'data']) {
+      const v = (response as any)[key];
+      if (Array.isArray(v)) return v;
+    }
+  }
+  if (typeof text === 'string' && text.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return parsed;
+    } catch { /* ignore */ }
+  }
+  return [];
+}
+
+export function extractTaskGetItem(response: any, text: string): any | undefined {
+  if (response && typeof response === 'object') {
+    if (response.task && typeof response.task === 'object' && !Array.isArray(response.task)) {
+      return response.task;
+    }
+    if (resolveTaskId(response) && (response.subject || response.content || response.title)) {
+      return response;
+    }
+  }
+  if (typeof text === 'string' && text.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed === 'object') {
+        return parsed.task && typeof parsed.task === 'object' ? parsed.task : parsed;
+      }
+    } catch { /* ignore */ }
+  }
+  return undefined;
+}
+
+
 /**
  * Advances plan todos based on tool executions (Edit, Write, Bash, Agent, etc.).
  *
@@ -537,6 +622,7 @@ function createEmptyTranscript(): ParsedTranscript {
     activeTools: [],
     agents: [],
     todos: [],
+    pendingTaskCreates: [],
     skills: [],
     mcpServers: [],
     wasCleared: false,
@@ -570,6 +656,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   let taskToolsObserved = false;
   const explicitState: { source: TaskSource } = { source: 'none' };
   const queuedTaskUpdates = new Map<string, any[]>();
+  /** tool_use id -> pending create (transient; never used as TodoItem.id). */
+  const pendingCreates = new Map<string, PendingTaskCreate>();
+  let observedTaskListId: string | undefined;
   let latestMarkdownTodos: TodoItem[] = [];
 
   const updateTask = (id: string, input: any): void => {
@@ -588,42 +677,107 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
       if (Array.isArray(input[addition])) item[field] = Array.from(new Set([...(item[field] || []), ...input[addition].map(String)]));
     }
   };
-  const applyTaskResult = (name: string, input: any, _toolId: string, response: any, text: string): void => {
-    if (!['TaskCreate', 'TaskUpdate', 'TodoWrite'].includes(name)) return;
+  const notePendingTaskCreate = (toolUseId: string, input: any): void => {
+    if (!toolUseId) return;
+    const subject = String(input?.subject || input?.description || 'Task').trim() || 'Task';
+    const description = typeof input?.description === 'string' ? input.description : undefined;
+    pendingCreates.set(toolUseId, { toolUseId, subject, description });
+  };
+
+  const applyTaskResult = (name: string, input: any, toolId: string, response: any, text: string): void => {
+    if (!['TaskCreate', 'TaskUpdate', 'TaskList', 'TaskGet', 'TodoWrite'].includes(name)) return;
     taskToolsObserved = true;
+
     if (name === 'TodoWrite' && Array.isArray(input.todos)) {
       explicitState.source = 'todoWrite';
+      pendingCreates.clear();
       todos.length = 0;
       for (const item of input.todos) {
         if (typeof item?.content === 'string' && ['pending', 'in_progress', 'completed'].includes(item.status)) {
           todos.push({ content: item.content, status: item.status });
         }
       }
-    } else if (name === 'TaskCreate') {
+      return;
+    }
+
+    if (name === 'TaskList') {
+      const items = extractTaskListItems(response, text);
+      explicitState.source = 'tasks';
+      tasksMap.clear();
+      pendingCreates.clear();
+      for (const raw of items) {
+        const item = normalizeOfficialTaskItem(raw);
+        if (item?.id) tasksMap.set(item.id, item);
+      }
+      const listHint =
+        (response && typeof response === 'object' && (
+          (typeof response.listId === 'string' && response.listId) ||
+          (typeof response.taskListId === 'string' && response.taskListId) ||
+          (typeof response.id === 'string' && response.id)
+        )) || undefined;
+      if (listHint && /^[a-zA-Z0-9_.-]{1,128}$/.test(String(listHint))) {
+        observedTaskListId = String(listHint);
+      }
+      return;
+    }
+
+    if (name === 'TaskGet') {
+      const raw = extractTaskGetItem(response, text);
+      const item = normalizeOfficialTaskItem(raw);
+      if (!item?.id) return;
+      explicitState.source = 'tasks';
+      const prev = tasksMap.get(item.id);
+      tasksMap.set(item.id, {
+        ...prev,
+        ...item,
+        // Keep prior deps if Get omits them
+        blockedBy: item.blockedBy ?? prev?.blockedBy,
+        blocks: item.blocks ?? prev?.blocks,
+        activeForm: item.activeForm ?? prev?.activeForm,
+        description: item.description ?? prev?.description,
+      });
+      if (toolId) pendingCreates.delete(toolId);
+      return;
+    }
+
+    if (name === 'TaskCreate') {
       // Assigned id comes only from tool result / prose — never tool_use id fallback.
       const match = /Task #([a-zA-Z0-9_.-]+) created/i.exec(text);
       const rawId = response?.task?.id ?? response?.id ?? match?.[1];
+      if (toolId) pendingCreates.delete(toolId);
       if (rawId === undefined || rawId === null || String(rawId).trim() === '') return;
       const id = String(rawId).trim();
       explicitState.source = 'tasks';
       const active = input.activeForm ?? input.active_form;
+      const blockedBy = Array.isArray(input.addBlockedBy)
+        ? input.addBlockedBy.map(String)
+        : Array.isArray(input.blockedBy) ? input.blockedBy.map(String) : undefined;
+      const blocks = Array.isArray(input.addBlocks)
+        ? input.addBlocks.map(String)
+        : Array.isArray(input.blocks) ? input.blocks.map(String) : undefined;
       tasksMap.set(id, {
         id,
         content: String(input.subject || input.description || 'Task'),
         status: 'pending',
         description: typeof input.description === 'string' ? input.description : undefined,
         activeForm: typeof active === 'string' ? active : undefined,
+        blockedBy,
+        blocks,
       });
       const updates = queuedTaskUpdates.get(id) || [];
       queuedTaskUpdates.delete(id);
       for (const update of updates) updateTask(id, update);
-    } else if (name === 'TaskUpdate') {
+      return;
+    }
+
+    if (name === 'TaskUpdate') {
       const taskId = resolveTaskId(input);
       if (!taskId) return;
       explicitState.source = 'tasks';
       updateTask(taskId, input);
     }
-  };;
+  };
+
 
   // 仅重放 JSONL 中已成功的计划编辑，不读取文件当前内容覆盖历史状态。
   const syncPlanFile = (name: string, input: any): void => {
@@ -654,6 +808,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   };
 
   let sessionId: string | undefined;
+  let parentSessionId: string | undefined;
   let cwd: string | undefined;
   let gitBranch: string | undefined;
   let sessionCreated: Date | undefined;
@@ -722,6 +877,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
       if (!sessionId && entry.sessionId) {
         sessionId = entry.sessionId;
       }
+      if (!parentSessionId && typeof entry.parentSessionId === 'string' && entry.parentSessionId) {
+        parentSessionId = entry.parentSessionId;
+      }
       if (!cwd && entry.cwd) {
         cwd = entry.cwd;
       }
@@ -765,6 +923,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
           activePlanPath = undefined;
           planContents.clear();
           queuedTaskUpdates.clear();
+          pendingCreates.clear();
+          observedTaskListId = undefined;
           activePlanText = '';
           explicitState.source = 'none';
           taskToolsObserved = false;
@@ -928,6 +1088,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
 
             if (status === 'running') {
               activeToolIds.add(block.id);
+              if (name === 'TaskCreate') notePendingTaskCreate(block.id, input);
             } else if (pending) {
               pendingToolResults.delete(block.id);
             }
@@ -983,6 +1144,10 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
               existingTool.endTime = ts;
               existingTool.durationMs = Math.max(0, ts.getTime() - existingTool.startTime.getTime());
               activeToolIds.delete(toolId);
+
+              if (block.is_error && existingTool.name === 'TaskCreate') {
+                pendingCreates.delete(toolId);
+              }
 
               if (!block.is_error) {
                 const savedInput = toolInputMap.get(toolId);
@@ -1061,6 +1226,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
 
   return {
     sessionId,
+    parentSessionId,
     cwd,
     gitBranch,
     sessionCreated,
@@ -1081,6 +1247,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     todos,
     taskSource: wasCleared ? 'none' : taskSource,
     taskToolsObserved: !wasCleared && taskToolsObserved,
+    pendingTaskCreates: wasCleared ? [] : Array.from(pendingCreates.values()),
+    observedTaskListId: wasCleared ? undefined : observedTaskListId,
     plan: !wasCleared && activePlanText ? {
       path: activePlanPath,
       items: extractPlanTodos(activePlanText),

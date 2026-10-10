@@ -103,6 +103,62 @@
         "title": "%command.configureStatusBar%",
         "icon": "$(paintcan)",
         "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.resumeSession",
+        "title": "%command.resumeSession%"
+      },
+      {
+        "command": "claudeHub.slashCommand",
+        "title": "%command.slashCommand%"
+      },
+      {
+        "command": "claudeHub.renameSession",
+        "title": "%command.renameSession%"
+      },
+      {
+        "command": "claudeHub.openWorktree",
+        "title": "%command.openWorktree%"
+      },
+      {
+        "command": "claudeHub.workspaceCostReport",
+        "title": "%command.workspaceCostReport%"
+      },
+      {
+        "command": "claudeHub.searchTranscript",
+        "title": "%command.searchTranscript%"
+      },
+      {
+        "command": "claudeHub.exportSession",
+        "title": "%command.exportSession%"
+      },
+      {
+        "command": "claudeHub.togglePinSession",
+        "title": "%command.togglePinSession%"
+      },
+      {
+        "command": "claudeHub.openBackgroundTasks",
+        "title": "%command.openBackgroundTasks%"
+      },
+      {
+        "command": "claudeHub.newConversationHandoff",
+        "title": "%command.newConversationHandoff%"
+      },
+      {
+        "command": "claudeHub.compareFork",
+        "title": "%command.compareFork%"
+      },
+      {
+        "command": "claudeHub.editSessionTags",
+        "title": "%command.editSessionTags%"
+      },
+      {
+        "command": "claudeHub.showTimeline",
+        "title": "%command.showTimeline%"
+      },
+      {
+        "command": "claudeHub.toggleTodoTools",
+        "title": "%command.toggleTodoTools%"
       }
     ],
     "menus": {
@@ -286,7 +342,7 @@
         },
         "claudeHub.fetchSubscriptionUsage": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "%config.fetchSubscriptionUsage.desc%"
         },
         "claudeHub.subscriptionRefreshInterval": {
@@ -300,6 +356,80 @@
           "type": "string",
           "default": "",
           "description": "%config.configDir.desc%"
+        },
+        "claudeHub.todo.preferSource": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "tasks",
+            "checklist",
+            "todoWrite"
+          ],
+          "default": "auto",
+          "description": "%config.todo.preferSource.desc%",
+          "enumDescriptions": [
+            "%config.todo.preferSource.auto%",
+            "%config.todo.preferSource.tasks%",
+            "%config.todo.preferSource.checklist%",
+            "%config.todo.preferSource.todoWrite%"
+          ]
+        },
+        "claudeHub.alerts.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.alerts.enabled.desc%"
+        },
+        "claudeHub.alerts.context": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.alerts.context.desc%"
+        },
+        "claudeHub.alerts.idleWithTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.alerts.idleWithTools.desc%"
+        },
+        "claudeHub.modelPricing": {
+          "type": "object",
+          "default": {},
+          "description": "%config.modelPricing.desc%",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "number"
+              },
+              "output": {
+                "type": "number"
+              },
+              "cacheRead": {
+                "type": "number"
+              },
+              "cacheWrite": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "claudeHub.modelAliases": {
+          "type": "object",
+          "default": {},
+          "description": "%config.modelAliases.desc%",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "claudeHub.sessionListPageSize": {
+          "type": "number",
+          "default": 8,
+          "minimum": 4,
+          "maximum": 50,
+          "description": "%config.sessionListPageSize.desc%"
+        },
+        "claudeHub.todoTools.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.todoTools.enabled.desc%"
         }
       }
     }

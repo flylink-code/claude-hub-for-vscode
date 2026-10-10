@@ -2052,7 +2052,7 @@ test('getWebviewContent includes clear button and clearCompletedTodos handler', 
   assert.ok(html.includes('id="todos-clear-btn"'), 'Webview HTML must have #todos-clear-btn element');
   assert.ok(html.includes('clearCompletedTodos'), 'Webview HTML must define clearCompletedTodos handler');
   assert.ok(html.includes("clearBtn.style.display = 'inline-block'"), 'Clear action must work for incomplete tasks');
-  assert.ok(html.includes('不删除任务文件'), 'Clear action must explain that task files are retained');
+  assert.ok(html.includes('does not delete') || html.includes('不删除'), 'Clear action must explain that task files are retained');
 });
 
 test('getWebviewContent shows task activity separately from confirmed task status', () => {

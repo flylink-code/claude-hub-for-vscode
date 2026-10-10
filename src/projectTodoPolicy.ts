@@ -38,13 +38,13 @@ interface CacheEntry {
 const fileCache = new Map<string, CacheEntry>();
 
 const VERIFY_PROMPT_ZH =
-  '请核对本会话执行计划各阶段的实际进度和验证结果，先检查已有任务，避免重复创建。可用 TaskCreate/TaskUpdate 时，记录真实的 pending、in_progress、completed；仅在验证后标记 completed。若任务工具不可用，请明确说明当前阶段和证据；若计划文件可编辑，可在核验后更新其中的 checklist 状态。不要仅凭 Agent 结束推断阶段完成。';
+  '请核对本会话执行计划各阶段的实际进度和验证结果，先检查已有任务，避免重复创建。可用 TaskCreate/TaskUpdate/TaskList 时，记录真实的 pending、in_progress、completed；仅在验证后标记 completed。若任务工具不可用，请明确说明当前阶段和证据；若计划文件可编辑，可在核验后更新其中的 checklist 状态。不要仅凭 Agent 结束推断阶段完成。';
 const VERIFY_PROMPT_EN =
   "Check actual progress and verification for each phase of this session's plan. Inspect existing tasks before creating new ones. If TaskCreate/TaskUpdate are available, record genuine pending, in_progress, and completed states; mark completed only after verification. Otherwise report the current phase and evidence, and update the plan checklist after verification if the plan file is editable. Do not infer phase completion from an Agent finishing.";
 const BRIEF_PROMPT_ZH =
-  '请根据执行计划同步任务状态：先查已有任务，用 TaskCreate/TaskUpdate 记录真实进度；仅在验证后标记 completed；不要因 Agent 结束就推断完成。';
+  '请根据执行计划同步任务状态：先查已有任务，用 TaskCreate/TaskUpdate/TaskList 记录真实进度；仅在验证后标记 completed；不要因 Agent 结束就推断完成。';
 const BRIEF_PROMPT_EN =
-  'Sync task status from the plan: inspect existing tasks, use TaskCreate/TaskUpdate for real progress, mark completed only after verification, and do not infer completion from an Agent finishing.';
+  'Sync task status from the plan: inspect existing tasks, use TaskCreate/TaskUpdate/TaskList for real progress, mark completed only after verification, and do not infer completion from an Agent finishing.';
 
 function truncatePrompt(value: string): string {
   if (value.length <= PROJECT_TODO_PROMPT_MAX_CHARS) return value;
@@ -202,6 +202,47 @@ export function clearProjectTodoPolicyCache(): void {
   fileCache.clear();
 }
 
+
+/**
+ * Effective prefer_source: project policy wins; else VS Code setting; default tasks.
+ * "auto" is treated as Task-first ("tasks").
+ */
+export function resolvePreferSource(
+  policy: ProjectTodoPolicy | undefined,
+  setting?: PreferSource | string,
+): PreferSource {
+  const fromPolicy = policy?.prefer_source;
+  if (fromPolicy && PREFER_SOURCES.has(fromPolicy)) {
+    return fromPolicy;
+  }
+  if (typeof setting === 'string' && PREFER_SOURCES.has(setting as PreferSource)) {
+    return setting as PreferSource;
+  }
+  return 'auto';
+}
+
+/** Force Task-only: hide checklist/markdown fill unless plan_checklist=required. */
+export function isTasksOnlyPrefer(prefer: PreferSource): boolean {
+  return prefer === 'tasks';
+}
+
+/** Dual/auto/checklist/todoWrite may use checklist when that data exists. tasks-only needs required. */
+export function allowChecklistFill(
+  prefer: PreferSource,
+  policy: ProjectTodoPolicy | undefined,
+): boolean {
+  if (!isTasksOnlyPrefer(prefer)) return true;
+  return policy?.plan_checklist === 'required';
+}
+
+export type TodoMode = 'task' | 'checklist' | 'none';
+
+export function todoModeFromSource(taskSource: string | undefined): TodoMode {
+  if (taskSource === 'native' || taskSource === 'tasks' || taskSource === 'todoWrite') return 'task';
+  if (taskSource === 'plan' || taskSource === 'markdown') return 'checklist';
+  return 'none';
+}
+
 export function shouldWarnPlanWithoutChecklist(
   policy: ProjectTodoPolicy | undefined,
   plan: { isChecklist?: boolean } | undefined,
@@ -239,48 +280,5 @@ export function buildTaskSyncPrompt(options: {
   return `${body}\n${planLine}${itemLines}`;
 }
 
-/** Canonical heading used by parser and inject/stub generators. */
+/** Canonical heading matched when reading project-doc todo policy. */
 export const TODO_POLICY_SECTION_HEADING = "## Claude Hub — Task Tracking / 任务追踪";
-
-/** Recommended bilingual section + sample JSON for AGENTS.md / CLAUDE.md. */
-export function getRecommendedTodoPolicySection(): string {
-  return [
-    TODO_POLICY_SECTION_HEADING,
-    "",
-    "### For Claude Code（给 Claude 的约定）",
-    "- After plan approval (`ExitPlanMode`), keep a **GFM checklist** in the plan file (`- [ ]` / `- [/]` / `- [x]`), or create **TaskCreate** items for each phase — prefer Tasks when tools are available.",
-    "- Mark `completed` only after verification. Do **not** mark phases done merely because an Agent/tool finished.",
-    "- 计划批准后：在计划文件中维护 GFM checklist，或用 TaskCreate 建阶段任务；仅在验证后标 completed；不要因 Agent 结束就推断阶段完成。",
-    "",
-    "### Hub preferences（插件读取；勿当脚本执行）",
-    "",
-    "```json",
-    "{",
-    '  "prefer_source": "auto",',
-    '  "plan_checklist": "preferred",',
-    '  "sync_prompt_style": "verify",',
-    '  "warn_plan_without_checklist": true,',
-    '  "activity_separate_from_status": true',
-    "}",
-    "```",
-    "",
-  ].join("\n");
-}
-
-export function markdownHasTodoPolicySection(markdown: string): boolean {
-  return extractTodoConfigFromMarkdown(markdown) !== undefined
-    || /^#{1,3}\s+Claude Hub\s*[\u2014\u2013\-]\s*Task Tracking/im.test(markdown)
-    || /^#{1,3}\s+.*Claude Hub.*\u4efb\u52a1\u8ffd\u8e2a/im.test(markdown);
-}
-
-/** Append recommended section when missing. Never overwrites an existing section. */
-export function appendRecommendedTodoPolicySection(existing: string): { content: string; appended: boolean } {
-  const text = typeof existing === "string" ? existing : "";
-  if (markdownHasTodoPolicySection(text)) {
-    return { content: text, appended: false };
-  }
-  const section = getRecommendedTodoPolicySection();
-  const trimmed = text.replace(/\s+$/u, "");
-  const content = trimmed.length ? trimmed + "\n\n" + section : section;
-  return { content, appended: true };
-}

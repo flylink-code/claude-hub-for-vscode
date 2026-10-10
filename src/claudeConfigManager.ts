@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ClaudeConfigDirProvider, resolveClaudeConfigDir, getClaudeProjectsDir } from './configDir.js';
-import { getRecommendedTodoPolicySection, markdownHasTodoPolicySection, appendRecommendedTodoPolicySection } from './projectTodoPolicy.js';
 import { t } from './i18n.js';
 
 function getVsCode(): any {
@@ -407,63 +406,6 @@ export class ClaudeConfigManager {
     return models;
   }
 
-  public async updateClaudeSettings(patch: {
-    model?: string;
-    effortLevel?: string;
-    defaultMode?: string;
-    apiBaseUrl?: string;
-    skipWebFetchPreflight?: boolean;
-    language?: string;
-  }): Promise<boolean> {
-    const filePath = this.getSettingsPath();
-    let current: ClaudeSettings = {};
-
-    try {
-      if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        current = JSON.parse(content) as ClaudeSettings;
-        fs.writeFileSync(`${filePath}.bak`, content, 'utf-8');
-      }
-
-      if (patch.model !== undefined) {
-        current.model = patch.model;
-      }
-      if (patch.effortLevel !== undefined) {
-        current.effortLevel = patch.effortLevel;
-      }
-      if (patch.defaultMode !== undefined) {
-        current.permissions = current.permissions || {};
-        current.permissions.defaultMode = patch.defaultMode;
-      }
-      if (patch.skipWebFetchPreflight !== undefined) {
-        current.skipWebFetchPreflight = patch.skipWebFetchPreflight;
-      }
-      if (patch.language !== undefined) {
-        current.language = patch.language;
-      }
-      if (patch.apiBaseUrl !== undefined) {
-        current.env = current.env || {};
-        if (patch.apiBaseUrl.trim()) {
-          current.env.ANTHROPIC_BASE_URL = patch.apiBaseUrl.trim();
-        } else {
-          delete current.env.ANTHROPIC_BASE_URL;
-        }
-      }
-
-      const parentDir = path.dirname(filePath);
-      if (!fs.existsSync(parentDir)) {
-        fs.mkdirSync(parentDir, { recursive: true });
-      }
-
-      fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf-8');
-      this.initWatchers();
-      this._onDidChange.fire(current);
-      return true;
-    } catch (err) {
-      console.error('[Claude Hub] Failed to update Claude settings.json:', err);
-      return false;
-    }
-  }
 
   public async openSettingsFile(): Promise<void> {
     const vsc = getVsCode();
@@ -562,8 +504,7 @@ export class ClaudeConfigManager {
         selectedType === 'AGENTS'
           ? `# AGENTS.md\n\nGuidelines for AI agents and Claude Code working on this project.\n\n## Project Overview\n\n## Build & Test Commands\n\n## Agent Rules & Guidelines\n\n`
           : `# CLAUDE.md\n\nGuidelines for Claude Code working on this project.\n\n## Build & Test\n\n`;
-      const defaultContent = stub + getRecommendedTodoPolicySection();
-      fs.writeFileSync(targetPath, defaultContent, 'utf-8');
+      fs.writeFileSync(targetPath, stub, 'utf-8');
       if (vsc) {
         vsc.window.showInformationMessage(`已为项目生成根目录 ${selectedType}.md`);
       }
@@ -582,72 +523,6 @@ export class ClaudeConfigManager {
   }
 
 
-  /**
-   * Append recommended Claude Hub Task Tracking section to AGENTS.md (preferred) or CLAUDE.md.
-   * Append-only when section missing; if present, open/copy only — never overwrite.
-   */
-  public async injectTodoPolicySection(customWorkspaceRoot?: string): Promise<'appended' | 'exists' | 'cancelled' | undefined> {
-    const vsc = getVsCode();
-    let rootPath = customWorkspaceRoot;
-    if (!rootPath && vsc) {
-      const wsFolders = vsc.workspace?.workspaceFolders;
-      if (wsFolders && wsFolders.length > 0) {
-        rootPath = wsFolders[0].uri.fsPath;
-      }
-    }
-    if (!rootPath) {
-      if (vsc) vsc.window.showWarningMessage(t('task.noWorkspace'));
-      return undefined;
-    }
-
-    const agentsMdPath = path.join(rootPath, 'AGENTS.md');
-    const claudeMdPath = path.join(rootPath, 'CLAUDE.md');
-    let targetPath = agentsMdPath;
-    if (!fs.existsSync(agentsMdPath) && fs.existsSync(claudeMdPath)) {
-      targetPath = claudeMdPath;
-    }
-
-    const existing = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, 'utf-8') : '';
-    const fileLabel = path.basename(targetPath);
-
-    if (markdownHasTodoPolicySection(existing)) {
-      if (vsc) {
-        const choice = await vsc.window.showInformationMessage(
-          t('task.injectExists', { file: fileLabel }),
-          t('task.injectOpen'),
-          t('task.injectCopy'),
-        );
-        if (choice === t('task.injectOpen')) {
-          const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(targetPath));
-          await vsc.window.showTextDocument(doc);
-        } else if (choice === t('task.injectCopy')) {
-          await vsc.env.clipboard.writeText(getRecommendedTodoPolicySection());
-          vsc.window.showInformationMessage(t('task.injectCopied'));
-        }
-      }
-      return 'exists';
-    }
-
-    if (vsc) {
-      const confirm = await vsc.window.showWarningMessage(
-        t('task.injectConfirm', { file: fileLabel }),
-        { modal: true },
-        t('task.injectAppend'),
-        t('task.injectCancel'),
-      );
-      if (confirm !== t('task.injectAppend')) return 'cancelled';
-    }
-
-    const { content, appended } = appendRecommendedTodoPolicySection(existing);
-    if (!appended) return 'exists';
-    fs.writeFileSync(targetPath, content, 'utf-8');
-    if (vsc) {
-      const doc = await vsc.workspace.openTextDocument(vsc.Uri.file(targetPath));
-      await vsc.window.showTextDocument(doc);
-      vsc.window.showInformationMessage(t('task.injectDone', { file: fileLabel }));
-    }
-    return 'appended';
-  }
 
   public async openClaudeMdFile(): Promise<void> {
     await this.openProjectDocFile();

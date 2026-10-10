@@ -111,8 +111,20 @@ export interface SessionInfo {
   plan?: SessionPlan;
   taskSource?: TaskSource;
   taskListId?: string;
+  /** High-level badge: Task (native/tasks/todoWrite) vs Checklist (plan/markdown). */
+  todoMode?: 'task' | 'checklist' | 'none';
+  /** Resolved prefer_source (auto = dual). */
+  preferSource?: 'auto' | 'tasks' | 'checklist' | 'todoWrite';
+  /** Checklist/markdown data exists (even if Task is primary). */
+  checklistAvailable?: boolean;
+  /** Whether checklist fill is allowed under current prefer. */
+  checklistFillAllowed?: boolean;
   lastActivity?: LastActivity;
   taskToolsObserved?: boolean;
+  /** Transient TaskCreate-in-flight cards (tool_use id only; never durable todo id). */
+  pendingTaskCreates?: Array<{ toolUseId: string; subject: string; description?: string }>;
+  /** True when Task tools seen but no valid native list could be bound. */
+  taskListNeedsSelection?: boolean;
   projectTodoPolicy?: ProjectTodoPolicyInfo;
   skills: string[];
   mcpServers: string[];
@@ -126,6 +138,10 @@ export interface SessionInfo {
   isCurrentWorkspace: boolean;
   wasCleared: boolean;
   cwd?: string;
+  /** Set when this session was forked / resumed from another. */
+  parentSessionId?: string;
+  /** Matching workspace folder name when multi-root. */
+  workspaceFolderName?: string;
 }
 
 export type FilterMode = 'currentWorkspace' | 'all';

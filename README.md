@@ -10,8 +10,11 @@ Monitor, manage, and visualize **Claude Code** sessions inside VS Code. Claude H
 
 ### Features
 
+> **Todo source:** Setting `claudeHub.todo.preferSource` defaults to `auto` (dual: Task and/or Checklist when present; Task primary if both) (official Task tools + `~/.claude/tasks`). Checklist/markdown fill is off unless you choose `checklist` or set project-doc `plan_checklist` to `required`.
+
+
 - **Dashboard.** A vertical accordion replaces a tab bar. The live panel stays open and shows the session indicator, context-window progress, input / cache / write / output tokens, estimated cost, and the Git branch. Tool activity and the todo list expand only while they are in use.
-- **Todo & Task Workflows.** Automatically parses live task checklists from `TodoWrite`, `TaskCreate`/`TaskUpdate`, or assistant Markdown task lists (`- [ ]`, `- [/]`, `- [x]`). Displays progress ratios, status indicators, and safely clears tasks on `/clear`.
+- **Todo & Task Workflows.** Automatically parses live task checklists from `TodoWrite`, `TaskCreate`/`TaskUpdate`, or assistant Markdown task lists (`- [ ]`, `- [/]`, `- [x]`). Displays progress ratios, status indicators, and safely clears tasks on `/clear`. Hub dashboard todos track TaskCreate/Update/List and `~/.claude/tasks` ? not the slash `/tasks` background-jobs view. Clear only hides dashboard items.
 - **Subagent Map.** Visualizes subagents launched by Claude Code with live execution status, duration chips, token usage, tool invocations, and git worktrees. Automatically keeps open when running and collapses when finished.
 - **Sessions.** Filter by all sessions, the current workspace, or active sessions. Search by project, title, or Git branch, and page through long histories. Fork copies a session’s full transcript into a new UUID so you can open it or resume it with `claude --resume`. Delete removes a session record.
 - **Workspace scope.** Current-workspace mode follows the folder open in VS Code. All-sessions mode lists every Claude Code session on the machine.
@@ -75,8 +78,8 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
     "claude-3-7-sonnet": 200000
   },
 
-  // Read the 5-hour subscription quota from local credentials.
-  "claudeHub.fetchSubscriptionUsage": true,
+  // Opt-in: read subscription quota from local Claude Code OAuth (off by default).
+  "claudeHub.fetchSubscriptionUsage": false,
 
   // Claude config directory. Empty uses ~/.claude.
   "claudeHub.configDir": "",
@@ -89,7 +92,6 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
 
 ### Project docs (AGENTS.md / CLAUDE.md)
 
-Add a **Claude Hub — Task Tracking** section so Claude and the extension share the same todo preferences. New files generated from the dashboard include a sample JSON block. Use **Insert task-tracking section** to append it to an existing file without overwriting.
 
 ### Development
 
@@ -185,8 +187,8 @@ npm test
     "claude-3-7-sonnet": 200000
   },
 
-  // 是否从本地凭据读取 5 小时订阅配额
-  "claudeHub.fetchSubscriptionUsage": true,
+  // 可选：从本机 Claude Code OAuth 读取订阅配额（默认关闭）。
+  "claudeHub.fetchSubscriptionUsage": false,
 
   // Claude 配置目录，留空则为 ~/.claude
   "claudeHub.configDir": "",
@@ -199,7 +201,6 @@ npm test
 
 ### 项目文档（AGENTS.md / CLAUDE.md）
 
-在文档中加入 **Claude Hub — Task Tracking / 任务追踪** 段落，让 Claude 与插件共享待办偏好。仪表盘新生成的文件会带上示例 JSON；也可用 **插入任务追踪段落** 仅追加、不覆盖已有内容。
 
 ### 本地开发
 

@@ -65,7 +65,13 @@ export function getWebviewContent(): string {
 
     .top-actions {
       display: flex;
-      gap: 4px;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      padding: 2px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .icon-btn {
@@ -73,10 +79,38 @@ export function getWebviewContent(): string {
       border: 1px solid transparent;
       color: var(--text-muted);
       border-radius: 4px;
-      padding: 3px 6px;
-      font-size: 11px;
+      padding: 0;
+      min-width: 26px;
+      height: 26px;
+      font-size: 12px;
+      line-height: 1;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .icon-btn-icon {
+      font-size: 12px;
+      line-height: 1;
+      width: 1.1em;
+      text-align: center;
+      filter: grayscale(0.25);
+      opacity: 0.92;
+    }
+
+    .icon-btn-text {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0;
+      white-space: nowrap;
+      max-width: 3.2em;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .icon-btn:hover {
@@ -84,11 +118,21 @@ export function getWebviewContent(): string {
       color: var(--text-main);
     }
 
+    .icon-btn:hover .icon-btn-icon {
+      filter: none;
+      opacity: 1;
+    }
+
     .icon-btn.active {
-      background: rgba(224, 122, 95, 0.16);
-      border-color: rgba(224, 122, 95, 0.4);
+      background: rgba(224, 122, 95, 0.12);
+      border-color: rgba(224, 122, 95, 0.35);
       color: var(--claude-accent);
-      font-weight: 600;
+      font-weight: 500;
+    }
+
+    .icon-btn.active .icon-btn-icon {
+      filter: none;
+      opacity: 1;
     }
 
     /* Accordion Section */
@@ -417,6 +461,94 @@ export function getWebviewContent(): string {
       line-height: 1.35;
       overflow-wrap: anywhere;
     }
+    .todo-deps {
+      color: var(--text-muted, #8b949e);
+      font-size: 9px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .todo-item-card.pending-create {
+      opacity: 0.85;
+      border-style: dashed;
+    }
+    .todos-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 2px 0 6px;
+    }
+    .todos-mode-chip {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+    }
+    .todos-mode-chip.task {
+      color: #58a6ff;
+      background: rgba(56, 139, 253, 0.16);
+      border-color: rgba(56, 139, 253, 0.4);
+    }
+    .todos-mode-chip.checklist {
+      color: var(--claude-accent, #e07a5f);
+      background: rgba(224, 122, 95, 0.14);
+      border-color: rgba(224, 122, 95, 0.4);
+    }
+    .todos-mode-chip.none {
+      color: var(--text-muted, #8b949e);
+      background: rgba(139, 148, 158, 0.12);
+      border-color: rgba(139, 148, 158, 0.28);
+    }
+    .todos-checklist-chip {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 999px;
+      color: var(--text-muted, #8b949e);
+      border: 1px dashed rgba(139, 148, 158, 0.45);
+      background: rgba(139, 148, 158, 0.06);
+    }
+    .todos-checklist-chip.hidden-mode {
+      color: var(--claude-amber, #d97706);
+      border-color: color-mix(in srgb, var(--claude-amber, #d97706) 55%, transparent);
+    }
+    .todos-source-chip {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 148, 158, 0.35);
+      background: rgba(139, 148, 158, 0.1);
+    }
+    .todos-list-btn {
+      margin: 0;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(224, 122, 95, 0.45);
+      background: transparent;
+      color: var(--claude-accent, #e07a5f);
+      font-size: 10px;
+      cursor: pointer;
+    }
+    .todos-empty-hint {
+      margin: 0 0 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(139, 148, 158, 0.28);
+      background: rgba(139, 148, 158, 0.08);
+      color: var(--text-muted, #8b949e);
+      font-size: 10px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .todos-needs-list {
+      color: var(--claude-amber, #d97706);
+      font-weight: 600;
+    }
 
     .todo-progress-track {
       height: 3px;
@@ -624,6 +756,35 @@ export function getWebviewContent(): string {
       color: #f44747;
     }
 
+    .session-act-btn.resume:hover {
+      background: rgba(86, 156, 214, 0.2);
+      border-color: #569cd6;
+      color: #569cd6;
+    }
+
+    .session-act-btn.rename:hover {
+      background: rgba(204, 167, 0, 0.2);
+      border-color: #cca700;
+      color: #cca700;
+    }
+
+    .agent-wt-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .agent-wt-btn {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
     /* 待办头部保持单行，窄屏通过隐藏次要标签释放空间。 */
     .todos-header {
       display: flex;
@@ -729,6 +890,13 @@ export function getWebviewContent(): string {
 
     /* 使用命名容器，避免意外匹配其他嵌套容器。 */
     @container hub (max-width: 290px) {
+      .top-actions .icon-btn-text {
+        display: none;
+      }
+      .top-actions .icon-btn {
+        min-width: 26px;
+        padding: 0;
+      }
       .header-sub, .chip-label-long, .todos-clear-text, .todos-sync-text, .todo-counter-detail {
         display: none;
       }
@@ -786,15 +954,23 @@ export function getWebviewContent(): string {
         flex-wrap: wrap;
         gap: 4px;
       }
+      .top-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
       .top-actions .icon-btn {
-        padding: 2px 4px;
-        font-size: 10px;
+        min-width: 24px;
+        height: 24px;
+        font-size: 11px;
       }
     }
 
     /* 旧版 Webview 才使用 viewport fallback；补偿 body 两侧共 16px padding。 */
     @supports not (container-type: inline-size) {
       @media (max-width: 306px) {
+        .top-actions .icon-btn-text {
+          display: none;
+        }
         .header-sub, .chip-label-long, .todos-clear-text, .todos-sync-text, .todo-counter-detail {
           display: none;
         }
@@ -852,9 +1028,14 @@ export function getWebviewContent(): string {
           flex-wrap: wrap;
           gap: 4px;
         }
+        .top-actions {
+          width: 100%;
+          justify-content: flex-end;
+        }
         .top-actions .icon-btn {
-          padding: 2px 4px;
-          font-size: 10px;
+          min-width: 24px;
+          height: 24px;
+          font-size: 11px;
         }
       }
     }
@@ -1203,9 +1384,13 @@ export function getWebviewContent(): string {
       <span>Claude</span>
       <span class="status-pill" id="global-status-pill">检测中</span>
     </div>
-    <div class="top-actions">
-      <button class="icon-btn" title="刷新状态" onclick="sendMessage('refresh')">🔄 刷新</button>
-      <button class="icon-btn" id="top-filter-btn" title="切换当前工作区 / 全局过滤" onclick="sendMessage('toggleFilter')">📁 过滤</button>
+        <div class="top-actions" role="toolbar" aria-label="Hub actions">
+      <button class="icon-btn" type="button" data-i18n-title="tbRefresh" title="" aria-label="" onclick="sendMessage(\'refresh\')"><span class="icon-btn-icon" aria-hidden="true">🔄</span><span class="icon-btn-text" data-role="label">刷新</span></button>
+      <button class="icon-btn" type="button" data-i18n-title="tbSlash" title="" aria-label="" onclick="sendMessage(\'slashCommand\')"><span class="icon-btn-icon" aria-hidden="true">/</span><span class="icon-btn-text" data-role="label"></span></button>
+      <button class="icon-btn" type="button" data-i18n-title="tbSearch" title="" aria-label="" onclick="sendMessage(\'searchTranscript\')"><span class="icon-btn-icon" aria-hidden="true">🔍</span><span class="icon-btn-text" data-role="label"></span></button>
+      <button class="icon-btn" type="button" data-i18n-title="tbCost" title="" aria-label="" onclick="sendMessage(\'workspaceCostReport\')"><span class="icon-btn-icon" aria-hidden="true">💵</span><span class="icon-btn-text" data-role="label"></span></button>
+      <button class="icon-btn" type="button" data-i18n-title="tbTasks" title="" aria-label="" onclick="sendMessage(\'openBackgroundTasks\')"><span class="icon-btn-icon" aria-hidden="true">🧵</span><span class="icon-btn-text" data-role="label"></span></button>
+      <button class="icon-btn" id="top-filter-btn" type="button" data-i18n-title="tbFilter" title="" aria-label="" onclick="sendMessage(\'toggleFilter\')"><span class="icon-btn-icon" aria-hidden="true">📁</span><span class="icon-btn-text" data-role="label">过滤</span></button>
     </div>
   </div>
 
@@ -1264,19 +1449,28 @@ export function getWebviewContent(): string {
         <div class="todos-header" onclick="toggleTodosList()">
           <div class="todos-header-title">
             <span id="todos-caret" class="caret">▼</span>
-            <span>📋 待办任务</span>
+            <span id="todos-title-label" title="">📋 待办任务</span>
           </div>
           <div class="todos-header-actions">
             <button type="button" id="todos-sync-btn" class="todos-sync-btn" style="display: none;" title="复制任务同步提示，发送到当前 Claude 对话" aria-label="复制任务同步提示" onclick="copyTodoSyncPrompt(event)">⧉<span class="todos-sync-text"> 复制提示</span></button>
-            <button type="button" id="todos-clear-btn" class="todos-clear-btn" style="display: none;" title="隐藏当前待办（不删除任务文件）" aria-label="隐藏当前待办" onclick="clearCompletedTodos(event)">✕<span class="todos-clear-text"> 清除</span></button>
+            <button type="button" id="todos-clear-btn" class="todos-clear-btn" style="display: none;" title="Hide dashboard todos only — does not delete ~/.claude/tasks or stop slash /tasks jobs" aria-label="隐藏当前待办" onclick="clearCompletedTodos(event)">✕<span class="todos-clear-text"> 清除</span></button>
             <span id="todos-counter" class="status-pill">0/0</span>
           </div>
         </div>
         <div class="todo-progress-track">
           <div id="todos-progress-bar" class="todo-progress-fill" style="width: 0%;"></div>
         </div>
+        <div class="todos-meta" id="todos-meta" style="display: none;">
+          <span class="todos-mode-chip" id="todos-mode-chip"></span>
+          <span class="todos-source-chip" id="todos-source-chip"></span>
+          <span class="todos-checklist-chip" id="todos-checklist-chip" style="display: none;"></span>
+          <span id="todos-list-label"></span>
+          <button type="button" class="todos-list-btn" id="todos-pick-list-btn">List</button>
+          <span class="todos-needs-list" id="todos-needs-list" style="display: none;"></span>
+        </div>
         <div id="todos-activity" class="todos-activity" style="display: none;"></div>
         <div id="todos-plan-warn" class="todos-plan-warn" role="status"></div>
+        <div id="todos-empty-hint" class="todos-empty-hint" style="display: none;"></div>
         <div id="todos-list"></div>
       </div>
 
@@ -1292,15 +1486,26 @@ export function getWebviewContent(): string {
         <div id="agents-list" class="agents-tree"></div>
       </div>
 
-      <!-- 5h Quota -->
+
+      <!-- Background jobs (≠ Hub todos; slash /tasks companion) -->
+      <div id="bgjobs-container" style="margin-top: 8px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+          <span title="Claude Code background agents/tools — not Hub Task/Checklist todos">🧵 后台任务 <span style="opacity:0.7">(/tasks)</span></span>
+          <button class="icon-btn" style="font-size:10px;padding:2px 6px;" onclick="sendMessage('openBackgroundTasks')" title="打开 /tasks">打开</button>
+        </div>
+        <div id="bgjobs-list" style="font-size: 11px;"></div>
+      </div>
+
+      <!-- Subscription quota (opt-in) -->
       <div id="sub-container" style="margin-top: 8px; display: none;">
         <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">
-          <span>⏳ 5小时订阅配额</span>
+          <span>⏳ 订阅配额</span>
           <span id="sub-reset"></span>
         </div>
         <div class="progress-bar-track" style="margin: 0;">
           <div id="sub-fill" class="progress-bar-fill" style="width: 0%;"></div>
         </div>
+        <div id="sub-meters" style="margin-top: 4px; font-size: 10px; color: var(--text-muted);"></div>
       </div>
 
     </div>
@@ -1321,6 +1526,7 @@ export function getWebviewContent(): string {
       <div class="filter-chips-row">
         <button class="filter-chip active" id="chip-all" onclick="setSessionFilter('all')">全部</button>
         <button class="filter-chip" id="chip-ws" onclick="setSessionFilter('workspace')"><span class="chip-label-long">当前工作区</span><span class="chip-label-short">工作区</span></button>
+        <button class="filter-chip" id="chip-pinned" onclick="setSessionFilter('pinned')">置顶</button>
         <button class="filter-chip" id="chip-active" onclick="setSessionFilter('active')">活跃中</button>
       </div>
 
@@ -1373,28 +1579,28 @@ export function getWebviewContent(): string {
     <div class="section-header" onclick="toggleSection('sec-advanced')">
       <span class="section-header-title">
         <span class="caret">▼</span>
-        <span>🌐 网络代理与环境配置</span>
+        <span>⚙️ 高级 / 环境配置</span>
       </span>
       <span class="status-pill" style="font-size: 9px;">配置</span>
     </div>
     <div class="section-body">
 
-      <div class="form-group">
-        <label class="form-label">API Base URL (代理地址)</label>
-        <input type="text" class="form-input" id="cfg-base-url" placeholder="https://api.anthropic.com">
+      <div id="todo-tools-panel" style="margin: 10px 0; padding: 8px; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;">
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;" id="todo-tools-title">Task tools env</div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer;">
+          <input type="checkbox" id="todo-tools-toggle" />
+          <span id="todo-tools-toggle-label">Enable CLAUDE_CODE_ENABLE_TODO_TOOLS</span>
+        </label>
+        <div id="todo-tools-status" style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;"></div>
+        <div id="todo-tools-caveat" style="font-size: 10px; color: #cca700; margin-top: 6px; line-height: 1.4;">Applies to new Claude Code sessions only.</div>
       </div>
-
-      <button class="btn btn-primary" onclick="saveProxyConfig()">💾 保存代理配置</button>
-      <div id="save-toast" class="toast">✓ 配置已保存更新</div>
 
       <button class="btn btn-secondary" onclick="sendMessage('openSettingsJson')">⚙️ 打开 Claude settings.json</button>
       <div class="doc-btn-group">
         <button class="btn btn-secondary" id="btn-open-agents-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'AGENTS' })" title="打开或创建项目根目录 AGENTS.md (支持新版 Agent 规范)">🤖 打开 AGENTS.md</button>
         <button class="btn btn-secondary" id="btn-open-claude-md" style="flex: 1; margin: 0; padding: 7px 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" onclick="sendMessage('openProjectDoc', { docType: 'CLAUDE' })" title="打开或创建项目根目录 CLAUDE.md (经典项目说明)">📝 打开 CLAUDE.md</button>
       </div>
-      <button class="btn btn-secondary" id="btn-inject-todo-policy" style="margin-top: 6px;" onclick="sendMessage('injectTodoPolicy')" title="Append recommended Claude Hub task-tracking section to AGENTS.md or CLAUDE.md">📋 插入任务追踪段落</button>
-
-    </div>
+</div>
   </div>
 
   </div><!-- end #app.hub-container -->
@@ -1402,29 +1608,63 @@ export function getWebviewContent(): string {
   <script>
     const vscode = acquireVsCodeApi();
     let hubUiStrings = {
-      planNoChecklistWarn: 'Plan has no GFM checklist — phase status may be inaccurate. Prefer checklist marks or TaskCreate/TaskUpdate.',
-      injectSection: 'Insert task-tracking section',
+      planNoChecklistWarn: 'Plan has no GFM checklist — phase status may be inaccurate. Prefer TaskCreate/TaskUpdate/TaskList, or checklist marks. (Hub todos ≠ slash /tasks.)',
       chipPending: 'Pending',
       chipActive: 'In progress',
       chipDone: 'Done',
       expand: 'Expand',
       collapse: 'Collapse',
+      hubTodosTitle: 'Session tasks',
+      hubTodosHint: 'Hub todos (Task tools), not slash /tasks.',
+      clearHideOnly: 'Hide dashboard todos only; does not delete task files.',
+      pickList: 'Choose list',
+      needsList: 'Choose a task list to bind',
+      creating: 'Creating…',
+      depends: 'Depends on',
+      blocks: 'Blocks',
+      sourceNative: 'Native disk',
+      sourceTasks: 'Task tools',
+      sourceTodoWrite: 'TodoWrite',
+      sourcePlan: 'Plan',
+      sourceMarkdown: 'Checklist',
+      sourceNone: 'No source',
+      listId: 'List: {id}',
+      optInHint: 'No Task or Checklist todos yet.',
+      todoToolsTitle: 'Task tools env',
+      todoToolsToggle: 'Enable CLAUDE_CODE_ENABLE_TODO_TOOLS',
+      todoToolsCaveat: 'Applies to new Claude Code sessions only. Current session is unchanged.',
+      todoToolsOn: 'On (settings.local.json)',
+      todoToolsOff: 'Off',
+      todoToolsEffectiveOn: 'Effective env: on',
+      todoToolsEffectiveOff: 'Effective env: off',
+      todoToolsObserved: 'Task tools observed in a session',
+      todoToolsHooksNote: 'Hub hooks/bridge not installed (env-only).',
+      modeTask: 'Task',
+      modeChecklist: 'Checklist',
+      modeNone: 'No todos',
+      checklistAlso: 'Checklist also present',
+      checklistHidden: 'Checklist hidden (tasks-only)',
     };
     function applyHubUiStrings(ui) {
       if (!ui || typeof ui !== 'object') return;
       if (typeof ui.planNoChecklistWarn === 'string') hubUiStrings.planNoChecklistWarn = ui.planNoChecklistWarn;
-      if (typeof ui.injectSection === 'string') hubUiStrings.injectSection = ui.injectSection;
       if (typeof ui.chipPending === 'string') hubUiStrings.chipPending = ui.chipPending;
       if (typeof ui.chipActive === 'string') hubUiStrings.chipActive = ui.chipActive;
       if (typeof ui.chipDone === 'string') hubUiStrings.chipDone = ui.chipDone;
       if (typeof ui.expand === 'string') hubUiStrings.expand = ui.expand;
       if (typeof ui.collapse === 'string') hubUiStrings.collapse = ui.collapse;
-      const injectBtn = document.getElementById('btn-inject-todo-policy');
-      if (injectBtn) {
-        injectBtn.textContent = '📋 ' + hubUiStrings.injectSection;
-        injectBtn.title = hubUiStrings.injectSection;
+      const copyKeys = ['tbRefresh','tbRefreshShort','tbSlash','tbSearch','tbCost','tbTasks','tbFilter','tbFilterWs','tbFilterAll','tbFilterWsShort','tbFilterAllShort','todoToolsTitle','todoToolsToggle','todoToolsCaveat','todoToolsOn','todoToolsOff','todoToolsEffectiveOn','todoToolsEffectiveOff','todoToolsObserved','todoToolsHooksNote','hubTodosTitle','hubTodosHint','clearHideOnly','pickList','needsList','creating','depends','blocks','sourceNative','sourceTasks','sourceTodoWrite','sourcePlan','sourceMarkdown','sourceNone','listId','optInHint','modeTask','modeChecklist','modeNone','checklistAlso','checklistHidden'];
+      for (const k of copyKeys) { if (typeof ui[k] === 'string') hubUiStrings[k] = ui[k]; }
+      const titleEl = document.getElementById('todos-title-label');
+      if (titleEl && hubUiStrings.hubTodosTitle) {
+        titleEl.textContent = '📋 ' + hubUiStrings.hubTodosTitle;
+        titleEl.title = hubUiStrings.hubTodosHint || '';
       }
-    }
+      const clearBtn = document.getElementById('todos-clear-btn');
+      if (clearBtn && hubUiStrings.clearHideOnly) clearBtn.title = hubUiStrings.clearHideOnly;
+      const pickBtn = document.getElementById('todos-pick-list-btn');
+      if (pickBtn && hubUiStrings.pickList) pickBtn.textContent = hubUiStrings.pickList;
+}
 
 
     // Accordion State Memory
@@ -1572,18 +1812,24 @@ export function getWebviewContent(): string {
       const running = agents.filter(a => a.status === 'running').length;
       const ended = agents.length - running;
       const parts = [];
+      const activeTodo = (session.todos || []).find(t => t.status === 'in_progress' && t.activeForm);
+      if (activeTodo && activeTodo.activeForm) {
+        parts.push({ text: activeTodo.activeForm, warn: false });
+      }
       if (agents.length) {
         parts.push({
           text: 'Agent ' + (running ? running + ' 运行 · ' : '') + ended + '/' + agents.length + ' 已结束',
           warn: false
         });
       }
+      if (!activeTodo) {
       if (!session.isIdle && session.activeTools && session.activeTools.length) {
         parts.push({ text: '工具 ' + session.activeTools[0].name + ' 运行中', warn: false });
       } else if (!session.isIdle && session.lastActivity &&
           (!session.currentTurnStartTime ||
             session.lastActivity.timestamp >= new Date(session.currentTurnStartTime).getTime())) {
         parts.push({ text: '最近 ' + session.lastActivity.name, warn: false });
+      }
       }
       if (parts.length && (session.taskSource === 'plan' || session.taskSource === 'markdown') &&
           session.todos.every(t => t.status === 'pending')) {
@@ -1611,16 +1857,145 @@ export function getWebviewContent(): string {
       activityEl.style.display = 'flex';
     }
 
+    function resolveTodoLabel(session, id) {
+      const hit = (session.todos || []).find(t => t.id === id);
+      return hit ? hit.content : id;
+    }
+
+    function formatTodoDeps(session, td) {
+      const bits = [];
+      if (Array.isArray(td.blockedBy) && td.blockedBy.length) {
+        bits.push((hubUiStrings.depends || 'Depends on') + ': ' + td.blockedBy.map(function(id) {
+          return resolveTodoLabel(session, id);
+        }).join(', '));
+      }
+      if (Array.isArray(td.blocks) && td.blocks.length) {
+        bits.push((hubUiStrings.blocks || 'Blocks') + ': ' + td.blocks.map(function(id) {
+          return resolveTodoLabel(session, id);
+        }).join(', '));
+      }
+      return bits.length ? '<div class="todo-deps">' + escapeHtml(bits.join(' · ')) + '</div>' : '';
+    }
+
+    function updateTodosMeta(s) {
+      const meta = document.getElementById('todos-meta');
+      if (!meta) return;
+      const hasTodos = (s.todos && s.todos.length) || (s.pendingTaskCreates && s.pendingTaskCreates.length) || s.taskListNeedsSelection || s.taskListId;
+      if (!hasTodos && !(s.taskSource && s.taskSource !== 'none')) {
+        meta.style.display = 'none';
+        return;
+      }
+      meta.style.display = 'flex';
+      const modeChip = document.getElementById('todos-mode-chip');
+      const chip = document.getElementById('todos-source-chip');
+      const checkChip = document.getElementById('todos-checklist-chip');
+      const listLabel = document.getElementById('todos-list-label');
+      const needs = document.getElementById('todos-needs-list');
+      const pick = document.getElementById('todos-pick-list-btn');
+      const mode = s.todoMode || (['native','tasks','todoWrite'].indexOf(s.taskSource) >= 0 ? 'task' : (['plan','markdown'].indexOf(s.taskSource) >= 0 ? 'checklist' : 'none'));
+      if (modeChip) {
+        modeChip.className = 'todos-mode-chip ' + mode;
+        modeChip.textContent = mode === 'task' ? (hubUiStrings.modeTask || 'Task')
+          : (mode === 'checklist' ? (hubUiStrings.modeChecklist || 'Checklist') : (hubUiStrings.modeNone || 'No todos'));
+      }
+      const sourceMap = {
+        native: hubUiStrings.sourceNative,
+        tasks: hubUiStrings.sourceTasks,
+        todoWrite: hubUiStrings.sourceTodoWrite,
+        plan: hubUiStrings.sourcePlan,
+        markdown: hubUiStrings.sourceMarkdown,
+        none: hubUiStrings.sourceNone,
+      };
+      if (chip) {
+        chip.textContent = sourceMap[s.taskSource] || sourceMap.none || (s.taskSource || '');
+        chip.style.display = (s.taskSource && s.taskSource !== 'none') ? 'inline' : 'none';
+      }
+      if (checkChip) {
+        const tasksOnlyHidden = s.preferSource === 'tasks' && s.checklistAvailable && s.checklistFillAllowed === false;
+        const also = mode === 'task' && s.checklistAvailable && s.checklistFillAllowed !== false;
+        if (tasksOnlyHidden) {
+          checkChip.style.display = 'inline';
+          checkChip.className = 'todos-checklist-chip hidden-mode';
+          checkChip.textContent = hubUiStrings.checklistHidden || 'Checklist hidden (tasks-only)';
+        } else if (also) {
+          checkChip.style.display = 'inline';
+          checkChip.className = 'todos-checklist-chip';
+          checkChip.textContent = hubUiStrings.checklistAlso || 'Checklist also present';
+        } else {
+          checkChip.style.display = 'none';
+          checkChip.textContent = '';
+        }
+      }
+      if (listLabel) {
+        if (s.taskListId) {
+          const tmpl = hubUiStrings.listId || 'List: {id}';
+          listLabel.textContent = tmpl.replace('{id}', s.taskListId);
+        } else {
+          listLabel.textContent = '';
+        }
+      }
+      if (pick) {
+        pick.textContent = hubUiStrings.pickList || 'Choose list';
+        pick.onclick = function(ev) {
+          if (ev) ev.stopPropagation();
+          sendMessage('selectTaskList');
+        };
+      }
+      if (needs) {
+        if (s.taskListNeedsSelection) {
+          needs.style.display = 'inline';
+          needs.textContent = hubUiStrings.needsList || '';
+        } else {
+          needs.style.display = 'none';
+          needs.textContent = '';
+        }
+      }
+      const clearBtn = document.getElementById('todos-clear-btn');
+      if (clearBtn && hubUiStrings.clearHideOnly) clearBtn.title = hubUiStrings.clearHideOnly;
+    }
+
+
+    function updateTodosEmptyHint(s) {
+      const el = document.getElementById('todos-empty-hint');
+      if (!el) return;
+      const hasDurable = s.todos && s.todos.length > 0;
+      const hasPending = s.pendingTaskCreates && s.pendingTaskCreates.length > 0;
+      const show = !hasDurable && !hasPending && !s.taskToolsObserved && (s.taskSource === 'none' || !s.taskSource);
+      if (show) {
+        el.style.display = 'block';
+        el.textContent = hubUiStrings.optInHint || 'Some models need CLAUDE_CODE_ENABLE_TODO_TOOLS for TaskCreate/Update/List.';
+      } else {
+        el.style.display = 'none';
+        el.textContent = '';
+      }
+    }
+
     function renderTodosList(s) {
       const todosList = document.getElementById('todos-list');
-      if (!todosList || !s || !s.todos) return;
-      todosList.innerHTML = s.todos.map(function(td) {
+      if (!todosList || !s) return;
+      updateTodosMeta(s);
+      const durable = Array.isArray(s.todos) ? s.todos : [];
+      const pending = Array.isArray(s.pendingTaskCreates) ? s.pendingTaskCreates : [];
+      const pendingHtml = pending.map(function(pc) {
+        const subject = pc.subject || 'Task';
+        return '<div class="todo-item-card pending pending-create" data-pending-tool="' + escapeHtml(pc.toolUseId || '') + '">' +
+          '<span class="todo-badge-icon"><span class="todo-spinner" role="img" aria-label="creating"></span></span>' +
+          '<div class="todo-card-main">' +
+            '<div class="todo-title-row">' +
+              '<span class="todo-title">' + escapeHtml(subject) + '</span>' +
+              '<span class="todo-status-chip pending">' + escapeHtml(hubUiStrings.creating || 'Creating…') + '</span>' +
+            '</div>' +
+            (pc.description ? '<div class="todo-body">' + escapeHtml(pc.description) + '</div>' : '') +
+          '</div>' +
+        '</div>';
+      }).join('');
+      const todosHtml = durable.map(function(td) {
         const statusClass = td.status === 'completed' ? 'completed' : (td.status === 'in_progress' ? 'in_progress' : 'pending');
-        let iconHtml = '<span style="opacity: 0.5;">☐</span>';
+        let iconHtml = '<span style="opacity: 0.5;">\u2610</span>';
         if (td.status === 'completed') {
-          iconHtml = '<span style="color: #2ea043; font-weight: bold;">☑</span>';
+          iconHtml = '<span style="color: #2ea043; font-weight: bold;">\u2611</span>';
         } else if (td.status === 'in_progress') {
-          iconHtml = '<span class="todo-spinner" role="img" title="进行中" aria-label="进行中"></span>';
+          iconHtml = '<span class="todo-spinner" role="img" title="\u8fdb\u884c\u4e2d" aria-label="\u8fdb\u884c\u4e2d"></span>';
         }
         const parts = splitTodoDisplay(td);
         const expanded = !!todoExpandState.get(parts.key);
@@ -1637,6 +2012,7 @@ export function getWebviewContent(): string {
         const subHtml = parts.subtitle
           ? '<div class="todo-active-form">' + escapeHtml(parts.subtitle) + '</div>'
           : '';
+        const depsHtml = formatTodoDeps(s, td);
         return '<div class="todo-item-card ' + statusClass + '" data-todo-id="' + escapeHtml(parts.key) + '">' +
           '<span class="todo-badge-icon">' + iconHtml + '</span>' +
           '<div class="todo-card-main">' +
@@ -1646,9 +2022,11 @@ export function getWebviewContent(): string {
             '</div>' +
             bodyHtml +
             subHtml +
+            depsHtml +
           '</div>' +
         '</div>';
       }).join('');
+      todosList.innerHTML = pendingHtml + todosHtml;
       todosList.querySelectorAll('.todo-expand-btn').forEach(function(btn) {
         btn.addEventListener('click', function(ev) {
           toggleTodoExpand(ev, btn.getAttribute('data-todo-key') || '');
@@ -1728,8 +2106,12 @@ export function getWebviewContent(): string {
       const action = actionElement.getAttribute('data-action');
       if (!action) return;
 
-      if (action === 'focusSession' || action === 'forkSession' || action === 'deleteSession') {
+      if (action === 'focusSession' || action === 'forkSession' || action === 'deleteSession' || action === 'resumeSession' || action === 'renameSession' || action === 'togglePinSession' || action === 'exportSession' || action === 'compareFork' || action === 'editSessionTags' || action === 'showTimeline') {
         sendMessage(action, { sessionId: actionElement.getAttribute('data-session-id') || '' });
+      } else if (action === 'openWorktree') {
+        sendMessage(action, { worktreePath: actionElement.getAttribute('data-worktree-path') || '' });
+      } else if (action === 'slashCommand' || action === 'workspaceCostReport' || action === 'searchTranscript' || action === 'openBackgroundTasks') {
+        sendMessage(action, {});
       } else if (action === 'openSessionFile') {
         sendMessage(action, { filePath: actionElement.getAttribute('data-file-path') || '' });
       } else if (action === 'toggleMcp') {
@@ -1750,19 +2132,67 @@ export function getWebviewContent(): string {
     let backendFilterMode = null;
     let searchKeyword = '';
     let currentPage = 1;
-    const pageSize = 6;
+    let pageSize = 8;
+
+    function setIconBtnLabel(btn, icon, text) {
+      if (!btn) return;
+      let iconEl = btn.querySelector('.icon-btn-icon');
+      let textEl = btn.querySelector('.icon-btn-text');
+      if (!iconEl) {
+        iconEl = document.createElement('span');
+        iconEl.className = 'icon-btn-icon';
+        iconEl.setAttribute('aria-hidden', 'true');
+        btn.insertBefore(iconEl, btn.firstChild);
+      }
+      if (!textEl) {
+        textEl = document.createElement('span');
+        textEl.className = 'icon-btn-text';
+        textEl.setAttribute('data-role', 'label');
+        btn.appendChild(textEl);
+      }
+      iconEl.textContent = icon;
+      textEl.textContent = text || '';
+    }
+
+    function applyToolbarI18n() {
+      const map = {
+        tbRefresh: hubUiStrings.tbRefresh || 'Refresh status',
+        tbSlash: hubUiStrings.tbSlash || 'Slash command',
+        tbSearch: hubUiStrings.tbSearch || 'Search transcript',
+        tbCost: hubUiStrings.tbCost || 'Workspace cost report',
+        tbTasks: hubUiStrings.tbTasks || 'Background /tasks (not Hub todos)',
+        tbFilter: hubUiStrings.tbFilter || 'Toggle workspace / all sessions filter',
+      };
+      document.querySelectorAll('.top-actions .icon-btn[data-i18n-title]').forEach((btn) => {
+        const key = btn.getAttribute('data-i18n-title');
+        const tip = map[key] || btn.title || '';
+        if (!tip) return;
+        // Filter button keeps dynamic title from updateTopFilterButton
+        if (btn.id === 'top-filter-btn') return;
+        btn.title = tip;
+        btn.setAttribute('aria-label', tip);
+      });
+      const refreshText = document.querySelector('.top-actions .icon-btn[data-i18n-title="tbRefresh"] .icon-btn-text');
+      if (refreshText && hubUiStrings.tbRefreshShort) refreshText.textContent = hubUiStrings.tbRefreshShort;
+    }
 
     function updateTopFilterButton(mode) {
       const btn = document.getElementById('top-filter-btn');
       if (!btn) return;
+      const tipWs = hubUiStrings.tbFilterWs || 'Filter: current workspace (click for all sessions)';
+      const tipAll = hubUiStrings.tbFilterAll || 'Filter: all sessions (click for current workspace)';
+      const labelWs = hubUiStrings.tbFilterWsShort || 'WS';
+      const labelAll = hubUiStrings.tbFilterAllShort || 'All';
       if (mode === 'currentWorkspace') {
-        btn.innerHTML = '📁 工作区';
+        setIconBtnLabel(btn, '📁', labelWs);
         btn.className = 'icon-btn active';
-        btn.title = '当前过滤：仅当前工作区（点击切换为全部会话）';
+        btn.title = tipWs;
+        btn.setAttribute('aria-label', tipWs);
       } else {
-        btn.innerHTML = '🌐 全部';
+        setIconBtnLabel(btn, '🌐', labelAll);
         btn.className = 'icon-btn';
-        btn.title = '当前过滤：显示全部会话（点击切换为仅当前工作区）';
+        btn.title = tipAll;
+        btn.setAttribute('aria-label', tipAll);
       }
     }
 
@@ -1786,6 +2216,9 @@ export function getWebviewContent(): string {
           updateTopFilterButton('currentWorkspace');
           sendMessage('setFilterMode', { mode: 'currentWorkspace' });
         }
+      } else if (filter === 'pinned') {
+        const chip = document.getElementById('chip-pinned');
+        if (chip) chip.classList.add('active');
       } else if (filter === 'active') {
         const chip = document.getElementById('chip-active');
         if (chip) chip.classList.add('active');
@@ -1793,11 +2226,30 @@ export function getWebviewContent(): string {
       renderSessionsList();
     }
 
+    let searchDebounceTimer = null;
     function onSearchInput(val) {
-      searchKeyword = (val || '').toLowerCase().trim();
-      currentPage = 1;
-      renderSessionsList();
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        searchKeyword = (val || '').toLowerCase().trim();
+        currentPage = 1;
+        renderSessionsList();
+      }, 150);
     }
+
+
+    (function bindTodoToolsToggle() {
+      const toggle = document.getElementById('todo-tools-toggle');
+      if (!toggle || toggle.dataset.bound === '1') return;
+      toggle.dataset.bound = '1';
+      toggle.addEventListener('change', () => {
+        if (toggle.dataset.syncing === '1') return;
+        toggle.disabled = true;
+        sendMessage('setTodoToolsEnv', { enabled: !!toggle.checked });
+        // Host always sendConfigUpdate (success or cancel) which re-enables via render
+        setTimeout(() => { toggle.disabled = false; }, 4000);
+      });
+      applyToolbarI18n();
+    })();
 
     function prevPage() {
       if (currentPage > 1) {
@@ -1915,6 +2367,69 @@ export function getWebviewContent(): string {
       return String(num);
     }
 
+    
+    function renderBackgroundJobs(s) {
+      const wrap = document.getElementById('bgjobs-container');
+      const list = document.getElementById('bgjobs-list');
+      if (!wrap || !list) return;
+      if (!s) { wrap.style.display = 'none'; list.innerHTML = ''; return; }
+      const agents = (s.agents || []).filter(a => a.background || a.status === 'running');
+      const tools = (s.activeTools || []).filter(t => t.background || t.status === 'running' || t.status === 'background');
+      const items = [];
+      for (const a of agents.slice(0, 8)) {
+        items.push('<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">🤖 ' + escapeHtml(a.name || a.type || a.id || 'agent') + ' · ' + escapeHtml(a.status || '') + (a.worktreePath ? ' · <button class="agent-wt-btn" data-action="openWorktree" data-worktree-path="' + escapeAttribute(a.worktreePath) + '">wt</button>' : '') + '</div>');
+      }
+      for (const t of tools.slice(0, 8)) {
+        const label = (t.name || 'tool') + (t.target ? ' → ' + t.target : '');
+        items.push('<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">🛠️ ' + escapeHtml(label) + ' · ' + escapeHtml(t.status || '') + '</div>');
+      }
+      if (!items.length) {
+        wrap.style.display = 'none';
+        list.innerHTML = '';
+        return;
+      }
+      wrap.style.display = 'block';
+      list.innerHTML = items.join('') + '<div style="opacity:0.65;margin-top:4px;">Hub 待办 ≠ 此面板。点“打开”发送 /tasks。</div>';
+    }
+
+    
+    function renderTodoToolsPanel(msg) {
+      const title = document.getElementById('todo-tools-title');
+      const label = document.getElementById('todo-tools-toggle-label');
+      const caveat = document.getElementById('todo-tools-caveat');
+      const status = document.getElementById('todo-tools-status');
+      const toggle = document.getElementById('todo-tools-toggle');
+      if (!toggle || !status) return;
+      if (title && hubUiStrings.todoToolsTitle) title.textContent = hubUiStrings.todoToolsTitle;
+      if (label && hubUiStrings.todoToolsToggle) label.textContent = hubUiStrings.todoToolsToggle;
+      if (caveat && hubUiStrings.todoToolsCaveat) caveat.textContent = hubUiStrings.todoToolsCaveat;
+
+      const states = Array.isArray(msg.taskIntegration) ? msg.taskIntegration : [];
+      const primary = states[0];
+      const settingOn = !!msg.todoToolsEnabledSetting;
+      const anyEnvOn = states.some(function (s) { return !!(s && s.envEnabled); });
+      // Disk env OR Hub setting (after host reconcile both should agree).
+      const checked = anyEnvOn || settingOn;
+      toggle.dataset.syncing = '1';
+      toggle.checked = checked;
+      toggle.disabled = false;
+      delete toggle.dataset.syncing;
+      const parts = [];
+      if (primary) {
+        parts.push(checked ? (hubUiStrings.todoToolsOn || 'On') : (hubUiStrings.todoToolsOff || 'Off'));
+        parts.push(primary.effectiveEnabled ? (hubUiStrings.todoToolsEffectiveOn || 'Effective: on') : (hubUiStrings.todoToolsEffectiveOff || 'Effective: off'));
+        if (primary.observed) parts.push(hubUiStrings.todoToolsObserved || 'Observed');
+        if (primary.conflict) parts.push('⚠ ' + (primary.conflictReason || 'conflict'));
+        if (!primary.hooksConfigured) parts.push(hubUiStrings.todoToolsHooksNote || 'env-only');
+        if (states.length > 1) parts.push('(' + states.length + ' folders)');
+      } else {
+        parts.push(hubUiStrings.todoToolsOff || 'Off');
+        parts.push('(no workspace folder)');
+      }
+      status.textContent = parts.join(' · ');
+      status.style.color = primary && primary.conflict ? '#f44747' : 'var(--text-muted)';
+    }
+
     function renderSessionsList() {
       const container = document.getElementById('session-cards-list');
       const totalBadge = document.getElementById('sessions-total-badge');
@@ -1933,12 +2448,15 @@ export function getWebviewContent(): string {
       let filtered = allSessions.filter(s => {
         if (currentFilter === 'workspace' && !s.isCurrentWorkspace) return false;
         if (currentFilter === 'active' && s.isIdle) return false;
+        if (currentFilter === 'pinned' && !s.pinned) return false;
         if (searchKeyword) {
           const matchProj = (s.projectName || '').toLowerCase().includes(searchKeyword);
           const matchTitle = (s.sessionTitle || '').toLowerCase().includes(searchKeyword);
           const matchBranch = (s.gitBranch || '').toLowerCase().includes(searchKeyword);
           const matchModel = (s.model || '').toLowerCase().includes(searchKeyword);
-          if (!matchProj && !matchTitle && !matchBranch && !matchModel) return false;
+          const matchFolder = (s.workspaceFolderName || '').toLowerCase().includes(searchKeyword);
+          const matchTags = Array.isArray(s.tags) && s.tags.some(t => String(t).toLowerCase().includes(searchKeyword));
+          if (!matchProj && !matchTitle && !matchBranch && !matchModel && !matchFolder && !matchTags) return false;
         }
         return true;
       });
@@ -1965,6 +2483,8 @@ export function getWebviewContent(): string {
 
       container.innerHTML = pageSessions.map(s => {
         const isFocused = s.sessionId === focusedSessionId;
+        const tagsBadge = (s.tags && s.tags.length) ? (' <span title="' + escapeAttribute(s.tags.join(', ')) + '" style="background: rgba(86,156,214,0.15); color:#9cdcfe; font-size:9px; padding:1px 4px; border-radius:3px;">' + escapeHtml(s.tags.slice(0,3).join(' · ')) + (s.tags.length > 3 ? '…' : '') + '</span>') : '';
+        const pinnedTag = s.pinned ? ' <span title="Pinned" style="background: rgba(204,167,0,0.2); color:#cca700; font-size:9px; padding:1px 4px; border-radius:3px;">PIN</span>' : '';
         const focusedTag = isFocused ? '<span class="status-pill focused" style="font-size: 9px;"><span class="badge-icon">📍</span><span class="badge-text">当前聚焦</span></span>' : '';
         const activeTag = !s.isIdle ? '<span class="status-pill active" style="font-size: 9px;"><span class="badge-icon">⚡</span><span class="badge-text">活跃</span></span>' : '<span class="status-pill idle" style="font-size: 9px;"><span class="badge-icon">💤</span><span class="badge-text">闲置</span></span>';
         const cardClass = isFocused ? 'session-card focused' : 'session-card';
@@ -2005,8 +2525,8 @@ export function getWebviewContent(): string {
 
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
-            '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + '</span>' +
-            '<div class="session-header-badges">' + focusedTag + activeTag + agentsBadge + '</div>' +
+            '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + (s.workspaceFolderName ? ' · ' + escapeHtml(s.workspaceFolderName) : '') + '</span>' +
+            '<div class="session-header-badges">' + focusedTag + pinnedTag + tagsBadge + activeTag + agentsBadge + '</div>' +
           '</div>' +
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
@@ -2015,6 +2535,13 @@ export function getWebviewContent(): string {
           '</div>' +
           '<div class="session-actions-row">' +
             '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '" title="聚焦此会话"><span class="btn-icon">👀</span><span class="btn-text">聚焦</span></button>' +
+            '<button class="session-act-btn resume" data-action="resumeSession" data-session-id="' + sessionIdAttr + '" title="在终端恢复 (claude --resume)"><span class="btn-icon">▶️</span><span class="btn-text">恢复</span></button>' +
+            '<button class="session-act-btn rename" data-action="renameSession" data-session-id="' + sessionIdAttr + '" title="重命名会话"><span class="btn-icon">✏️</span><span class="btn-text">改名</span></button>' +
+            '<button class="session-act-btn" data-action="togglePinSession" data-session-id="' + sessionIdAttr + '" title="置顶/取消置顶"><span class="btn-icon">' + (s.pinned ? '📌' : '📍') + '</span><span class="btn-text">' + (s.pinned ? '已置顶' : '置顶') + '</span></button>' +
+            '<button class="session-act-btn" data-action="exportSession" data-session-id="' + sessionIdAttr + '" title="导出 Markdown"><span class="btn-icon">📄</span><span class="btn-text">导出</span></button>' +
+            (s.parentSessionId ? '<button class="session-act-btn" data-action="compareFork" data-session-id="' + sessionIdAttr + '" title="对比父会话"><span class="btn-icon">🔀</span><span class="btn-text">对比</span></button>' : '') +
+            '<button class="session-act-btn" data-action="editSessionTags" data-session-id="' + sessionIdAttr + '" title="编辑标签"><span class="btn-icon">🏷️</span><span class="btn-text">标签</span></button>' +
+            '<button class="session-act-btn" data-action="showTimeline" data-session-id="' + sessionIdAttr + '" title="权限/Hook 时间线"><span class="btn-icon">🛡️</span><span class="btn-text">时间线</span></button>' +
             '<button class="session-act-btn fork" data-action="forkSession" data-session-id="' + sessionIdAttr + '" title="分叉此会话 (Fork)"><span class="btn-icon">🌿</span><span class="btn-text">分叉</span></button>' +
             '<button class="session-act-btn" data-action="openSessionFile" data-file-path="' + sessionFileAttr + '" title="查看原始 JSONL 日志"><span class="btn-icon">📄</span><span class="btn-text">日志</span></button>' +
             '<button class="session-act-btn delete" data-action="deleteSession" data-session-id="' + sessionIdAttr + '" title="删除此会话"><span class="btn-icon">🗑️</span><span class="btn-text">删除</span></button>' +
@@ -2023,13 +2550,6 @@ export function getWebviewContent(): string {
       }).join('');
     }
 
-    function saveProxyConfig() {
-      const apiBaseUrl = document.getElementById('cfg-base-url').value.trim();
-      sendMessage('saveConfig', { apiBaseUrl });
-      const toast = document.getElementById('save-toast');
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 2000);
-    }
 
     // Message Receiver
     window.addEventListener('message', event => {
@@ -2038,6 +2558,10 @@ export function getWebviewContent(): string {
 
       if (msg.type === 'updateSession') {
         applyHubUiStrings(msg.ui);
+        applyToolbarI18n();
+        if (msg.sessionListPageSize && msg.sessionListPageSize >= 4) {
+          pageSize = Math.min(50, Math.max(4, Number(msg.sessionListPageSize) || 8));
+        }
         const s = msg.session;
         currentSession = s || null;
         if (msg.allSessions) {
@@ -2120,7 +2644,10 @@ export function getWebviewContent(): string {
           const todosWrap = document.getElementById('todos-container');
           const todosList = document.getElementById('todos-list');
           const warnOnlyPlan = shouldWarnPlanWithoutChecklist(s);
-          if (s.todos && s.todos.length > 0) {
+          const hasPendingCreates = s.pendingTaskCreates && s.pendingTaskCreates.length > 0;
+          const hasTodoContent = (s.todos && s.todos.length > 0) || hasPendingCreates;
+          const showEmptyOptIn = !hasTodoContent && !s.taskToolsObserved && (s.todoMode === 'none' || !s.todoMode) && !s.checklistAvailable;
+          if (hasTodoContent || s.taskListNeedsSelection || showEmptyOptIn) {
             todosWrap.style.display = 'block';
             const done = s.todos.filter(x => x.status === 'completed').length;
             const inProg = s.todos.filter(x => x.status === 'in_progress').length;
@@ -2275,7 +2802,10 @@ export function getWebviewContent(): string {
               if (a.id) details.push('<div><strong>ID:</strong> ' + escapeHtml(a.id) + '</div>');
               if (a.model) details.push('<div><strong>模型:</strong> ' + escapeHtml(a.model) + '</div>');
               if (a.parentAgentId) details.push('<div><strong>父代理:</strong> ' + escapeHtml(a.parentAgentId) + '</div>');
-              if (a.worktreePath) details.push('<div><strong>工作区:</strong> ' + escapeHtml(a.worktreePath) + '</div>');
+              if (a.worktreePath) {
+                details.push('<div><strong>工作区:</strong> ' + escapeHtml(a.worktreePath) + '</div>');
+                details.push('<div class="agent-wt-actions"><button class="agent-wt-btn" data-action="openWorktree" data-worktree-path="' + escapeAttribute(a.worktreePath) + '" onclick="event.stopPropagation()">📂 Worktree</button></div>');
+              }
               const isExpanded = expandedAgentKeys.has(agentKey);
               const detailContent = details.length > 0 ? '<div id="' + agentDetailId + '" class="agent-detail-body" style="display: ' + (isExpanded ? 'flex' : 'none') + ';">' + details.join('') + '</div>' : '';
 
@@ -2323,21 +2853,36 @@ export function getWebviewContent(): string {
 
         updateLiveSessionDuration();
 
-        // Subscription Rate Limits
-        if (msg.subscription && msg.subscription.fiveHour) {
+        // Subscription Rate Limits (opt-in OAuth meters)
+        if (msg.subscription && (msg.subscription.session || (msg.subscription.meters && msg.subscription.meters.length))) {
+          const meter = msg.subscription.session || msg.subscription.meters[0];
           document.getElementById('sub-container').style.display = 'block';
-          const pct = Math.min(100, Math.round(msg.subscription.fiveHour.utilization || 0));
+          const pct = Math.min(100, Math.round(meter.percentage || 0));
           document.getElementById('sub-fill').style.width = pct + '%';
-          document.getElementById('sub-reset').innerText = pct + '% · ' + (msg.subscription.fiveHour.resetsAt ? new Date(msg.subscription.fiveHour.resetsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+          const label = meter.label || 'Quota';
+          const reset = meter.resetsAt ? new Date(meter.resetsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          document.getElementById('sub-reset').innerText = label + ' · ' + pct + '%' + (reset ? ' · ' + reset : '');
+          const titleEl = document.querySelector('#sub-container span');
+          if (titleEl && titleEl.id !== 'sub-reset') titleEl.textContent = '⏳ ' + label;
+        } else if (msg.subscriptionError) {
+          document.getElementById('sub-container').style.display = 'block';
+          document.getElementById('sub-fill').style.width = '0%';
+          document.getElementById('sub-reset').innerText = msg.subscriptionError;
+        }
+        const metersEl = document.getElementById('sub-meters');
+        if (metersEl) {
+          const meters = (msg.subscription && msg.subscription.meters) ? msg.subscription.meters.slice(0, 4) : [];
+          metersEl.innerHTML = meters.map(m => {
+            const p = Math.min(100, Math.round(m.percentage || 0));
+            return '<div>' + escapeHtml(m.label || m.key) + ': ' + p + '%</div>';
+          }).join('');
         }
       }
 
       if (msg.type === 'loadConfig') {
         applyHubUiStrings(msg.ui);
+        renderTodoToolsPanel(msg);
         const c = msg.config || {};
-        if (c.apiBaseUrl) {
-          document.getElementById('cfg-base-url').value = c.apiBaseUrl;
-        }
         if (msg.projectDocs) {
           const btnAgents = document.getElementById('btn-open-agents-md');
           const btnClaude = document.getElementById('btn-open-claude-md');
@@ -2397,6 +2942,7 @@ export function getWebviewContent(): string {
     }, 1000);
 
     // Notify backend ready
+    applyToolbarI18n();
     sendMessage('ready');
   </script>
 </body>

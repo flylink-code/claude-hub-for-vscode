@@ -9,13 +9,13 @@ export class TerminalManager {
     );
   }
 
-  public static focusOrLaunchClaudeTerminal(): vscode.Terminal {
+  public static focusOrLaunchClaudeTerminal(cwd?: string): vscode.Terminal {
     let terminal = this.findClaudeTerminal();
     if (!terminal) {
-      const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      const folder = cwd || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
       terminal = vscode.window.createTerminal({
         name: 'Claude Code',
-        cwd,
+        cwd: folder,
         iconPath: new vscode.ThemeIcon('sparkle'),
       });
       terminal.sendText('claude');
@@ -24,9 +24,32 @@ export class TerminalManager {
     return terminal;
   }
 
-  public static sendSlashCommand(command: string): void {
-    const terminal = this.focusOrLaunchClaudeTerminal();
+  /** Open a dedicated terminal in cwd and run claude --resume <sessionId>. */
+  public static resumeSession(sessionId: string, cwd?: string, label?: string): vscode.Terminal {
+    const name = label ? `Claude (${label})` : 'Claude Code';
+    const terminal = vscode.window.createTerminal({
+      name,
+      cwd: cwd || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+      iconPath: new vscode.ThemeIcon('debug-start'),
+    });
+    terminal.show();
+    terminal.sendText(`claude --resume ${sessionId}`);
+    return terminal;
+  }
+
+  public static sendSlashCommand(command: string, cwd?: string): void {
+    const terminal = this.focusOrLaunchClaudeTerminal(cwd);
     const cleanCmd = command.startsWith('/') ? command : `/${command}`;
     terminal.sendText(cleanCmd);
+  }
+
+  public static openTerminalInPath(cwd: string, name?: string): vscode.Terminal {
+    const terminal = vscode.window.createTerminal({
+      name: name || 'Claude Worktree',
+      cwd,
+      iconPath: new vscode.ThemeIcon('terminal'),
+    });
+    terminal.show();
+    return terminal;
   }
 }

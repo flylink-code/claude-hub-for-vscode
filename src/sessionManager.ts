@@ -10,12 +10,14 @@ import {
   resolveClaudeConfigDir,
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
+import { setPricingOverrides, PricingOverrides } from './modelPricing.js';
 import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache, extractPlanTodos, extractMarkdownTodos } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData, TaskSource, TodoItem, SessionPlan } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
-import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot, mergeDiskPlanTodos } from './nativeTasks.js';
-import { readProjectTodoPolicy, projectTodoPolicyWatchPaths } from './projectTodoPolicy.js';
+import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, writeTaskAssociation, resolveNativeListCandidate, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot, mergeDiskPlanTodos } from './nativeTasks.js';
+import { SessionAlertController } from './sessionAlerts.js';
+import { readProjectTodoPolicy, projectTodoPolicyWatchPaths, resolvePreferSource, allowChecklistFill, todoModeFromSource } from './projectTodoPolicy.js';
 
 export { generateForkTitle };
 
@@ -40,6 +42,7 @@ export class SessionManager implements vscode.Disposable {
   private disposed = false;
   private taskReader = new NativeTaskReader();
   private taskWatcher = new TaskDataWatcher(() => this.scheduleScan());
+  private alertController = new SessionAlertController();
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -180,51 +183,179 @@ export class SessionManager implements vscode.Disposable {
     }
   }
 
-  public async deleteSession(sessionId: string): Promise<boolean> {
+  public getTrashDir(): string {
+    return path.join(this.getConfigDir(), '.hub-trash');
+  }
+
+  /** Soft-delete: move transcript (+ optional sidecars) into ~/.claude/.hub-trash for undo. */
+  public async deleteSession(sessionId: string, options?: { permanent?: boolean }): Promise<{ ok: boolean; trashId?: string }> {
     const session = this._sessions.find((s) => s.sessionId === sessionId);
     if (!session || !session.sessionFile) {
-      return false;
+      return { ok: false };
     }
 
     try {
-      // 1. Delete main transcript .jsonl file
-      if (fs.existsSync(session.sessionFile)) {
-        fs.unlinkSync(session.sessionFile);
-      }
-      clearTranscriptCache(session.sessionFile);
+      const permanent = options?.permanent === true;
+      let trashId: string | undefined;
 
-      // 2. Delete subagents folder if exists (e.g. <dir>/<sessionId>/)
-      const dir = path.dirname(session.sessionFile);
-      const subagentDir = path.join(dir, sessionId);
-      if (fs.existsSync(subagentDir)) {
-        try {
-          fs.rmSync(subagentDir, { recursive: true, force: true });
-        } catch (e) {
-          console.warn('[Claude Hub] Could not remove subagent directory:', e);
+      if (!permanent) {
+        const trashRoot = this.getTrashDir();
+        fs.mkdirSync(trashRoot, { recursive: true });
+        trashId = `${sessionId}-${Date.now()}`;
+        const trashDir = path.join(trashRoot, trashId);
+        fs.mkdirSync(trashDir, { recursive: true });
+
+        const meta = {
+          sessionId,
+          originalFile: session.sessionFile,
+          projectPath: session.projectPath,
+          projectName: session.projectName,
+          sessionTitle: session.sessionTitle,
+          deletedAt: new Date().toISOString(),
+        };
+        fs.writeFileSync(path.join(trashDir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
+
+        if (fs.existsSync(session.sessionFile)) {
+          const dest = path.join(trashDir, path.basename(session.sessionFile));
+          fs.renameSync(session.sessionFile, dest);
+        }
+        clearTranscriptCache(session.sessionFile);
+
+        const dir = path.dirname(session.sessionFile);
+        const subagentDir = path.join(dir, sessionId);
+        if (fs.existsSync(subagentDir)) {
+          try {
+            fs.renameSync(subagentDir, path.join(trashDir, 'subagents'));
+          } catch (e) {
+            console.warn('[Claude Hub] Could not move subagent directory:', e);
+          }
+        }
+
+        const configDir = this.getConfigDir();
+        const sessionEnvDir = path.join(configDir, 'session-env', sessionId);
+        if (fs.existsSync(sessionEnvDir)) {
+          try {
+            fs.renameSync(sessionEnvDir, path.join(trashDir, 'session-env'));
+          } catch (e) {
+            console.warn('[Claude Hub] Could not move session-env directory:', e);
+          }
+        }
+      } else {
+        if (fs.existsSync(session.sessionFile)) {
+          fs.unlinkSync(session.sessionFile);
+        }
+        clearTranscriptCache(session.sessionFile);
+
+        const dir = path.dirname(session.sessionFile);
+        const subagentDir = path.join(dir, sessionId);
+        if (fs.existsSync(subagentDir)) {
+          try {
+            fs.rmSync(subagentDir, { recursive: true, force: true });
+          } catch (e) {
+            console.warn('[Claude Hub] Could not remove subagent directory:', e);
+          }
+        }
+
+        const configDir = this.getConfigDir();
+        const sessionEnvDir = path.join(configDir, 'session-env', sessionId);
+        if (fs.existsSync(sessionEnvDir)) {
+          try {
+            fs.rmSync(sessionEnvDir, { recursive: true, force: true });
+          } catch (e) {
+            console.warn('[Claude Hub] Could not remove session-env directory:', e);
+          }
         }
       }
 
-      // 3. Delete session-env directory if exists
-      const configDir = this.getConfigDir();
-      const sessionEnvDir = path.join(configDir, 'session-env', sessionId);
-      if (fs.existsSync(sessionEnvDir)) {
-        try {
-          fs.rmSync(sessionEnvDir, { recursive: true, force: true });
-        } catch (e) {
-          console.warn('[Claude Hub] Could not remove session-env directory:', e);
-        }
-      }
-
-      // 4. Reset focused session if this was the focused one
       if (this._focusedSessionId === sessionId) {
         this._focusedSessionId = null;
       }
 
-      // 5. Rescan sessions so UI and status bar update immediately
+      await this.scanSessions();
+      return { ok: true, trashId };
+    } catch (err) {
+      console.error('[Claude Hub] Failed to delete session:', err);
+      return { ok: false };
+    }
+  }
+
+  public async undoDeleteSession(trashId: string): Promise<boolean> {
+    try {
+      const trashDir = path.join(this.getTrashDir(), trashId);
+      const metaPath = path.join(trashDir, 'meta.json');
+      if (!fs.existsSync(metaPath)) return false;
+      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) as {
+        sessionId: string;
+        originalFile: string;
+      };
+      const jsonlName = `${meta.sessionId}.jsonl`;
+      const trashedFile = path.join(trashDir, jsonlName);
+      if (!fs.existsSync(trashedFile)) return false;
+
+      fs.mkdirSync(path.dirname(meta.originalFile), { recursive: true });
+      if (fs.existsSync(meta.originalFile)) return false;
+      fs.renameSync(trashedFile, meta.originalFile);
+
+      const subSrc = path.join(trashDir, 'subagents');
+      const subDest = path.join(path.dirname(meta.originalFile), meta.sessionId);
+      if (fs.existsSync(subSrc) && !fs.existsSync(subDest)) {
+        fs.renameSync(subSrc, subDest);
+      }
+
+      const envSrc = path.join(trashDir, 'session-env');
+      const envDest = path.join(this.getConfigDir(), 'session-env', meta.sessionId);
+      if (fs.existsSync(envSrc) && !fs.existsSync(envDest)) {
+        fs.mkdirSync(path.dirname(envDest), { recursive: true });
+        fs.renameSync(envSrc, envDest);
+      }
+
+      try {
+        fs.rmSync(trashDir, { recursive: true, force: true });
+      } catch {
+        /* keep trash if cleanup fails */
+      }
+
+      await this.scanSessions();
+      this.setFocusedSession(meta.sessionId);
+      return true;
+    } catch (err) {
+      console.error('[Claude Hub] Failed to undo delete:', err);
+      return false;
+    }
+  }
+
+  public async renameSession(sessionId: string, newTitle: string): Promise<boolean> {
+    const session = this._sessions.find((s) => s.sessionId === sessionId);
+    if (!session || !session.sessionFile || !fs.existsSync(session.sessionFile)) {
+      return false;
+    }
+    const title = (newTitle || '').trim();
+    if (!title) return false;
+
+    try {
+      let prefix = '';
+      try {
+        const st = fs.statSync(session.sessionFile);
+        if (st.size > 0) {
+          const fd = fs.openSync(session.sessionFile, 'r');
+          const buf = Buffer.alloc(1);
+          fs.readSync(fd, buf, 0, 1, st.size - 1);
+          fs.closeSync(fd);
+          if (buf[0] !== 0x0a) prefix = '\n';
+        }
+      } catch { prefix = '\n'; }
+      const entry = JSON.stringify({
+        type: 'custom-title',
+        customTitle: title,
+        sessionId,
+        timestamp: new Date().toISOString(),
+      });
+      fs.appendFileSync(session.sessionFile, prefix + entry + '\n', 'utf8');
+      clearTranscriptCache(session.sessionFile);
       await this.scanSessions();
       return true;
     } catch (err) {
-      console.error('[Claude Hub] Failed to delete session:', err);
+      console.error('[Claude Hub] Failed to rename session:', err);
       return false;
     }
   }
@@ -330,7 +461,7 @@ export class SessionManager implements vscode.Disposable {
       this.subscriptionTimer = null;
     }
 
-    const enabled = vscode.workspace.getConfiguration('claudeHub').get<boolean>('fetchSubscriptionUsage', true);
+    const enabled = vscode.workspace.getConfiguration('claudeHub').get<boolean>('fetchSubscriptionUsage', false);
     if (!enabled) {
       void this.refreshSubscription();
       return;
@@ -345,7 +476,7 @@ export class SessionManager implements vscode.Disposable {
   }
 
   public async refreshSubscription(): Promise<void> {
-    const enabled = vscode.workspace.getConfiguration('claudeHub').get<boolean>('fetchSubscriptionUsage', true);
+    const enabled = vscode.workspace.getConfiguration('claudeHub').get<boolean>('fetchSubscriptionUsage', false);
     if (!enabled) {
       this._subscriptionUsage = null;
       this._onDidUpdateSubscription.fire(null);
@@ -376,6 +507,9 @@ export class SessionManager implements vscode.Disposable {
       const config = vscode.workspace.getConfiguration('claudeHub');
       const defaultLimit = config.get<number>('contextLimit', 200000);
       const modelLimits = config.get<Record<string, number>>('modelContextLimits', {});
+    const pricingRates = config.get<PricingOverrides['rates']>('modelPricing', {});
+    const pricingAliases = config.get<PricingOverrides['aliases']>('modelAliases', {});
+    setPricingOverrides({ rates: pricingRates || {}, aliases: pricingAliases || {} });
       const idleTimeout = config.get<number>('idleTimeout', 180);
 
       const projectsDir = getClaudeProjectsDir(this.getConfigDir());
@@ -443,30 +577,106 @@ export class SessionManager implements vscode.Disposable {
           const association = readTaskAssociation(this.taskStorageDir, sessionId, projectPath);
           const selections = this.context.globalState.get<Record<string, string>>('taskListSelections', {});
           const selectedList = selections[`${path.resolve(this.getConfigDir())}:${sessionId}`];
-          const candidateList = selectedList || association?.taskListId || sessionId;
+          const configDir = this.getConfigDir();
+          const projectTodoPolicy = readProjectTodoPolicy(projectPath);
+          let preferSetting = 'auto';
+          try {
+            preferSetting = vscode.workspace.getConfiguration('claudeHub').get<string>('todo.preferSource', 'auto') || 'auto';
+          } catch { /* tests without vscode */ }
+          const preferSource = resolvePreferSource(projectTodoPolicy, preferSetting);
+          const checklistFillOk = allowChecklistFill(preferSource, projectTodoPolicy);
+          const listExists = (listId: string) => {
+            const snap = this.taskReader.read(configDir, listId);
+            return snap.exists;
+          };
+          const observedList = parsed.observedTaskListId;
+          const picked = resolveNativeListCandidate({
+            selectedList,
+            associationListId: association?.taskListId || observedList,
+            sessionId,
+            listExists,
+          });
           let todos = parsed.todos;
           let taskSource = parsed.taskSource ?? 'none';
+          // Force tasks-only: drop assistant-markdown fill. Dual/auto keeps checklist when present.
+          if (preferSource === 'tasks' && taskSource === 'markdown') {
+            todos = [];
+            taskSource = 'none';
+          }
           let taskListId: string | undefined;
+          let taskListNeedsSelection = false;
           let plan = parsed.plan;
+          const parsedSource = parsed.taskSource ?? 'none';
+          let checklistAvailable =
+            parsedSource === 'plan' ||
+            parsedSource === 'markdown' ||
+            Boolean(plan?.isChecklist) ||
+            ((plan?.items?.length || 0) > 0);
           const planPath = plan?.path || (!parsed.hadClearCommand ? association?.planPath : undefined);
-          if (!parsed.wasCleared && planPath && isAllowedPlanPath(this.getConfigDir(), projectPath, planPath)) {
+          if (!parsed.wasCleared && planPath && isAllowedPlanPath(configDir, projectPath, planPath)) {
             try {
               const text = fs.readFileSync(planPath, 'utf8');
-              const diskPlan = { path: planPath, items: extractPlanTodos(text), isChecklist: extractMarkdownTodos(text).length > 0 };
-              const merged = mergeDiskPlanTodos(taskSource, todos, diskPlan);
-              todos = merged.todos;
-              taskSource = merged.taskSource;
-              plan = merged.plan;
+              const diskPlan = {
+                path: planPath,
+                items: extractPlanTodos(text),
+                isChecklist: extractMarkdownTodos(text).length > 0,
+              };
+              if (diskPlan.isChecklist || diskPlan.items.length > 0) {
+                checklistAvailable = true;
+              }
+              if (diskPlan.isChecklist && !checklistFillOk) {
+                // tasks-only: keep plan path, do not fill todos from checklist
+                plan = { path: planPath, items: [], isChecklist: true };
+              } else {
+                const hadTaskPrimary = taskSource === 'native' || taskSource === 'tasks' || taskSource === 'todoWrite';
+                const merged = mergeDiskPlanTodos(taskSource, todos, diskPlan);
+                if (hadTaskPrimary) {
+                  // Task stays primary; checklist still noted via checklistAvailable
+                  plan = merged.plan;
+                } else {
+                  todos = merged.todos;
+                  taskSource = merged.taskSource;
+                  plan = merged.plan;
+                }
+              }
             } catch { /* 文件暂时不可读时保留 transcript 快照 */ }
           }
-          if (!parsed.wasCleared && (!parsed.hadClearCommand || parsed.taskToolsObserved) && isSafeId(candidateList)) {
-            const native = this.taskReader.read(this.getConfigDir(), candidateList);
+          if (!parsed.wasCleared && (!parsed.hadClearCommand || parsed.taskToolsObserved) && picked.listId) {
+            const native = this.taskReader.read(configDir, picked.listId);
             if (native.exists && native.valid) {
+              if (taskSource === 'plan' || taskSource === 'markdown' || (plan && (plan.isChecklist || (plan.items && plan.items.length)))) {
+                checklistAvailable = true;
+              }
               todos = native.items;
               taskSource = 'native';
-              taskListId = candidateList;
+              taskListId = picked.listId;
+              writeTaskAssociation(this.taskStorageDir, {
+                sessionId,
+                projectPath,
+                taskListId: picked.listId,
+                planPath: plan?.path || association?.planPath,
+                taskObservedAt: Date.now(),
+              });
             }
           }
+          if (
+            !parsed.wasCleared &&
+            parsed.taskToolsObserved &&
+            !taskListId &&
+            listTaskLists(configDir).length > 0 &&
+            (taskSource === 'tasks' || taskSource === 'none')
+          ) {
+            taskListNeedsSelection = true;
+          }
+          const todoMode = todoModeFromSource(taskSource);
+          // If Task primary and checklist exists under dual mode, keep checklistAvailable true
+          if (todoMode === 'task' && (plan?.isChecklist || (plan?.items && plan.items.length > 0))) {
+            checklistAvailable = true;
+          }
+          if (todoMode === 'checklist') {
+            checklistAvailable = true;
+          }
+          const checklistFillAllowed = checklistFillOk;
           const dismissKey = crypto.createHash('sha256').update(path.resolve(filePath)).digest('hex');
           if (dismissed[dismissKey]) {
             const current = taskSnapshot(taskSource, taskListId ?? plan?.path, todos);
@@ -496,6 +706,7 @@ export class SessionManager implements vscode.Disposable {
           const matchingWsFolder = (vscode.workspace.workspaceFolders || []).find((wf) =>
             isPathInWorkspace(projectPath, [wf.uri.fsPath]),
           );
+          const workspaceFolderName = matchingWsFolder?.name;
           const rawProjectName = matchingWsFolder
             ? matchingWsFolder.name
             : parsed.cwd
@@ -641,9 +852,15 @@ export class SessionManager implements vscode.Disposable {
             plan,
             taskSource,
             taskListId,
+            todoMode,
+            preferSource,
+            checklistAvailable,
+            checklistFillAllowed,
+            pendingTaskCreates: parsed.pendingTaskCreates,
+            taskListNeedsSelection,
             lastActivity: parsed.lastActivity,
             taskToolsObserved: parsed.taskToolsObserved || taskSource === 'native',
-            projectTodoPolicy: readProjectTodoPolicy(projectPath),
+            projectTodoPolicy,
             skills: parsed.skills,
             mcpServers: parsed.mcpServers,
             gitBranch: parsed.gitBranch,
@@ -654,6 +871,8 @@ export class SessionManager implements vscode.Disposable {
             currentTurnStartTime: parsed.currentTurnStartTime,
             isIdle,
             isCurrentWorkspace,
+            workspaceFolderName,
+            parentSessionId: parsed.parentSessionId,
             wasCleared: parsed.wasCleared,
             cwd: parsed.cwd,
           });
@@ -678,6 +897,7 @@ export class SessionManager implements vscode.Disposable {
         ...discoveredSessions.flatMap(s => projectTodoPolicyWatchPaths(s.projectPath)),
       ];
       this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir, discoveredWatchMd);
+      this.alertController.evaluate(this._sessions);
       this._onDidUpdateSessions.fire(this.getFilteredSessions());
     } catch (err) {
       console.error('[Claude Hub] Error during scanSessions:', err);

@@ -208,8 +208,12 @@ export function parseUsageResponse(body: unknown): SubscriptionUsageData | null 
   };
 }
 
+export type SubscriptionFetchError = { status: number; message: string } | null;
+export let lastSubscriptionFetchError: SubscriptionFetchError = null;
+
 export function fetchSubscriptionUsage(token: string): Promise<SubscriptionUsageData | null> {
   return new Promise((resolve) => {
+    lastSubscriptionFetchError = null;
     const req = https.request(
       {
         hostname: 'api.anthropic.com',
@@ -218,7 +222,8 @@ export function fetchSubscriptionUsage(token: string): Promise<SubscriptionUsage
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'claude-code',
+          'anthropic-beta': 'oauth-2025-04-20',
+          'User-Agent': 'claude-code/2.0 (Claude Hub)',
         },
         timeout: 6000,
       },
@@ -229,6 +234,14 @@ export function fetchSubscriptionUsage(token: string): Promise<SubscriptionUsage
         });
         res.on('end', () => {
           if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+            const status = res.statusCode || 0;
+            if (status === 401) {
+              lastSubscriptionFetchError = { status, message: 'OAuth token rejected (401). Re-login in Claude Code.' };
+            } else if (status === 429) {
+              lastSubscriptionFetchError = { status, message: 'Rate limited (429). Try again later.' };
+            } else {
+              lastSubscriptionFetchError = { status, message: `Usage API HTTP ${status}` };
+            }
             resolve(null);
             return;
           }

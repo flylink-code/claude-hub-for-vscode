@@ -12,9 +12,9 @@ import {
   buildTaskSyncPrompt,
   shouldWarnPlanWithoutChecklist,
   PROJECT_TODO_DOC_MAX_BYTES,
-  getRecommendedTodoPolicySection,
-  appendRecommendedTodoPolicySection,
-  markdownHasTodoPolicySection,
+  resolvePreferSource,
+  allowChecklistFill,
+  todoModeFromSource,
 } from '../src/projectTodoPolicy.js';
 import { getWebviewContent } from '../src/webviewHtml.js';
 
@@ -218,26 +218,30 @@ test('getWebviewContent includes plan-without-checklist warning chip helpers', (
 });
 
 
-test('recommended section parses and append is idempotent', () => {
-  const section = getRecommendedTodoPolicySection();
-  assert.ok(markdownHasTodoPolicySection(section));
-  const policy = extractTodoConfigFromMarkdown(section);
-  assert.ok(policy);
-  assert.strictEqual(policy!.prefer_source, 'auto');
-  assert.strictEqual(policy!.warn_plan_without_checklist, true);
 
-  const first = appendRecommendedTodoPolicySection('# AGENTS.md\n\nHello\n');
-  assert.strictEqual(first.appended, true);
-  assert.ok(first.content.includes('Claude Hub'));
-  const second = appendRecommendedTodoPolicySection(first.content);
-  assert.strictEqual(second.appended, false);
-  assert.strictEqual(second.content, first.content);
+
+test('resolvePreferSource defaults to auto (dual); policy wins', () => {
+  assert.strictEqual(resolvePreferSource(undefined, undefined), 'auto');
+  assert.strictEqual(resolvePreferSource(undefined, 'auto'), 'auto');
+  assert.strictEqual(resolvePreferSource(undefined, 'tasks'), 'tasks');
+  assert.strictEqual(resolvePreferSource(undefined, 'checklist'), 'checklist');
+  assert.strictEqual(resolvePreferSource({ prefer_source: 'todoWrite' }, 'tasks'), 'todoWrite');
+  assert.strictEqual(resolvePreferSource({ prefer_source: 'auto' }, 'checklist'), 'auto');
 });
 
-test('getWebviewContent uses hubUiStrings for plan warn and inject button', () => {
-  const html = getWebviewContent();
-  assert.ok(html.includes('hubUiStrings.planNoChecklistWarn'));
-  assert.ok(html.includes('btn-inject-todo-policy'));
-  assert.ok(html.includes("sendMessage('injectTodoPolicy')"));
-  assert.ok(html.includes('applyHubUiStrings'));
+test('allowChecklistFill: dual/auto allow; tasks-only needs required', () => {
+  assert.strictEqual(allowChecklistFill('auto', undefined), true);
+  assert.strictEqual(allowChecklistFill('tasks', undefined), false);
+  assert.strictEqual(allowChecklistFill('tasks', { plan_checklist: 'preferred' }), false);
+  assert.strictEqual(allowChecklistFill('tasks', { plan_checklist: 'required' }), true);
+  assert.strictEqual(allowChecklistFill('checklist', undefined), true);
+});
+
+test('todoModeFromSource maps Task vs Checklist families', () => {
+  assert.strictEqual(todoModeFromSource('native'), 'task');
+  assert.strictEqual(todoModeFromSource('tasks'), 'task');
+  assert.strictEqual(todoModeFromSource('todoWrite'), 'task');
+  assert.strictEqual(todoModeFromSource('plan'), 'checklist');
+  assert.strictEqual(todoModeFromSource('markdown'), 'checklist');
+  assert.strictEqual(todoModeFromSource('none'), 'none');
 });

@@ -10,6 +10,9 @@ import { TaskIntegrationManager } from './taskIntegration.js';
 import { isAllowedPlanPath } from './nativeTasks.js';
 import { t, getCurrentLanguage } from './i18n.js';
 import { buildTaskSyncPrompt } from './projectTodoPolicy.js';
+import { getPinnedSessionIds, sortSessionsWithPins } from './sessionPins.js';
+import { getSessionTagMap } from './sessionTags.js';
+import { lastSubscriptionFetchError } from './subscriptionUsage.js';
 
 export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'claudeHub.dashboardView';
@@ -126,6 +129,41 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           break;
         }
 
+        case 'setTodoToolsEnv': {
+          const enabled = msg.enabled === true;
+          const folders = vscode.workspace.workspaceFolders || [];
+          let folder: vscode.WorkspaceFolder | undefined;
+          if (folders.length === 1) {
+            folder = folders[0];
+          } else if (folders.length > 1) {
+            folder = await this.pickWorkspace();
+          }
+          if (!folder) {
+            // Rollback optimistic checkbox — no write happened
+            this.sendConfigUpdate();
+            if (folders.length === 0) {
+              vscode.window.showInformationMessage(t('task.noProject'));
+            }
+            break;
+          }
+          try {
+            this.taskIntegration.setTodoToolsEnv(folder.uri.fsPath, enabled);
+            await vscode.workspace.getConfiguration('claudeHub').update(
+              'todoTools.enabled',
+              enabled,
+              vscode.ConfigurationTarget.Workspace,
+            );
+            this.sendConfigUpdate();
+            vscode.window.showInformationMessage(
+              t(enabled ? 'todoTools.enabledToast' : 'todoTools.disabledToast'),
+            );
+          } catch (error) {
+            this.sendConfigUpdate();
+            vscode.window.showErrorMessage(t('task.error', { err: String(error) }));
+          }
+          break;
+        }
+
         case 'openSessionPlan': {
           const session = this.sessionManager.focusedSession;
           const file = session?.plan?.path;
@@ -156,7 +194,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           const session = this.sessionManager.focusedSession;
           if (!session) break;
           const selected = await vscode.window.showQuickPick([
-            { label: t('task.autoList'), listId: undefined as string | undefined },
+            { label: t('task.unlinkList'), description: t('task.autoList'), listId: undefined as string | undefined },
             ...this.sessionManager.availableTaskLists.map(listId => ({ label: listId, listId })),
           ], { placeHolder: t('task.selectList') });
           if (selected) await this.sessionManager.selectTaskList(session.sessionId, selected.listId);
@@ -215,18 +253,6 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           }
           break;
 
-        case 'saveConfig': {
-          const ok = await this.configManager.updateClaudeSettings({
-            apiBaseUrl: msg.apiBaseUrl,
-          });
-          if (ok) {
-            vscode.window.showInformationMessage('Claude Code 代理配置已保存！');
-          } else {
-            vscode.window.showErrorMessage('保存配置失败，请检查文件写入权限。');
-          }
-          break;
-        }
-
         case 'openSettingsJson':
           await this.configManager.openSettingsFile();
           break;
@@ -241,17 +267,59 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           this.sendConfigUpdate();
           break;
 
-        case 'injectTodoPolicy': {
-          const folder = await this.pickWorkspace();
-          if (!folder) break;
-          await this.configManager.injectTodoPolicySection(folder.uri.fsPath);
-          this.sendConfigUpdate();
+        
+        case 'compareFork': {
+          await vscode.commands.executeCommand('claudeHub.compareFork', msg.sessionId);
+          break;
+        }
+        case 'editSessionTags': {
+          await vscode.commands.executeCommand('claudeHub.editSessionTags', msg.sessionId);
+          break;
+        }
+        case 'showTimeline': {
+          await vscode.commands.executeCommand('claudeHub.showTimeline', msg.sessionId);
+          break;
+        }
+        case 'togglePinSession': {
+          await vscode.commands.executeCommand('claudeHub.togglePinSession', msg.sessionId);
+          break;
+        }
+        case 'exportSession': {
+          await vscode.commands.executeCommand('claudeHub.exportSession', msg.sessionId);
+          break;
+        }
+        case 'workspaceCostReport': {
+          await vscode.commands.executeCommand('claudeHub.workspaceCostReport');
+          break;
+        }
+        case 'searchTranscript': {
+          await vscode.commands.executeCommand('claudeHub.searchTranscript');
+          break;
+        }
+        case 'openBackgroundTasks': {
+          await vscode.commands.executeCommand('claudeHub.openBackgroundTasks');
+          break;
+        }
+        case 'resumeSession': {
+          await vscode.commands.executeCommand('claudeHub.resumeSession', msg.sessionId);
+          break;
+        }
+        case 'renameSession': {
+          await vscode.commands.executeCommand('claudeHub.renameSession', msg.sessionId);
+          break;
+        }
+        case 'slashCommand': {
+          await vscode.commands.executeCommand('claudeHub.slashCommand');
+          break;
+        }
+        case 'openWorktree': {
+          await vscode.commands.executeCommand('claudeHub.openWorktree', msg.worktreePath);
           break;
         }
 
         case 'newConversation': {
           try {
-            await vscode.commands.executeCommand('claude-vscode.newConversation');
+            await vscode.commands.executeCommand('claudeHub.newConversationHandoff');
           } catch {
             try {
               await vscode.commands.executeCommand('claude-vscode.editor.open');
@@ -287,7 +355,10 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     }
 
     const gwMap = this.configManager.getGatewayModelMap();
-    const allSessions = this.sessionManager.allSessions.map((s) => ({
+    const pinnedSessionIds = getPinnedSessionIds(this.context);
+    const allSessions = sortSessionsWithPins(this.sessionManager.allSessions, pinnedSessionIds).map((s) => ({
+      pinned: pinnedSessionIds.includes(s.sessionId),
+      tags: (getSessionTagMap(this.context)[s.sessionId] || []),
       sessionId: s.sessionId,
       projectName: s.projectName,
       sessionTitle: s.sessionTitle,
@@ -298,6 +369,8 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       lastUpdated: s.lastUpdated.getTime(),
       isIdle: s.isIdle,
       isCurrentWorkspace: s.isCurrentWorkspace,
+      workspaceFolderName: s.workspaceFolderName,
+      parentSessionId: s.parentSessionId,
       sessionFile: s.sessionFile,
       gitBranch: s.gitBranch,
       agentsCount: s.totalAgentsCount ?? (s.agents?.length || 0),
@@ -320,16 +393,59 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       allSessions,
       focusedSessionId: session?.sessionId || null,
       filterMode: this.sessionManager.filterMode,
+      sessionListPageSize: vscode.workspace.getConfiguration('claudeHub').get<number>('sessionListPageSize', 8),
       subscription: this.sessionManager.subscriptionUsage,
+      subscriptionError: lastSubscriptionFetchError ? lastSubscriptionFetchError.message : undefined,
+      pinnedSessionIds: getPinnedSessionIds(this.context),
       cost,
       ui: {
+        tbRefresh: t('tb.refresh'),
+        tbRefreshShort: t('tb.refreshShort'),
+        tbSlash: t('tb.slash'),
+        tbSearch: t('tb.search'),
+        tbCost: t('tb.cost'),
+        tbTasks: t('tb.tasks'),
+        tbFilter: t('tb.filter'),
+        tbFilterWs: t('tb.filterWs'),
+        tbFilterAll: t('tb.filterAll'),
+        tbFilterWsShort: t('tb.filterWsShort'),
+        tbFilterAllShort: t('tb.filterAllShort'),
+        todoToolsTitle: t('todoTools.title'),
+        todoToolsToggle: t('todoTools.toggle'),
+        todoToolsCaveat: t('todoTools.caveat'),
+        todoToolsOn: t('todoTools.on'),
+        todoToolsOff: t('todoTools.off'),
+        todoToolsEffectiveOn: t('todoTools.effectiveOn'),
+        todoToolsEffectiveOff: t('todoTools.effectiveOff'),
+        todoToolsObserved: t('todoTools.observed'),
+        todoToolsHooksNote: t('todoTools.hooksNote'),
         planNoChecklistWarn: t('task.planNoChecklistWarn'),
-        injectSection: t('task.injectSection'),
         chipPending: t('task.chipPending'),
         chipActive: t('task.chipActive'),
         chipDone: t('task.chipDone'),
         expand: t('task.expand'),
         collapse: t('task.collapse'),
+        hubTodosTitle: t('task.hubTodosTitle'),
+        hubTodosHint: t('task.hubTodosHint'),
+        clearHideOnly: t('task.clearHideOnly'),
+        pickList: t('task.pickList'),
+        needsList: t('task.needsList'),
+        creating: t('task.creating'),
+        depends: t('task.depends'),
+        blocks: t('task.blocks'),
+        sourceNative: t('task.sourceNative'),
+        sourceTasks: t('task.sourceTasks'),
+        sourceTodoWrite: t('task.sourceTodoWrite'),
+        sourcePlan: t('task.sourcePlan'),
+        sourceMarkdown: t('task.sourceMarkdown'),
+        sourceNone: t('task.sourceNone'),
+        listId: t('task.listId'),
+        optInHint: t('task.optInHint'),
+        modeTask: t('task.modeTask'),
+        modeChecklist: t('task.modeChecklist'),
+        modeNone: t('task.modeNone'),
+        checklistAlso: t('task.checklistAlso'),
+        checklistHidden: t('task.checklistHidden'),
       },
     });
   }
@@ -340,19 +456,83 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       type: 'loadConfig',
       config: this.configManager.getClaudeSettings(),
       projectDocs: this.configManager.getProjectDocStatus(),
+      todoToolsEnabledSetting: (() => {
+        const desired = vscode.workspace.getConfiguration('claudeHub').get<boolean>('todoTools.enabled', false) === true;
+        const folders = vscode.workspace.workspaceFolders || [];
+        let anyEnvOn = false;
+        for (const folder of folders) {
+          try {
+            this.taskIntegration.reconcileWithSetting(folder.uri.fsPath, desired);
+          } catch (error) {
+            console.warn('[Claude Hub] todoTools reconcile failed:', error);
+          }
+          const st = this.taskIntegration.status(folder.uri.fsPath);
+          if (st.envEnabled) anyEnvOn = true;
+        }
+        // Mirror file → setting when Hub-owned env is on but setting still false
+        if (anyEnvOn && !desired) {
+          void vscode.workspace.getConfiguration('claudeHub').update(
+            'todoTools.enabled',
+            true,
+            vscode.ConfigurationTarget.Workspace,
+          );
+          return true;
+        }
+        return desired;
+      })(),
       taskIntegration: (vscode.workspace.workspaceFolders || []).map(folder => {
         const observed = this.sessionManager.allSessions.some(session =>
           session.taskToolsObserved && isPathInWorkspace(session.projectPath, [folder.uri.fsPath]));
         return this.taskIntegration.status(folder.uri.fsPath, observed);
       }),
       ui: {
+        tbRefresh: t('tb.refresh'),
+        tbRefreshShort: t('tb.refreshShort'),
+        tbSlash: t('tb.slash'),
+        tbSearch: t('tb.search'),
+        tbCost: t('tb.cost'),
+        tbTasks: t('tb.tasks'),
+        tbFilter: t('tb.filter'),
+        tbFilterWs: t('tb.filterWs'),
+        tbFilterAll: t('tb.filterAll'),
+        tbFilterWsShort: t('tb.filterWsShort'),
+        tbFilterAllShort: t('tb.filterAllShort'),
+        todoToolsTitle: t('todoTools.title'),
+        todoToolsToggle: t('todoTools.toggle'),
+        todoToolsCaveat: t('todoTools.caveat'),
+        todoToolsOn: t('todoTools.on'),
+        todoToolsOff: t('todoTools.off'),
+        todoToolsEffectiveOn: t('todoTools.effectiveOn'),
+        todoToolsEffectiveOff: t('todoTools.effectiveOff'),
+        todoToolsObserved: t('todoTools.observed'),
+        todoToolsHooksNote: t('todoTools.hooksNote'),
         planNoChecklistWarn: t('task.planNoChecklistWarn'),
-        injectSection: t('task.injectSection'),
         chipPending: t('task.chipPending'),
         chipActive: t('task.chipActive'),
         chipDone: t('task.chipDone'),
         expand: t('task.expand'),
         collapse: t('task.collapse'),
+        hubTodosTitle: t('task.hubTodosTitle'),
+        hubTodosHint: t('task.hubTodosHint'),
+        clearHideOnly: t('task.clearHideOnly'),
+        pickList: t('task.pickList'),
+        needsList: t('task.needsList'),
+        creating: t('task.creating'),
+        depends: t('task.depends'),
+        blocks: t('task.blocks'),
+        sourceNative: t('task.sourceNative'),
+        sourceTasks: t('task.sourceTasks'),
+        sourceTodoWrite: t('task.sourceTodoWrite'),
+        sourcePlan: t('task.sourcePlan'),
+        sourceMarkdown: t('task.sourceMarkdown'),
+        sourceNone: t('task.sourceNone'),
+        listId: t('task.listId'),
+        optInHint: t('task.optInHint'),
+        modeTask: t('task.modeTask'),
+        modeChecklist: t('task.modeChecklist'),
+        modeNone: t('task.modeNone'),
+        checklistAlso: t('task.checklistAlso'),
+        checklistHidden: t('task.checklistHidden'),
       },
     });
   }

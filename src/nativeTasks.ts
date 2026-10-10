@@ -87,9 +87,11 @@ export class NativeTaskReader {
             continue;
           }
           if (item.status === 'deleted') continue;
+          const active = item.activeForm ?? item.active_form;
           items.push({
             id: item.id, content: item.subject, status: item.status,
             description: typeof item.description === 'string' ? item.description : undefined,
+            activeForm: typeof active === 'string' && active.trim() ? active.trim() : undefined,
             blockedBy: Array.isArray(item.blockedBy) ? item.blockedBy.filter(isSafeId) : [],
             blocks: Array.isArray(item.blocks) ? item.blocks.filter(isSafeId) : [],
           });
@@ -136,6 +138,58 @@ export function readTaskAssociation(storageDir: string, sessionId: string, proje
     };
   } catch { return undefined; }
 }
+
+/**
+ * Pick a native list id without silently inventing one when the directory is missing.
+ * Manual selection wins; then association; sessionId only if that list directory exists.
+ */
+export function resolveNativeListCandidate(options: {
+  selectedList?: string;
+  associationListId?: string;
+  sessionId: string;
+  listExists: (listId: string) => boolean;
+}): { listId?: string; usedFallbackSessionId: boolean } {
+  const { selectedList, associationListId, sessionId, listExists } = options;
+  if (selectedList && isSafeId(selectedList)) {
+    return listExists(selectedList)
+      ? { listId: selectedList, usedFallbackSessionId: false }
+      : { listId: undefined, usedFallbackSessionId: false };
+  }
+  if (associationListId && isSafeId(associationListId) && listExists(associationListId)) {
+    return { listId: associationListId, usedFallbackSessionId: false };
+  }
+  if (isSafeId(sessionId) && listExists(sessionId)) {
+    return { listId: sessionId, usedFallbackSessionId: true };
+  }
+  return { listId: undefined, usedFallbackSessionId: false };
+}
+
+export function writeTaskAssociation(
+  storageDir: string,
+  association: TaskAssociation,
+): boolean {
+  if (!isSafeId(association.sessionId)) return false;
+  const root = path.join(storageDir, 'sessions');
+  try {
+    fs.mkdirSync(root, { recursive: true });
+  } catch { return false; }
+  const file = path.join(root, `${association.sessionId}.json`);
+  if (!isWithin(root, file)) return false;
+  try {
+    const payload = {
+      sessionId: association.sessionId,
+      projectPath: association.projectPath,
+      taskListId: association.taskListId,
+      planPath: association.planPath,
+      taskObservedAt: association.taskObservedAt ?? Date.now(),
+    };
+    fs.writeFileSync(file, JSON.stringify(payload, null, 2), 'utf8');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 
 export function listTaskLists(configDir: string): string[] {
   const root = path.join(configDir, 'tasks');

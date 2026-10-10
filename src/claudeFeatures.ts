@@ -11,6 +11,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { ClaudeConfigDirProvider, resolveClaudeConfigDir } from './configDir.js';
 import { TokenUsage } from './types.js';
+import { formatCostForDisplay } from './modelPricing.js';
 
 export interface McpServerInfo {
   name: string;
@@ -251,27 +252,6 @@ export class ClaudeFeaturesManager {
   }
 
   public static calculateCost(tokenUsage: TokenUsage, model: string): string {
-    const m = (model || '').toLowerCase();
-    let inRate = 0.003; // Sonnet: $3 / Mtok
-    let outRate = 0.015; // Sonnet: $15 / Mtok
-    let cacheRate = 0.0003;
-
-    if (m.includes('opus')) {
-      inRate = 0.015;
-      outRate = 0.075;
-      cacheRate = 0.0015;
-    } else if (m.includes('haiku')) {
-      inRate = 0.0008;
-      outRate = 0.004;
-      cacheRate = 0.00008;
-    }
-
-    const cost =
-      (tokenUsage.inputTokens / 1000) * inRate +
-      (tokenUsage.outputTokens / 1000) * outRate +
-      (tokenUsage.cacheReadTokens / 1000) * cacheRate;
-
-    if (cost < 0.001) return '< $0.001';
-    return `$${cost.toFixed(3)}`;
+    return formatCostForDisplay(tokenUsage, model);
   }
 }
