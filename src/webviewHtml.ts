@@ -2494,16 +2494,12 @@ export function getWebviewContent(): string {
       const counter = document.getElementById('bgjobs-counter');
       if (!wrap || !list) return;
       const now = Date.now();
-      const recentMs = 20 * 60 * 1000;
       const rows = [];
       const seen = {};
       function pushJob(job, project, sessionId) {
-        if (!job || !job.id) return;
+        if (!job || !job.id || job.status !== 'running') return;
         const key = (sessionId || '') + ':' + job.id;
         if (seen[key]) return;
-        const running = job.status === 'running';
-        const endMs = jobTimeMs(job.endTime);
-        if (!running && !(endMs > 0 && now - endMs < recentMs)) return;
         seen[key] = true;
         rows.push({ job: job, project: project || '' });
       }
@@ -2791,19 +2787,19 @@ export function getWebviewContent(): string {
             banner.style.display = 'none';
           }
 
-          // Todos List
+          // Todos List — hide the whole section when this session has no tasks
           const todosWrap = document.getElementById('todos-container');
           const todosList = document.getElementById('todos-list');
           const warnOnlyPlan = shouldWarnPlanWithoutChecklist(s);
-          const hasPendingCreates = s.pendingTaskCreates && s.pendingTaskCreates.length > 0;
-          const hasTodoContent = (s.todos && s.todos.length > 0) || hasPendingCreates;
-          const showEmptyOptIn = !hasTodoContent && !s.taskToolsObserved && (s.todoMode === 'none' || !s.todoMode) && !s.checklistAvailable;
-          if (hasTodoContent || s.taskListNeedsSelection || showEmptyOptIn) {
+          const todos = Array.isArray(s.todos) ? s.todos : [];
+          const hasPendingCreates = Array.isArray(s.pendingTaskCreates) && s.pendingTaskCreates.length > 0;
+          const hasTodoContent = todos.length > 0 || hasPendingCreates;
+          if (hasTodoContent) {
             todosWrap.style.display = 'block';
-            const done = s.todos.filter(x => x.status === 'completed').length;
-            const inProg = s.todos.filter(x => x.status === 'in_progress').length;
-            const pct = Math.round((done / s.todos.length) * 100);
-            const isAllCompleted = done === s.todos.length;
+            const done = todos.filter(x => x.status === 'completed').length;
+            const inProg = todos.filter(x => x.status === 'in_progress').length;
+            const pct = todos.length ? Math.round((done / todos.length) * 100) : 0;
+            const isAllCompleted = todos.length > 0 && done === todos.length;
 
             const counterEl = document.getElementById('todos-counter');
             const caret = document.getElementById('todos-caret');
@@ -2829,11 +2825,11 @@ export function getWebviewContent(): string {
             if (counterEl) {
               if (isAllCompleted) {
                 counterEl.className = 'status-pill idle';
-                counterEl.innerHTML = '<span>✓ ' + done + '/' + s.todos.length + '</span><span class="todo-counter-detail">(已完成)</span>';
-                counterEl.title = '✓ ' + done + '/' + s.todos.length + ' (已完成)';
+                counterEl.innerHTML = '<span>✓ ' + done + '/' + todos.length + '</span><span class="todo-counter-detail">(已完成)</span>';
+                counterEl.title = '✓ ' + done + '/' + todos.length + ' (已完成)';
               } else {
                 counterEl.className = inProg > 0 ? 'status-pill active' : 'status-pill';
-                const summaryText = done + '/' + s.todos.length;
+                const summaryText = done + '/' + todos.length;
                 counterEl.innerHTML = '<span>' + summaryText + '</span><span class="todo-counter-detail">(' + pct + '%)</span>' + (inProg > 0 ? '<span class="todo-spinner" role="img" title="进行中" aria-label="进行中"></span>' : '');
                 counterEl.title = summaryText + ' (' + pct + '%)' + (inProg > 0 ? ' · 进行中' : '');
               }

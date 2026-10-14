@@ -2,6 +2,20 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.17] - 2026-10-14
+
+### 中文
+
+- **当前模型：** 在 Claude Code 里切换模型后立刻显示新模型，不必等这一轮对话成功。中转站的 `ANTHROPIC_MODEL` 只在还没选择具体模型时作为默认。
+- **后台任务：** 斜杠 `/tasks` 里已经结束的任务会从侧边栏去掉，不再保留最近完成的记录。
+- **会话任务：** 当前对话没有待办时，自动隐藏「会话任务」栏，不再显示 `0/0`。
+
+### English
+
+- **Selected model:** Switching models in Claude Code updates the label immediately, without waiting for a successful turn. `ANTHROPIC_MODEL` is only the relay default when no concrete model is picked.
+- **Background tasks:** Finished slash `/tasks` jobs leave the sidebar instead of staying as recent completions.
+- **Session tasks:** The session-task section hides when the current conversation has no todos, instead of showing `0/0`.
+
 ## [0.2.16] - 2026-10-14
 
 ### 中文

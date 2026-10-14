@@ -738,8 +738,8 @@ export class SessionManager implements vscode.Disposable {
           }
           const isCurrentWorkspace = isPathInWorkspace(projectPath, workspaceFolders);
 
-          // Current workspace follows the composer selection (ANTHROPIC_MODEL, else settings.model),
-          // not the previous turn's transcript model. Other projects keep their own transcript model.
+          // Current workspace follows the picker (`settings.model`) as soon as it is saved.
+          // `ANTHROPIC_MODEL` is only the relay default. Other projects keep their transcript model.
           const effectiveModel =
             (isCurrentWorkspace && configuredModel) ? configuredModel : (parsed.model || configuredModel || '');
           const lastResponseModel =

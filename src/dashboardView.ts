@@ -355,11 +355,11 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     }
 
     const gwMap = this.configManager.getGatewayModelMap();
-    const configuredModel = this.configManager.getConfiguredModel();
     const effort = this.configManager.getEffortLevel();
-    const modelLabelOf = (s: { isCurrentWorkspace: boolean; model: string }): string => {
-      if (s.isCurrentWorkspace && configuredModel) {
-        return formatSelectedModelName(configuredModel, gwMap, effort);
+    const modelLabelOf = (s: { isCurrentWorkspace: boolean; model: string; lastResponseModel?: string }): string => {
+      const active = this.configManager.getActiveModel(s.lastResponseModel || s.model);
+      if (s.isCurrentWorkspace && active) {
+        return formatSelectedModelName(active, gwMap, effort);
       }
       return formatModelDisplayName(s.model, gwMap);
     };

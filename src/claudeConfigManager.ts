@@ -78,6 +78,11 @@ export function matchModel(candidate: string | undefined, models: DiscoveredMode
   return found;
 }
 
+function isConcretePickerModel(model: string): boolean {
+  const value = model.trim().toLowerCase();
+  return value !== '' && value !== 'default' && value !== 'auto' && value !== 'inherit' && value !== 'claude.auto';
+}
+
 export class ClaudeConfigManager {
   private _onDidChange: any;
   public readonly onDidChange: any;
@@ -248,16 +253,27 @@ export class ClaudeConfigManager {
   }
 
   /**
-   * Model the Claude Code composer will use for the next turn.
-   * `ANTHROPIC_MODEL` wins over `settings.model`: the picker and gateway
-   * switcher write the env var, while `settings.model` often stays stale.
+   * Model selected in the Claude Code picker (`settings.model`).
+   * `ANTHROPIC_MODEL` is only the relay default used when no concrete model is picked.
+   * The picker applies as soon as it is saved, without waiting for a successful turn.
    */
   public getConfiguredModel(): string | undefined {
+    const { fromEnv, fromSettings } = this.readModelSources();
+    if (isConcretePickerModel(fromSettings)) return fromSettings;
+    return fromEnv || undefined;
+  }
+
+  /** Same selection as `getConfiguredModel`. The last reply does not delay it. */
+  public getActiveModel(_lastResponseModel?: string): string | undefined {
+    return this.getConfiguredModel();
+  }
+
+  private readModelSources(): { fromEnv: string; fromSettings: string } {
     const settings = this.getClaudeSettings();
     const env = settings.env || {};
     const fromEnv = typeof env.ANTHROPIC_MODEL === 'string' ? env.ANTHROPIC_MODEL.trim() : '';
     const fromSettings = typeof settings.model === 'string' ? settings.model.trim() : '';
-    return fromEnv || fromSettings || undefined;
+    return { fromEnv, fromSettings };
   }
 
   public getEffortLevel(): string | undefined {

@@ -273,7 +273,31 @@ test('config directory provider is shared by Claude configuration and features',
       }),
       'utf8',
     );
+    assert.strictEqual(manager.getConfiguredModel(), 'claude-sonnet-5-5-medium');
+    assert.strictEqual(manager.getActiveModel('claude.gpt-6-luna'), 'claude-sonnet-5-5-medium');
+    fs.writeFileSync(
+      path.join(tempDir, 'settings.json'),
+      JSON.stringify({
+        model: 'default',
+        effortLevel: 'high',
+        env: { ANTHROPIC_MODEL: 'claude.gemini-3.8-flash' },
+        mcpServers: { demo: { command: 'demo-mcp' } },
+      }),
+      'utf8',
+    );
     assert.strictEqual(manager.getConfiguredModel(), 'claude.gemini-3.8-flash');
+    fs.writeFileSync(
+      path.join(tempDir, 'settings.json'),
+      JSON.stringify({
+        model: 'claude.gpt-5.6-sol',
+        effortLevel: 'high',
+        env: { ANTHROPIC_MODEL: 'claude.gemini-3.8-flash' },
+        mcpServers: { demo: { command: 'demo-mcp' } },
+      }),
+      'utf8',
+    );
+    assert.strictEqual(manager.getActiveModel('claude.gemini-3.8-flash'), 'claude.gpt-5.6-sol');
+    assert.strictEqual(manager.getConfiguredModel(), 'claude.gpt-5.6-sol');
     assert.strictEqual(manager.getEffortLevel(), 'high');
     assert.strictEqual(manager.getGatewayModels()[0].id, 'custom-model');
 
@@ -2053,7 +2077,8 @@ test('getWebviewContent renders compact todo counters with full tooltips', () =>
     { done: 0, total: 4, inProg: 0, pct: 0, isAllCompleted: false, status: '', detail: '(0%)' },
   ]) {
     const counterEl = { className: '', innerHTML: '', title: '' };
-    script.runInNewContext({ ...state, counterEl, s: { todos: Array(state.total) } });
+    const todos = Array(state.total);
+    script.runInNewContext({ ...state, counterEl, s: { todos }, todos });
     assert.ok(counterEl.innerHTML.includes(state.done + '/' + state.total));
     assert.ok(counterEl.innerHTML.includes('class="todo-counter-detail">' + state.detail));
     assert.ok(counterEl.title.includes(state.detail));
@@ -2502,6 +2527,10 @@ test('parseTranscriptFile tracks slash /tasks background shells and agents after
     assert.ok(html.includes('renderBackgroundJobs(s)'));
     assert.ok(html.includes('后台 '));
     assert.equal(html.includes('sess.backgroundJobs'), false);
+    assert.equal(html.includes('20 * 60 * 1000'), false);
+    assert.ok(html.includes("job.status !== 'running'"));
+    assert.equal(html.includes('showEmptyOptIn'), false);
+    assert.ok(html.includes('if (hasTodoContent) {'));
 
     const stale = {
       id: 'old',
