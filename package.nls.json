@@ -52,11 +52,11 @@
   "config.language.auto": "Auto-detect from VS Code interface language",
   "config.language.zhCN": "简体中文 (Simplified Chinese)",
   "config.language.en": "English",
-  "config.todo.preferSource.desc": "How the dashboard chooses todos. Default auto (dual): show Task and/or Checklist when each exists; Task wins the primary list if both are present.",
-  "config.todo.preferSource.tasks": "Tasks only: hide checklist/markdown fill unless project plan_checklist is required.",
-  "config.todo.preferSource.auto": "Dual mode: show Task and Checklist when present; Task is primary if both exist. Never force-fill the other side.",
-  "config.todo.preferSource.checklist": "Allow plan GFM checklist and assistant markdown todos.",
-  "config.todo.preferSource.todoWrite": "Prefer TodoWrite when present.",
+  "config.todo.preferSource.desc": "Session todos use official Task mode (TaskCreate/TaskUpdate/TaskList and ~/.claude/tasks). Checklist is not shown. Legacy TodoWrite appears only when no official tasks exist.",
+  "config.todo.preferSource.tasks": "Official Task mode. Checklist is not a session todo source.",
+  "config.todo.preferSource.auto": "Same as official Task mode. Checklist is not shown.",
+  "config.todo.preferSource.checklist": "Legacy only: show the plan or assistant markdown checklist.",
+  "config.todo.preferSource.todoWrite": "Legacy TodoWrite when present. Official Task still wins if both exist.",
   "command.resumeSession": "Resume Claude Session in Terminal",
   "command.slashCommand": "Send Claude Code Slash Command",
   "command.renameSession": "Rename Claude Session",
@@ -76,6 +76,6 @@
   "config.modelPricing.desc": "Optional USD-per-MTok rate overrides keyed by model id (input/output/cacheRead/cacheWrite). Merges over the built-in Anthropic table.",
   "config.modelAliases.desc": "Optional model alias map (alias -> canonical priced model id) for cost estimates.",
   "config.sessionListPageSize.desc": "Sessions shown per page in the Hub list (light virtualization).",
-  "config.todoTools.enabled.desc": "Opt-in: write CLAUDE_CODE_ENABLE_TODO_TOOLS=1 into the workspace .claude/settings.local.json (env only, no Hub hooks). Applies to new Claude Code sessions only.",
-  "command.toggleTodoTools": "Toggle Task Tools Env (CLAUDE_CODE_ENABLE_TODO_TOOLS)"
+  "config.todoTools.enabled.desc": "Opt-in: write CLAUDE_CODE_ENABLE_TODO_TOOLS=1 and CLAUDE_CODE_ENABLE_TASKS=1 into the workspace .claude/settings.local.json so new Claude Code sessions get TaskCreate/TaskUpdate/TaskList, including on unrecognized models (env only, no Hub hooks).",
+  "command.toggleTodoTools": "Toggle official Task tools (TaskCreate / TaskUpdate / TaskList)"
 }

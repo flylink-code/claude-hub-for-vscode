@@ -220,20 +220,20 @@ test('getWebviewContent includes plan-without-checklist warning chip helpers', (
 
 
 
-test('resolvePreferSource defaults to auto (dual); policy wins', () => {
-  assert.strictEqual(resolvePreferSource(undefined, undefined), 'auto');
-  assert.strictEqual(resolvePreferSource(undefined, 'auto'), 'auto');
+test('resolvePreferSource defaults to official tasks; explicit checklist still wins', () => {
+  assert.strictEqual(resolvePreferSource(undefined, undefined), 'tasks');
+  assert.strictEqual(resolvePreferSource(undefined, 'auto'), 'tasks');
   assert.strictEqual(resolvePreferSource(undefined, 'tasks'), 'tasks');
   assert.strictEqual(resolvePreferSource(undefined, 'checklist'), 'checklist');
   assert.strictEqual(resolvePreferSource({ prefer_source: 'todoWrite' }, 'tasks'), 'todoWrite');
-  assert.strictEqual(resolvePreferSource({ prefer_source: 'auto' }, 'checklist'), 'auto');
+  assert.strictEqual(resolvePreferSource({ prefer_source: 'auto' }, 'checklist'), 'tasks');
 });
 
-test('allowChecklistFill: dual/auto allow; tasks-only needs required', () => {
-  assert.strictEqual(allowChecklistFill('auto', undefined), true);
+test('allowChecklistFill only when checklist is explicitly selected', () => {
+  assert.strictEqual(allowChecklistFill('auto', undefined), false);
   assert.strictEqual(allowChecklistFill('tasks', undefined), false);
-  assert.strictEqual(allowChecklistFill('tasks', { plan_checklist: 'preferred' }), false);
-  assert.strictEqual(allowChecklistFill('tasks', { plan_checklist: 'required' }), true);
+  assert.strictEqual(allowChecklistFill('tasks', { plan_checklist: 'required' }), false);
+  assert.strictEqual(allowChecklistFill('todoWrite', undefined), false);
   assert.strictEqual(allowChecklistFill('checklist', undefined), true);
 });
 

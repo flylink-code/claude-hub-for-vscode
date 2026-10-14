@@ -689,6 +689,8 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     taskToolsObserved = true;
 
     if (name === 'TodoWrite' && Array.isArray(input.todos)) {
+      // Official TaskCreate/Update/List stays primary. TodoWrite is a legacy list only.
+      if (explicitState.source === 'tasks') return;
       explicitState.source = 'todoWrite';
       pendingCreates.clear();
       todos.length = 0;

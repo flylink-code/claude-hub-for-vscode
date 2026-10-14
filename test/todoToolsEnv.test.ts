@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { TaskIntegrationManager, TASK_TOOL_ENV, readJsonObject, isTodoToolsEnvEnabled } from '../src/taskIntegration.js';
+import { TaskIntegrationManager, TASK_TOOL_ENV, TODO_TOOLS_GATE_ENV, readJsonObject, isTodoToolsEnvEnabled } from '../src/taskIntegration.js';
 import { getWebviewContent } from '../src/webviewHtml.js';
 
 function makeMgr(root: string) {
@@ -27,6 +28,7 @@ test('setTodoToolsEnv writes env only without hooks', () => {
   const file = path.join(project, '.claude', 'settings.local.json');
   assert.ok(fs.existsSync(file));
   const settings = readJsonObject(file);
+  assert.equal(settings.env[TODO_TOOLS_GATE_ENV], '1');
   assert.equal(settings.env[TASK_TOOL_ENV], '1');
   assert.equal(settings.hooks, undefined);
 
@@ -38,10 +40,11 @@ test('setTodoToolsEnv writes env only without hooks', () => {
   mgr.setTodoToolsEnv(project, false);
   const after = readJsonObject(file);
   assert.ok(!after.env || after.env[TASK_TOOL_ENV] === undefined);
+  assert.ok(!after.env || after.env[TODO_TOOLS_GATE_ENV] === undefined);
   assert.equal(mgr.status(project).envEnabled, false);
 });
 
-test('setTodoToolsEnv conflicts when CLAUDE_CODE_ENABLE_TASKS disabled', () => {
+test('setTodoToolsEnv turns official Task mode on over an explicit off', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-todo-env-conflict-'));
   const project = path.join(root, 'proj');
   fs.mkdirSync(path.join(project, '.claude'), { recursive: true });
@@ -51,9 +54,40 @@ test('setTodoToolsEnv conflicts when CLAUDE_CODE_ENABLE_TASKS disabled', () => {
     'utf8',
   );
   const mgr = makeMgr(root);
-  const st = mgr.status(project);
-  assert.equal(st.conflict, true);
-  assert.throws(() => mgr.setTodoToolsEnv(project, true), /CLAUDE_CODE_ENABLE_TASKS/);
+  assert.equal(mgr.status(project).envEnabled, false);
+  mgr.setTodoToolsEnv(project, true);
+  const settings = readJsonObject(path.join(project, '.claude', 'settings.local.json'));
+  assert.equal(settings.env[TODO_TOOLS_GATE_ENV], '1');
+  assert.equal(settings.env[TASK_TOOL_ENV], '1');
+  assert.equal(mgr.status(project).envEnabled, true);
+  mgr.setTodoToolsEnv(project, false);
+  const after = readJsonObject(path.join(project, '.claude', 'settings.local.json'));
+  assert.equal(after.env[TASK_TOOL_ENV], '0');
+  assert.equal(after.env[TODO_TOOLS_GATE_ENV], undefined);
+});
+
+test('enabling official Task mode keeps the tool gate and selector together', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-todo-legacy-'));
+  const project = path.join(root, 'proj');
+  fs.mkdirSync(path.join(project, '.claude'), { recursive: true });
+  fs.writeFileSync(
+    path.join(project, '.claude', 'settings.local.json'),
+    JSON.stringify({ env: { [TODO_TOOLS_GATE_ENV]: '1' } }, null, 2) + '\n',
+    'utf8',
+  );
+  const mgr = makeMgr(root);
+  const key = crypto.createHash('sha256').update(path.resolve(project)).digest('hex');
+  const own = path.join(root, 'storage', 'projects', `${key}.env-only.json`);
+  fs.mkdirSync(path.dirname(own), { recursive: true });
+  fs.writeFileSync(own, JSON.stringify({
+    projectPath: project,
+    hadEnv: true,
+    previousExists: false,
+  }), 'utf8');
+  mgr.setTodoToolsEnv(project, true);
+  const settings = readJsonObject(path.join(project, '.claude', 'settings.local.json'));
+  assert.equal(settings.env[TODO_TOOLS_GATE_ENV], '1');
+  assert.equal(settings.env[TASK_TOOL_ENV], '1');
 });
 
 test('isTodoToolsEnvEnabled normalizes 1/true variants', () => {
@@ -73,7 +107,7 @@ test('status treats numeric/boolean env as enabled', () => {
   fs.mkdirSync(path.join(project, '.claude'), { recursive: true });
   fs.writeFileSync(
     path.join(project, '.claude', 'settings.local.json'),
-    JSON.stringify({ env: { [TASK_TOOL_ENV]: true } }, null, 2) + '\n',
+    JSON.stringify({ env: { [TODO_TOOLS_GATE_ENV]: 1, [TASK_TOOL_ENV]: true } }, null, 2) + '\n',
     'utf8',
   );
   const mgr = makeMgr(root);

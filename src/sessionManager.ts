@@ -579,9 +579,9 @@ export class SessionManager implements vscode.Disposable {
           const selectedList = selections[`${path.resolve(this.getConfigDir())}:${sessionId}`];
           const configDir = this.getConfigDir();
           const projectTodoPolicy = readProjectTodoPolicy(projectPath);
-          let preferSetting = 'auto';
+          let preferSetting = 'tasks';
           try {
-            preferSetting = vscode.workspace.getConfiguration('claudeHub').get<string>('todo.preferSource', 'auto') || 'auto';
+            preferSetting = vscode.workspace.getConfiguration('claudeHub').get<string>('todo.preferSource', 'tasks') || 'tasks';
           } catch { /* tests without vscode */ }
           const preferSource = resolvePreferSource(projectTodoPolicy, preferSetting);
           const checklistFillOk = allowChecklistFill(preferSource, projectTodoPolicy);
@@ -598,8 +598,8 @@ export class SessionManager implements vscode.Disposable {
           });
           let todos = parsed.todos;
           let taskSource = parsed.taskSource ?? 'none';
-          // Force tasks-only: drop assistant-markdown fill. Dual/auto keeps checklist when present.
-          if (preferSource === 'tasks' && taskSource === 'markdown') {
+          // Checklist is not a session-todo source unless the user explicitly selects it.
+          if (preferSource !== 'checklist' && (taskSource === 'plan' || taskSource === 'markdown')) {
             todos = [];
             taskSource = 'none';
           }
@@ -621,12 +621,11 @@ export class SessionManager implements vscode.Disposable {
                 items: extractPlanTodos(text),
                 isChecklist: extractMarkdownTodos(text).length > 0,
               };
-              if (diskPlan.isChecklist || diskPlan.items.length > 0) {
+              if (checklistFillOk && (diskPlan.isChecklist || diskPlan.items.length > 0)) {
                 checklistAvailable = true;
               }
-              if (diskPlan.isChecklist && !checklistFillOk) {
-                // tasks-only: keep plan path, do not fill todos from checklist
-                plan = { path: planPath, items: [], isChecklist: true };
+              if (!checklistFillOk) {
+                plan = { path: planPath, items: [], isChecklist: diskPlan.isChecklist };
               } else {
                 const hadTaskPrimary = taskSource === 'native' || taskSource === 'tasks' || taskSource === 'todoWrite';
                 const merged = mergeDiskPlanTodos(taskSource, todos, diskPlan);
@@ -673,8 +672,11 @@ export class SessionManager implements vscode.Disposable {
           if (todoMode === 'task' && (plan?.isChecklist || (plan?.items && plan.items.length > 0))) {
             checklistAvailable = true;
           }
-          if (todoMode === 'checklist') {
+          if (todoMode === 'checklist' && preferSource === 'checklist') {
             checklistAvailable = true;
+          }
+          if (preferSource !== 'checklist') {
+            checklistAvailable = false;
           }
           const checklistFillAllowed = checklistFillOk;
           const dismissKey = crypto.createHash('sha256').update(path.resolve(filePath)).digest('hex');

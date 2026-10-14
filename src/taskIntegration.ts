@@ -4,7 +4,15 @@ import * as crypto from 'crypto';
 import { spawnSync } from 'child_process';
 import { isWithin } from './nativeTasks.js';
 
-export const TASK_TOOL_ENV = 'CLAUDE_CODE_ENABLE_TODO_TOOLS';
+/** Selects TaskCreate/TaskUpdate/TaskList/TaskGet instead of legacy TodoWrite. */
+export const TASK_TOOL_ENV = 'CLAUDE_CODE_ENABLE_TASKS';
+/**
+ * Turns the task-tracking tool family on for models Claude Code does not enable by default
+ * (newer Claude models and unrecognized ids such as gpt6-luna).
+ */
+export const TODO_TOOLS_GATE_ENV = 'CLAUDE_CODE_ENABLE_TODO_TOOLS';
+/** @deprecated Use TODO_TOOLS_GATE_ENV. Kept so older call sites keep compiling. */
+export const LEGACY_TODO_TOOL_ENV = TODO_TOOLS_GATE_ENV;
 
 /** Treat common truthy env encodings as enabled. */
 export function isTodoToolsEnvEnabled(value: unknown): boolean {
@@ -20,7 +28,7 @@ export interface TaskIntegrationState {
   projectPath: string;
   /** True when Hub env-only flag is set in settings.local.json OR full hook integration is configured. */
   configured: boolean;
-  /** settings.local.json has CLAUDE_CODE_ENABLE_TODO_TOOLS=1 (env-only or full). */
+  /** Local settings enable both the tool gate and official Task tools. */
   envEnabled: boolean;
   /** Effective merged env (process + user + project + local) is 1. */
   effectiveEnabled: boolean;
@@ -63,11 +71,21 @@ export function resolveNodeExecutable(): string {
   return executable;
 }
 
+interface OwnedEnvKey {
+  key: string;
+  previousExists: boolean;
+  previousValue?: unknown;
+}
+
 interface Ownership {
   projectPath: string;
   hadEnv: boolean;
   previousExists: boolean;
   previousValue?: unknown;
+  /** Missing on files written before official Task mode. Those tracked only one env key. */
+  envKey?: string;
+  /** Both the tool gate and the Task-vs-TodoWrite selector, when Hub owns the pair. */
+  keys?: OwnedEnvKey[];
 }
 
 export class TaskIntegrationManager {
@@ -108,8 +126,10 @@ export class TaskIntegrationManager {
       const settings = readJsonObject(this.settingsFile(project));
       const env = this.effectiveEnv(project);
       const hooks = settings.hooks || {};
-      const envEnabled = isTodoToolsEnvEnabled(settings.env?.[TASK_TOOL_ENV]);
-      const effectiveEnabled = isTodoToolsEnvEnabled(env[TASK_TOOL_ENV]);
+      const envEnabled = isTodoToolsEnvEnabled(settings.env?.[TODO_TOOLS_GATE_ENV])
+        && isTodoToolsEnvEnabled(settings.env?.[TASK_TOOL_ENV]);
+      const effectiveEnabled = isTodoToolsEnvEnabled(env[TODO_TOOLS_GATE_ENV])
+        && isTodoToolsEnvEnabled(env[TASK_TOOL_ENV]);
       const hooksConfigured =
         envEnabled &&
         ['SessionStart', 'UserPromptSubmit', 'PostToolUse'].every(
@@ -119,13 +139,9 @@ export class TaskIntegrationManager {
               (group: any) => Array.isArray(group.hooks) && group.hooks.some((h: any) => this.ownedHook(h)),
             ),
         );
-      const tasksDisabled = ['0', 'false'].includes(String(env.CLAUDE_CODE_ENABLE_TASKS).toLowerCase());
       let conflict = false;
       let conflictReason: string | undefined;
-      if (tasksDisabled) {
-        conflict = true;
-        conflictReason = 'CLAUDE_CODE_ENABLE_TASKS is disabled';
-      } else if (envEnabled && !effectiveEnabled) {
+      if (envEnabled && !effectiveEnabled) {
         conflict = true;
         conflictReason = 'Local env is on but effective env is overridden';
       }
@@ -158,6 +174,30 @@ export class TaskIntegrationManager {
     return path.join(this.storageDir, 'projects', `${key}.env-only.json`);
   }
 
+  private restoreOwnedKey(settings: JsonObject, key: string, previousExists: boolean, previousValue: unknown): void {
+    if (!settings.env || typeof settings.env !== 'object' || Array.isArray(settings.env)) return;
+    if (!isTodoToolsEnvEnabled(settings.env[key])) return;
+    if (previousExists) settings.env[key] = previousValue;
+    else delete settings.env[key];
+  }
+
+  private captureOwnedKeys(settings: JsonObject): OwnedEnvKey[] {
+    const env = settings.env && typeof settings.env === 'object' && !Array.isArray(settings.env) ? settings.env : {};
+    return [TODO_TOOLS_GATE_ENV, TASK_TOOL_ENV].map((key) => ({
+      key,
+      previousExists: Object.prototype.hasOwnProperty.call(env, key),
+      previousValue: env[key],
+    }));
+  }
+
+  private applyTaskModeEnv(settings: JsonObject): void {
+    settings.env = {
+      ...(settings.env && typeof settings.env === 'object' && !Array.isArray(settings.env) ? settings.env : {}),
+      [TODO_TOOLS_GATE_ENV]: '1',
+      [TASK_TOOL_ENV]: '1',
+    };
+  }
+
 
   /**
    * Align settings.local.json with Hub setting desire for this project.
@@ -169,9 +209,6 @@ export class TaskIntegrationManager {
     const st = this.status(project);
     if (desiredEnabled) {
       if (st.envEnabled) return false;
-      if (st.conflict && st.conflictReason?.includes('CLAUDE_CODE_ENABLE_TASKS')) {
-        return false;
-      }
       this.setTodoToolsEnv(project, true);
       return true;
     }
@@ -184,15 +221,9 @@ export class TaskIntegrationManager {
     return false;
   }
 
-  /** Env-only: set/clear CLAUDE_CODE_ENABLE_TODO_TOOLS in settings.local.json (no hooks). */
+  /** Env-only: set/clear the task-tool gate and official Task selector in settings.local.json. */
   setTodoToolsEnv(project: string, enabled: boolean): void {
     this.checkWriteTarget(project);
-    if (enabled) {
-      const st = this.status(project);
-      if (st.conflict && st.conflictReason?.includes('CLAUDE_CODE_ENABLE_TASKS')) {
-        throw new Error('Tasks are explicitly disabled (CLAUDE_CODE_ENABLE_TASKS). Resolve that before enabling.');
-      }
-    }
     const file = this.settingsFile(project);
     const original = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
     const settings = readJsonObject(file);
@@ -202,25 +233,42 @@ export class TaskIntegrationManager {
     const ownFile = this.ownershipEnvFile(project);
     fs.mkdirSync(path.dirname(ownFile), { recursive: true });
     if (enabled) {
-      if (!fs.existsSync(ownFile)) {
+      const existing = fs.existsSync(ownFile) ? (readJsonObject(ownFile) as Ownership) : undefined;
+      if (!existing?.keys) {
+        const keys = this.captureOwnedKeys(settings);
+        if (existing) {
+          const tracked = keys.find((item) => item.key === (existing.envKey || TODO_TOOLS_GATE_ENV));
+          if (tracked) {
+            tracked.previousExists = existing.previousExists;
+            tracked.previousValue = existing.previousValue;
+          }
+        }
+        const env = settings.env && typeof settings.env === 'object' && !Array.isArray(settings.env) ? settings.env : {};
         atomicWriteJson(ownFile, {
           projectPath: project,
-          hadEnv: settings.env !== undefined,
-          previousExists: Object.prototype.hasOwnProperty.call(settings.env || {}, TASK_TOOL_ENV),
-          previousValue: settings.env?.[TASK_TOOL_ENV],
+          hadEnv: existing?.hadEnv ?? settings.env !== undefined,
+          previousExists: Object.prototype.hasOwnProperty.call(env, TASK_TOOL_ENV),
+          previousValue: env[TASK_TOOL_ENV],
+          envKey: TASK_TOOL_ENV,
+          keys,
         } satisfies Ownership);
       }
-      settings.env = { ...settings.env, [TASK_TOOL_ENV]: '1' };
+      this.applyTaskModeEnv(settings);
     } else {
       const ownership = fs.existsSync(ownFile) ? (readJsonObject(ownFile) as Ownership) : undefined;
       if (settings.env && typeof settings.env === 'object') {
-        if (ownership && isTodoToolsEnvEnabled(settings.env[TASK_TOOL_ENV])) {
-          if (ownership.previousExists) settings.env[TASK_TOOL_ENV] = ownership.previousValue;
-          else delete settings.env[TASK_TOOL_ENV];
-        } else if (isTodoToolsEnvEnabled(settings.env[TASK_TOOL_ENV])) {
-          delete settings.env[TASK_TOOL_ENV];
+        if (ownership?.keys?.length) {
+          for (const item of ownership.keys) {
+            this.restoreOwnedKey(settings, item.key, item.previousExists, item.previousValue);
+          }
+        } else if (ownership) {
+          const ownedKey = ownership.envKey || TODO_TOOLS_GATE_ENV;
+          this.restoreOwnedKey(settings, ownedKey, ownership.previousExists, ownership.previousValue);
+        } else {
+          this.restoreOwnedKey(settings, TODO_TOOLS_GATE_ENV, false, undefined);
+          this.restoreOwnedKey(settings, TASK_TOOL_ENV, false, undefined);
         }
-        if (Object.keys(settings.env).length === 0) {
+        if (settings.env && Object.keys(settings.env).length === 0) {
           if (!ownership || !ownership.hadEnv) delete settings.env;
         }
       }
@@ -269,13 +317,16 @@ export class TaskIntegrationManager {
 
     const ownFile = this.ownershipFile(project);
     if (!fs.existsSync(ownFile)) {
+      const env = settings.env && typeof settings.env === 'object' && !Array.isArray(settings.env) ? settings.env : {};
       atomicWriteJson(ownFile, {
         projectPath: project, hadEnv: settings.env !== undefined,
-        previousExists: Object.prototype.hasOwnProperty.call(settings.env || {}, TASK_TOOL_ENV),
-        previousValue: settings.env?.[TASK_TOOL_ENV],
+        previousExists: Object.prototype.hasOwnProperty.call(env, TASK_TOOL_ENV),
+        previousValue: env[TASK_TOOL_ENV],
+        envKey: TASK_TOOL_ENV,
+        keys: this.captureOwnedKeys(settings),
       } satisfies Ownership);
     }
-    settings.env = { ...settings.env, [TASK_TOOL_ENV]: '1' };
+    this.applyTaskModeEnv(settings);
     settings.hooks = { ...settings.hooks };
     for (const event of ['SessionStart', 'UserPromptSubmit', 'PostToolUse']) {
       const previous = settings.hooks[event] ?? [];
@@ -319,7 +370,12 @@ export class TaskIntegrationManager {
       }
       if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
     }
-    if (ownership && settings.env?.[TASK_TOOL_ENV] === '1') {
+    if (ownership?.keys?.length && settings.env && typeof settings.env === 'object') {
+      for (const item of ownership.keys) {
+        this.restoreOwnedKey(settings, item.key, item.previousExists, item.previousValue);
+      }
+      if (Object.keys(settings.env).length === 0 && !ownership.hadEnv) delete settings.env;
+    } else if (ownership && settings.env?.[TASK_TOOL_ENV] === '1') {
       if (ownership.previousExists) settings.env[TASK_TOOL_ENV] = ownership.previousValue;
       else delete settings.env[TASK_TOOL_ENV];
       if (!ownership.hadEnv && Object.keys(settings.env).length === 0) delete settings.env;

@@ -698,24 +698,42 @@ export function getWebviewContent(): string {
     .session-meta-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       font-size: 10px;
       color: var(--text-muted);
       margin-bottom: 6px;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 2px 8px;
+      min-width: 0;
+    }
+
+    .session-meta-main {
+      flex: 1 1 12em;
+      min-width: 0;
+      max-width: 100%;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .session-meta-side {
+      flex: 0 1 auto;
+      max-width: 100%;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
     }
 
     .session-actions-row {
       display: flex;
+      flex-wrap: wrap;
+      align-items: center;
       gap: 4px;
       border-top: 1px solid rgba(255, 255, 255, 0.05);
       padding-top: 6px;
     }
 
     .session-act-btn {
-      flex: 1 1 0;
-      min-width: 0;
+      flex: 0 0 auto;
+      max-width: 100%;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text-main);
@@ -728,6 +746,7 @@ export function getWebviewContent(): string {
       justify-content: center;
       gap: 3px;
       white-space: nowrap;
+      overflow: hidden;
       transition: all 0.15s ease;
     }
 
@@ -1594,13 +1613,13 @@ export function getWebviewContent(): string {
     <div class="section-body">
 
       <div id="todo-tools-panel" style="margin: 10px 0; padding: 8px; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;">
-        <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;" id="todo-tools-title">Task tools env</div>
+        <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;" id="todo-tools-title">Official Task mode</div>
         <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer;">
           <input type="checkbox" id="todo-tools-toggle" />
-          <span id="todo-tools-toggle-label">Enable CLAUDE_CODE_ENABLE_TODO_TOOLS</span>
+          <span id="todo-tools-toggle-label">Enable official Task tools (TaskCreate / TaskUpdate / TaskList)</span>
         </label>
         <div id="todo-tools-status" style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;"></div>
-        <div id="todo-tools-caveat" style="font-size: 10px; color: #cca700; margin-top: 6px; line-height: 1.4;">Applies to new Claude Code sessions only.</div>
+        <div id="todo-tools-caveat" style="font-size: 10px; color: #cca700; margin-top: 6px; line-height: 1.4;">New sessions only. Writes CLAUDE_CODE_ENABLE_TODO_TOOLS=1 and CLAUDE_CODE_ENABLE_TASKS=1.</div>
       </div>
 
       <button class="btn btn-secondary" onclick="sendMessage('openSettingsJson')">⚙️ 打开 Claude settings.json</button>
@@ -1638,9 +1657,9 @@ export function getWebviewContent(): string {
       sourceNone: 'No source',
       listId: 'List: {id}',
       optInHint: 'No Task or Checklist todos yet.',
-      todoToolsTitle: 'Task tools env',
-      todoToolsToggle: 'Enable CLAUDE_CODE_ENABLE_TODO_TOOLS',
-      todoToolsCaveat: 'Applies to new Claude Code sessions only. Current session is unchanged.',
+      todoToolsTitle: 'Official Task mode',
+      todoToolsToggle: 'Enable official Task tools (TaskCreate / TaskUpdate / TaskList)',
+      todoToolsCaveat: 'New sessions only. Writes CLAUDE_CODE_ENABLE_TODO_TOOLS=1 and CLAUDE_CODE_ENABLE_TASKS=1.',
       todoToolsOn: 'On (settings.local.json)',
       todoToolsOff: 'Off',
       todoToolsEffectiveOn: 'Effective env: on',
@@ -1971,7 +1990,7 @@ export function getWebviewContent(): string {
       const show = !hasDurable && !hasPending && !s.taskToolsObserved && (s.taskSource === 'none' || !s.taskSource);
       if (show) {
         el.style.display = 'block';
-        el.textContent = hubUiStrings.optInHint || 'Some models need CLAUDE_CODE_ENABLE_TODO_TOOLS for TaskCreate/Update/List.';
+        el.textContent = hubUiStrings.optInHint || 'Turn on official Task mode (CLAUDE_CODE_ENABLE_TASKS) in Advanced settings.';
       } else {
         el.style.display = 'none';
         el.textContent = '';
@@ -2537,8 +2556,8 @@ export function getWebviewContent(): string {
           '</div>' +
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
-            '<span>' + tokenText + '</span>' +
-            '<span>' + rightMetaHtml + '</span>' +
+            '<span class="session-meta-main">' + tokenText + '</span>' +
+            '<span class="session-meta-side">' + rightMetaHtml + '</span>' +
           '</div>' +
           '<div class="session-actions-row">' +
             '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '" title="聚焦此会话"><span class="btn-icon">👀</span><span class="btn-text">聚焦</span></button>' +

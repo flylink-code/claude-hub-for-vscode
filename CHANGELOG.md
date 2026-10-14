@@ -2,6 +2,20 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.15] - 2026-10-14
+
+### 中文
+
+- **会话卡片：** 操作按钮按内容宽度换行，Token / 模型与分支时间不再叠在一起。
+- **会话待办：** 默认只显示官方 Task（TaskCreate / TaskUpdate / TaskList 与 `~/.claude/tasks`）。Checklist 不再填入会话待办。旧版 TodoWrite 仅在没有官方 Task 时显示，且不能覆盖已有 Task。
+- **高级配置：** 开关同时写入 `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` 与 `CLAUDE_CODE_ENABLE_TASKS=1`。前者让未识别模型（如 gpt6-luna）带上任务工具，后者选用最新的 TaskCreate / TaskUpdate / TaskList。
+
+### English
+
+- **Session cards:** Action buttons wrap to their content width, and token, model, branch, and time no longer overlap.
+- **Session todos:** Official Task mode is the default (TaskCreate / TaskUpdate / TaskList and `~/.claude/tasks`). Checklists are no longer session todos. Legacy TodoWrite appears only when no official tasks exist, and cannot replace them.
+- **Advanced settings:** The toggle writes `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` and `CLAUDE_CODE_ENABLE_TASKS=1`. The first exposes task tools on unrecognized models such as gpt6-luna; the second selects TaskCreate / TaskUpdate / TaskList.
+
 ## [0.2.14] - 2026-10-10
 
 ### 中文
@@ -50,6 +64,7 @@
 - Replaced the square `🔄` emoji with a lightweight circular spinner, and fixed the spinner animation being unintentionally disabled by `prefers-reduced-motion` in Cursor Webviews.
 - Added regression coverage for narrow layouts, todo lifecycles, plan-progress replay, and spinner animation.
 
+[0.2.15]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.15
 [0.2.14]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.14
 [0.2.12]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.12
 [0.2.11]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.11

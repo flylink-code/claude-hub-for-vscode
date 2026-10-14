@@ -204,21 +204,23 @@ export function clearProjectTodoPolicyCache(): void {
 
 
 /**
- * Effective prefer_source: project policy wins; else VS Code setting; default tasks.
- * "auto" is treated as Task-first ("tasks").
+ * Effective prefer_source: project policy wins; else VS Code setting.
+ * "auto" and a missing setting are the official Task list (native + TaskCreate/Update/List).
+ * Checklist is not a session-todo source unless explicitly selected.
  */
 export function resolvePreferSource(
   policy: ProjectTodoPolicy | undefined,
   setting?: PreferSource | string,
 ): PreferSource {
   const fromPolicy = policy?.prefer_source;
-  if (fromPolicy && PREFER_SOURCES.has(fromPolicy)) {
+  if (fromPolicy === 'auto') return 'tasks';
+  if (fromPolicy === 'tasks' || fromPolicy === 'checklist' || fromPolicy === 'todoWrite') {
     return fromPolicy;
   }
-  if (typeof setting === 'string' && PREFER_SOURCES.has(setting as PreferSource)) {
-    return setting as PreferSource;
+  if (setting === 'tasks' || setting === 'checklist' || setting === 'todoWrite') {
+    return setting;
   }
-  return 'auto';
+  return 'tasks';
 }
 
 /** Force Task-only: hide checklist/markdown fill unless plan_checklist=required. */
@@ -226,13 +228,12 @@ export function isTasksOnlyPrefer(prefer: PreferSource): boolean {
   return prefer === 'tasks';
 }
 
-/** Dual/auto/checklist/todoWrite may use checklist when that data exists. tasks-only needs required. */
+/** Session todos use a plan/markdown checklist only when that source is explicitly selected. */
 export function allowChecklistFill(
   prefer: PreferSource,
-  policy: ProjectTodoPolicy | undefined,
+  _policy?: ProjectTodoPolicy,
 ): boolean {
-  if (!isTasksOnlyPrefer(prefer)) return true;
-  return policy?.plan_checklist === 'required';
+  return prefer === 'checklist';
 }
 
 export type TodoMode = 'task' | 'checklist' | 'none';

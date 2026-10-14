@@ -162,6 +162,10 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('@container'));
   assert.ok(html.includes('btn-icon'));
   assert.ok(html.includes('btn-text'));
+  assert.ok(html.includes('session-meta-main'));
+  assert.ok(html.includes('session-meta-side'));
+  assert.match(html, /\.session-actions-row\s*\{[^}]*flex-wrap:\s*wrap/);
+  assert.doesNotMatch(html, /\.session-act-btn\s*\{[^}]*flex:\s*1\s+1\s+0/);
   assert.ok(html.includes('chip-label-short'));
   assert.ok(html.includes('header-sub'));
   assert.ok(html.includes('hud-info-row'));
@@ -2178,6 +2182,60 @@ test('parseTranscriptFile TaskUpdate accepts id/task_id aliases and captures act
     assert.strictEqual(parsed.todos[0].status, 'completed');
     assert.strictEqual(parsed.todos[0].activeForm, '调整布局细节');
     assert.notStrictEqual(String(parsed.todos[0].id), 'call_create_a');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile keeps official Task list when a later TodoWrite arrives', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-task-over-todo-'));
+  const filePath = path.join(tempDir, 'task-over-todo.jsonl');
+  try {
+    const lines = [
+      JSON.stringify({
+        sessionId: 'task-over-todo',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'tool_use', id: 'call_create_keep', name: 'TaskCreate',
+            input: { subject: '官方任务', activeForm: '正在做官方任务' },
+          }],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [{ type: 'tool_result', tool_use_id: 'call_create_keep', content: 'Task #9 created' }],
+        },
+        toolUseResult: { task: { id: '9', subject: '官方任务', status: 'pending' } },
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'tool_use', id: 'call_old_todo', name: 'TodoWrite',
+            input: { todos: [{ content: '旧版待办', status: 'in_progress' }] },
+          }],
+        },
+      }),
+      JSON.stringify({
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [{ type: 'tool_result', tool_use_id: 'call_old_todo', content: 'Todos have been modified successfully.' }],
+        },
+      }),
+    ];
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+    clearTranscriptCache();
+    const parsed = await parseTranscriptFile(filePath);
+    assert.strictEqual(parsed.taskSource, 'tasks');
+    assert.strictEqual(parsed.todos.length, 1);
+    assert.strictEqual(parsed.todos[0].id, '9');
+    assert.strictEqual(parsed.todos[0].content, '官方任务');
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

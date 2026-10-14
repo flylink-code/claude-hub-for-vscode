@@ -283,6 +283,7 @@ test('webview includes official-task polish markers', () => {
     'selectTaskList',
     'activeForm',
     'slash /tasks',
+    'CLAUDE_CODE_ENABLE_TASKS',
     'CLAUDE_CODE_ENABLE_TODO_TOOLS',
     'todos-mode-chip',
     'todos-checklist-chip',

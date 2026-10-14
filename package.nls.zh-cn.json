@@ -52,11 +52,11 @@
   "config.language.auto": "自动跟随 VS Code 界面语言 (默认)",
   "config.language.zhCN": "简体中文 (Simplified Chinese)",
   "config.language.en": "English",
-  "config.todo.preferSource.desc": "仪表盘如何选择待办。默认 auto（双模式）：Task 与 Checklist 各自有数据就显示；两者都有时以 Task 为主列表。",
-  "config.todo.preferSource.tasks": "仅 Task：隐藏 checklist/markdown 填充（除非项目 plan_checklist 为 required）。",
-  "config.todo.preferSource.auto": "双模式：有则显示；两者都有时 Task 为主，不强制用另一边填空。",
-  "config.todo.preferSource.checklist": "允许计划 GFM checklist 与助手 markdown 待办。",
-  "config.todo.preferSource.todoWrite": "有 TodoWrite 时优先使用。",
+  "config.todo.preferSource.desc": "会话待办使用官方 Task 模式（TaskCreate/TaskUpdate/TaskList 与 ~/.claude/tasks）。不显示 Checklist。仅当没有官方 Task 时才显示旧版 TodoWrite。",
+  "config.todo.preferSource.tasks": "官方 Task 模式。Checklist 不作为会话待办。",
+  "config.todo.preferSource.auto": "与官方 Task 模式相同。不显示 Checklist。",
+  "config.todo.preferSource.checklist": "仅旧版：显示计划或助手 markdown checklist。",
+  "config.todo.preferSource.todoWrite": "有旧版 TodoWrite 时显示。若同时存在官方 Task，仍以 Task 为准。",
   "command.resumeSession": "在终端恢复 Claude 会话",
   "command.slashCommand": "发送 Claude Code 斜杠命令",
   "command.renameSession": "重命名 Claude 会话",
@@ -76,6 +76,6 @@
   "config.modelPricing.desc": "可选：按模型 ID 覆盖美元/百万 token 单价（input/output/cacheRead/cacheWrite），合并进内置 Anthropic 价表。",
   "config.modelAliases.desc": "可选：费用估算用的模型别名映射（别名 -> 规范价表 ID）。",
   "config.sessionListPageSize.desc": "Hub 会话列表每页条数（轻量分页虚拟化）。",
-  "config.todoTools.enabled.desc": "可选：将 CLAUDE_CODE_ENABLE_TODO_TOOLS=1 写入工作区 .claude/settings.local.json（仅环境变量，不安装 Hub hooks）。仅对新的 Claude Code 会话生效。",
-  "command.toggleTodoTools": "切换 Task 工具环境变量 (CLAUDE_CODE_ENABLE_TODO_TOOLS)"
+  "config.todoTools.enabled.desc": "可选：将 CLAUDE_CODE_ENABLE_TODO_TOOLS=1 与 CLAUDE_CODE_ENABLE_TASKS=1 写入工作区 .claude/settings.local.json，让新的 Claude Code 会话获得 TaskCreate/TaskUpdate/TaskList，包括 gpt 等未识别模型（仅环境变量，不安装 Hub hooks）。",
+  "command.toggleTodoTools": "切换官方 Task 工具（TaskCreate / TaskUpdate / TaskList）"
 }
