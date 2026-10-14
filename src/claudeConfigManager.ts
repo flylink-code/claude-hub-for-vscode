@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ClaudeConfigDirProvider, resolveClaudeConfigDir, getClaudeProjectsDir } from './configDir.js';
+import { gatewayModelRemainder } from './contextLimit.js';
 import { t } from './i18n.js';
 
 function getVsCode(): any {
@@ -49,10 +50,8 @@ export function cleanModelKey(rawKey: string): string {
   if (trimmed.toLowerCase() === 'claude.auto' || trimmed.toLowerCase() === 'auto') {
     return 'auto';
   }
-  const multiDotMatch = /^claude\.[^.]+\.(.+)$/.exec(trimmed);
-  if (multiDotMatch && multiDotMatch[1]) {
-    return multiDotMatch[1];
-  }
+  const gatewayRest = gatewayModelRemainder(trimmed);
+  if (gatewayRest) return gatewayRest;
   if (trimmed.startsWith('claude.')) {
     return trimmed.slice(7);
   }
@@ -248,13 +247,22 @@ export class ClaudeConfigManager {
     return map;
   }
 
+  /**
+   * Model the Claude Code composer will use for the next turn.
+   * `ANTHROPIC_MODEL` wins over `settings.model`: the picker and gateway
+   * switcher write the env var, while `settings.model` often stays stale.
+   */
   public getConfiguredModel(): string | undefined {
     const settings = this.getClaudeSettings();
     const env = settings.env || {};
-    const candidate = settings.model || env.ANTHROPIC_MODEL;
-    if (typeof candidate === 'string' && candidate.trim()) {
-      return candidate.trim();
-    }
+    const fromEnv = typeof env.ANTHROPIC_MODEL === 'string' ? env.ANTHROPIC_MODEL.trim() : '';
+    const fromSettings = typeof settings.model === 'string' ? settings.model.trim() : '';
+    return fromEnv || fromSettings || undefined;
+  }
+
+  public getEffortLevel(): string | undefined {
+    const effort = this.getClaudeSettings().effortLevel;
+    if (typeof effort === 'string' && effort.trim()) return effort.trim();
     return undefined;
   }
 

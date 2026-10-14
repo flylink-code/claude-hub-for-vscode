@@ -16,10 +16,12 @@ import {
   resolveTaskId,
   clearTranscriptCache,
   extractBlockTextContent,
+  parseClaudeSessionRecord,
+  backgroundJobsForLiveProcess,
 } from '../src/transcriptParser.js';
 import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
 import { taskSnapshot, mergeDiskPlanTodos } from '../src/nativeTasks.js';
-import { formatModelDisplayName, getContextLimitForModel } from '../src/contextLimit.js';
+import { formatModelDisplayName, formatSelectedModelName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
 import {
   formatProgressBar,
@@ -82,6 +84,11 @@ test('formatModelDisplayName maps models cleanly', () => {
   assert.strictEqual(formatModelDisplayName('claude-fable-5'), 'Fable 5');
   assert.strictEqual(formatModelDisplayName('claude-opus-5'), 'Opus 5');
   assert.strictEqual(formatModelDisplayName('claude.auto', new Map([['claude.auto', 'Auto']])), 'Auto');
+  const gateway = new Map([['claude.gemini-3.8-flash', 'gemini-3.8-flash'], ['claude.gpt-6-luna', 'gpt-6-luna']]);
+  assert.strictEqual(formatModelDisplayName('claude.gemini-3.8-flash'), 'gemini-3.8-flash');
+  assert.strictEqual(formatSelectedModelName('claude.gemini-3.8-flash', gateway, 'high'), 'gemini-3.8-flash High');
+  assert.strictEqual(formatSelectedModelName('claude.gpt-6-luna', gateway), 'gpt-6-luna');
+  assert.strictEqual(formatSelectedModelName('claude.gemini-3.8-flash-high', gateway, 'high'), 'gemini-3.8-flash-high');
 });
 
 test('isPathInWorkspace matches case-insensitively on Windows', () => {
@@ -191,6 +198,7 @@ test('cleanModelKey strips prefixes and preserves dotted versions correctly', ()
   assert.strictEqual(cleanModelKey('claude.sub2api.gpt-5.6-sol'), 'gpt-5.6-sol');
   assert.strictEqual(cleanModelKey('claude.sub2api.gpt-6-astra'), 'gpt-6-astra');
   assert.strictEqual(cleanModelKey('claude.antigravity--built-in.gemini-3.8-flash'), 'gemini-3.8-flash');
+  assert.strictEqual(cleanModelKey('claude.gemini-3.8-flash'), 'gemini-3.8-flash');
   assert.strictEqual(cleanModelKey('claude.auto'), 'auto');
   assert.strictEqual(cleanModelKey('auto'), 'auto');
   assert.strictEqual(cleanModelKey('claude-sonnet-5'), 'sonnet-5');
@@ -255,6 +263,18 @@ test('config directory provider is shared by Claude configuration and features',
     assert.strictEqual(manager.getSettingsPath(), path.join(tempDir, 'settings.json'));
     assert.strictEqual(manager.getGatewayModelsPath(), path.join(cacheDir, 'gateway-models.json'));
     assert.strictEqual(manager.getConfiguredModel(), 'custom-model');
+    fs.writeFileSync(
+      path.join(tempDir, 'settings.json'),
+      JSON.stringify({
+        model: 'claude-sonnet-5-5-medium',
+        effortLevel: 'high',
+        env: { ANTHROPIC_MODEL: 'claude.gemini-3.8-flash' },
+        mcpServers: { demo: { command: 'demo-mcp' } },
+      }),
+      'utf8',
+    );
+    assert.strictEqual(manager.getConfiguredModel(), 'claude.gemini-3.8-flash');
+    assert.strictEqual(manager.getEffortLevel(), 'high');
     assert.strictEqual(manager.getGatewayModels()[0].id, 'custom-model');
 
     const features = new ClaudeFeaturesManager(() => tempDir);
@@ -2347,4 +2367,191 @@ test('mergeDiskPlanTodos: checklist disk wins; non-checklist keeps parser plan; 
 
   const nativeWin = mergeDiskPlanTodos('native', toolTodos, diskChecklist);
   assert.strictEqual(nativeWin.taskSource, 'native');
+});
+
+test('parseTranscriptFile tracks slash /tasks background shells and agents after the session goes idle', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-bg-'));
+  const testFile = path.join(tempDir, 'bg.jsonl');
+  const outputFile = 'C:\\Temp\\claude\\tasks\\b11dw3frb.output';
+  try {
+    const lines = [
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T01:56:13.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_bash_bg',
+            name: 'Bash',
+            input: {
+              command: 'cd /e/W-AI_WorkSpace/Ai-Switcher && npx tsc --noEmit',
+              run_in_background: true,
+            },
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T01:56:14.000Z',
+        toolUseResult: {
+          backgroundTaskId: 'b11dw3frb',
+          stdout: '',
+          stderr: '',
+        },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_bash_bg',
+            content: 'Command running in background with ID: b11dw3frb. Output is being written to: ' + outputFile + '. You will be notified when it completes.',
+          }],
+        },
+      },
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T01:57:00.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_agent_bg',
+            name: 'Agent',
+            input: { description: '分析 ZstdDecompressionError', subagent_type: 'Explore', run_in_background: true },
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T01:57:01.000Z',
+        toolUseResult: {
+          isAsync: true,
+          status: 'async_launched',
+          agentId: 'a04bc807a9232704d',
+          description: '分析 ZstdDecompressionError',
+        },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_agent_bg',
+            content: 'Async agent launched successfully.\nagentId: a04bc807a9232704d\nThe agent is working in the background.',
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T01:58:00.000Z',
+        message: { role: 'user', content: '继续看别的问题' },
+      },
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T01:58:10.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_stop',
+            name: 'TaskStop',
+            input: { task_id: 'bkopoz2a0' },
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T01:58:11.000Z',
+        toolUseResult: {
+          task_id: 'bkopoz2a0',
+          task_type: 'local_bash',
+          command: 'cmd //c scripts\\build-exe.bat',
+        },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_stop',
+            content: 'Successfully stopped task: bkopoz2a0',
+          }],
+        },
+      },
+      {
+        type: 'queue-operation',
+        timestamp: '2026-10-14T02:01:00.000Z',
+        content: '<task-notification>\n<task-id>b11dw3frb</task-id>\n<output-file>' + outputFile + '</output-file>\n<status>completed</status>\n<summary>Background command "npx tsc" completed (exit code 0)</summary>\n</task-notification>',
+      },
+    ];
+    fs.writeFileSync(testFile, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
+    const parsed = await parseTranscriptFile(testFile);
+    const byId = new Map((parsed.backgroundJobs || []).map((job) => [job.id, job]));
+    const shell = byId.get('b11dw3frb');
+    assert.ok(shell);
+    assert.strictEqual(shell.status, 'completed');
+    assert.strictEqual(shell.kind, 'shell');
+    assert.strictEqual(shell.exitCode, 0);
+    assert.ok(shell.label.includes('npx tsc'));
+    assert.strictEqual(shell.outputFile, outputFile);
+    const agent = byId.get('a04bc807a9232704d');
+    assert.ok(agent);
+    assert.strictEqual(agent.status, 'running');
+    assert.strictEqual(agent.kind, 'agent');
+    assert.strictEqual(agent.label, '分析 ZstdDecompressionError');
+    const stopped = byId.get('bkopoz2a0');
+    assert.ok(stopped);
+    assert.strictEqual(stopped.status, 'killed');
+    assert.strictEqual(stopped.kind, 'shell');
+
+    const html = getWebviewContent();
+    assert.ok(html.includes('bgjob-dot running'));
+    assert.ok(html.includes('renderBackgroundJobs(s)'));
+    assert.ok(html.includes('后台 '));
+    assert.equal(html.includes('sess.backgroundJobs'), false);
+
+    const stale = {
+      id: 'old',
+      kind: 'agent' as const,
+      label: '展示平均输出速率',
+      status: 'running' as const,
+      startTime: new Date('2026-09-18T00:00:00.000Z'),
+    };
+    const finished = { ...stale, id: 'done', status: 'completed' as const };
+    assert.deepEqual(backgroundJobsForLiveProcess([stale, finished], false).map((job) => job.id), ['done']);
+    assert.equal(backgroundJobsForLiveProcess([stale], true).length, 1);
+    assert.deepEqual(parseClaudeSessionRecord('{"pid":25876,"sessionId":"136b5730-2db7-4bb6-81b2-f7d228b37738","status":"idle"}'), {
+      pid: 25876,
+      sessionId: '136b5730-2db7-4bb6-81b2-f7d228b37738',
+    });
+    assert.equal(parseClaudeSessionRecord('{"status":"idle"}'), undefined);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('background_tasks_changed replaces inferred running jobs', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-bg-snap-'));
+  const testFile = path.join(tempDir, 'snap.jsonl');
+  try {
+    const lines = [
+      {
+        type: 'user',
+        timestamp: '2026-10-14T01:00:00.000Z',
+        toolUseResult: { backgroundTaskId: 'boldone', command: 'npx tsc' },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_old',
+            content: 'Command running in background with ID: boldone.',
+          }],
+        },
+      },
+      {
+        type: 'system',
+        subtype: 'background_tasks_changed',
+        timestamp: '2026-10-14T01:05:00.000Z',
+        tasks: [{ task_id: 'blive', task_type: 'local_bash', description: 'npm test' }],
+      },
+    ];
+    fs.writeFileSync(testFile, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
+    const parsed = await parseTranscriptFile(testFile);
+    const byId = new Map((parsed.backgroundJobs || []).map((job) => [job.id, job]));
+    assert.strictEqual(byId.get('boldone')?.status, 'completed');
+    assert.strictEqual(byId.get('blive')?.status, 'running');
+    assert.strictEqual(byId.get('blive')?.kind, 'shell');
+    assert.strictEqual(byId.get('blive')?.label, 'npm test');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });

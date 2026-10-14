@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
 import { ClaudeFeaturesManager } from './claudeFeatures.js';
-import { formatModelDisplayName } from './contextLimit.js';
+import { formatModelDisplayName, formatSelectedModelName } from './contextLimit.js';
 import { SessionManager } from './sessionManager.js';
 import { getWebviewContent } from './webviewHtml.js';
 import { ClaudeConfigDirProvider, isPathInWorkspace } from './configDir.js';
@@ -355,6 +355,14 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     }
 
     const gwMap = this.configManager.getGatewayModelMap();
+    const configuredModel = this.configManager.getConfiguredModel();
+    const effort = this.configManager.getEffortLevel();
+    const modelLabelOf = (s: { isCurrentWorkspace: boolean; model: string }): string => {
+      if (s.isCurrentWorkspace && configuredModel) {
+        return formatSelectedModelName(configuredModel, gwMap, effort);
+      }
+      return formatModelDisplayName(s.model, gwMap);
+    };
     const pinnedSessionIds = getPinnedSessionIds(this.context);
     const allSessions = sortSessionsWithPins(this.sessionManager.allSessions, pinnedSessionIds).map((s) => ({
       pinned: pinnedSessionIds.includes(s.sessionId),
@@ -362,7 +370,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       sessionId: s.sessionId,
       projectName: s.projectName,
       sessionTitle: s.sessionTitle,
-      model: formatModelDisplayName(s.model, gwMap),
+      model: modelLabelOf(s),
       rawModel: s.model,
       lastResponseModel: s.lastResponseModel ? formatModelDisplayName(s.lastResponseModel, gwMap) : undefined,
       tokenUsage: s.tokenUsage,
@@ -375,12 +383,22 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       gitBranch: s.gitBranch,
       agentsCount: s.totalAgentsCount ?? (s.agents?.length || 0),
       subagentsTotalTokens: s.subagentsTotalTokens,
+      backgroundJobs: (s.backgroundJobs || [])
+        .filter((job) => job.status === 'running')
+        .map((job) => ({
+          id: job.id,
+          kind: job.kind,
+          label: job.label,
+          status: job.status,
+          startTime: job.startTime instanceof Date ? job.startTime.getTime() : job.startTime,
+          outputFile: job.outputFile,
+        })),
     }));
 
     const sessionPayload = session
       ? {
           ...session,
-          modelDisplay: formatModelDisplayName(session.model, gwMap),
+          modelDisplay: modelLabelOf(session),
           lastResponseModelDisplay: session.lastResponseModel
             ? formatModelDisplayName(session.lastResponseModel, gwMap)
             : undefined,

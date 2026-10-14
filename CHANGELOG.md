@@ -9,12 +9,16 @@
 - **会话卡片：** 操作按钮按内容宽度换行，Token / 模型与分支时间不再叠在一起。
 - **会话待办：** 默认只显示官方 Task（TaskCreate / TaskUpdate / TaskList 与 `~/.claude/tasks`）。Checklist 不再填入会话待办。旧版 TodoWrite 仅在没有官方 Task 时显示，且不能覆盖已有 Task。
 - **高级配置：** 开关同时写入 `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` 与 `CLAUDE_CODE_ENABLE_TASKS=1`。前者让未识别模型（如 gpt6-luna）带上任务工具，后者选用最新的 TaskCreate / TaskUpdate / TaskList。
+- **后台任务：** 侧边栏和状态栏同步当前对话的斜杠 `/tasks`。只统计仍在运行的 Claude Code 进程；`background_tasks_changed` 会整份替换任务列表，进程退出后列表为空。
+- **当前模型：** 状态栏跟随 Claude Code 输入框里选中的模型。`ANTHROPIC_MODEL` 优先于过期的 `settings.model`，不再显示上一轮回复用过的模型。
 
 ### English
 
 - **Session cards:** Action buttons wrap to their content width, and token, model, branch, and time no longer overlap.
 - **Session todos:** Official Task mode is the default (TaskCreate / TaskUpdate / TaskList and `~/.claude/tasks`). Checklists are no longer session todos. Legacy TodoWrite appears only when no official tasks exist, and cannot replace them.
 - **Advanced settings:** The toggle writes `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` and `CLAUDE_CODE_ENABLE_TASKS=1`. The first exposes task tools on unrecognized models such as gpt6-luna; the second selects TaskCreate / TaskUpdate / TaskList.
+- **Background tasks:** The sidebar and status bar mirror slash `/tasks` for the current conversation. Only a running Claude Code process counts; `background_tasks_changed` replaces the list, and the list is empty after the process exits.
+- **Selected model:** The status bar follows the model chosen in the Claude Code composer. `ANTHROPIC_MODEL` wins over a stale `settings.model`, instead of the previous turn's response model.
 
 ## [0.2.14] - 2026-10-10
 

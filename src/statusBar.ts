@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
 import { ClaudeFeaturesManager } from './claudeFeatures.js';
-import { formatModelDisplayName } from './contextLimit.js';
+import { formatModelDisplayName, formatSelectedModelName } from './contextLimit.js';
 import { t } from './i18n.js';
 import { SessionManager } from './sessionManager.js';
 import {
@@ -17,7 +17,17 @@ import {
   StatusBarPreset,
   StatusBarRenderOptions,
 } from './statusBarFormatter.js';
-import { SessionInfo, SubscriptionUsageData } from './types.js';
+import { BackgroundJob, SessionInfo, SubscriptionUsageData } from './types.js';
+
+function runningBackgroundJobs(session: SessionInfo | null | undefined): BackgroundJob[] {
+  if (!session) return [];
+  return (session.backgroundJobs || []).filter((job) => job.status === 'running');
+}
+
+function withBackgroundSuffix(text: string, count: number): string {
+  if (count <= 0) return text;
+  return text + ' · $(sync~spin) ' + t('status.backgroundRunning', { count });
+}
 
 export {
   ConfigGetter,
@@ -96,6 +106,16 @@ export class StatusBarController implements vscode.Disposable {
     }
   }
 
+  /** Composer model for this workspace; transcript model for other projects. */
+  private modelLabel(session: SessionInfo): string {
+    const gwMap = this.configManager?.getGatewayModelMap();
+    const configured = this.configManager?.getConfiguredModel();
+    if (session.isCurrentWorkspace && configured) {
+      return formatSelectedModelName(configured, gwMap, this.configManager?.getEffortLevel());
+    }
+    return formatModelDisplayName(session.model, gwMap);
+  }
+
   public update(): void {
     const config = vscode.workspace.getConfiguration('claudeHub');
     const show = config.get<boolean>('showStatusBarItem', true);
@@ -117,10 +137,13 @@ export class StatusBarController implements vscode.Disposable {
 
     if (!session) {
       const otherActive = allSessions.filter((s) => !s.isIdle).length;
-      const targetText =
+      const bgCount = runningBackgroundJobs(session).length;
+      const targetText = withBackgroundSuffix(
         filterMode === 'currentWorkspace' && otherActive > 0
           ? '$(sparkle) Idle (' + otherActive + ')'
-          : '$(sparkle) Idle';
+          : '$(sparkle) Idle',
+        bgCount,
+      );
       if (this.item.text !== targetText) {
         this.item.text = targetText;
       }
@@ -130,7 +153,7 @@ export class StatusBarController implements vscode.Disposable {
         this.item.backgroundColor = undefined;
       }
 
-      const idleFingerprint = `idle:${filterMode}:${otherActive}`;
+      const idleFingerprint = `idle:${filterMode}:${otherActive}:${bgCount}`;
       if (idleFingerprint !== this.lastSemanticFingerprint) {
         this.lastSemanticFingerprint = idleFingerprint;
         if (filterMode === 'currentWorkspace' && otherActive > 0) {
@@ -168,8 +191,7 @@ export class StatusBarController implements vscode.Disposable {
     const warningThreshold = config.get<number>('warningThreshold', 50);
     const dangerThreshold = config.get<number>('dangerThreshold', 75);
 
-    const gwMap = this.configManager?.getGatewayModelMap();
-    const modelDisplay = formatModelDisplayName(session.model, gwMap);
+    const modelDisplay = this.modelLabel(session);
     const pct = session.tokenUsage.percentage;
 
     // Running activity (only when session is active and not idle)
@@ -186,7 +208,7 @@ export class StatusBarController implements vscode.Disposable {
     const renderOpts = resolveRenderOptions(config);
     const cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
 
-    const targetText = formatStatusBarText({
+    const targetText = withBackgroundSuffix(formatStatusBarText({
       percentage: pct,
       totalTokens: session.tokenUsage.totalTokens,
       contextLimit: session.contextLimit,
@@ -198,7 +220,7 @@ export class StatusBarController implements vscode.Disposable {
       gitBranch: session.gitBranch,
       todos: session.todos,
       options: renderOpts,
-    });
+    }), runningBackgroundJobs(session).length);
 
     if (this.item.text !== targetText) {
       this.item.text = targetText;
@@ -243,12 +265,11 @@ export class StatusBarController implements vscode.Disposable {
     const hasRunningTool = session.activeTools.length > 0;
     const tTool = hasRunningTool ? session.activeTools[0] : undefined;
     const elapsedSec = tTool ? Math.max(0, Math.floor((Date.now() - tTool.startTime.getTime()) / 1000)) : 0;
-    const gwMap = this.configManager?.getGatewayModelMap();
-    const modelDisplay = formatModelDisplayName(session.model, gwMap);
+    const modelDisplay = this.modelLabel(session);
     const cost = ClaudeFeaturesManager.calculateCost(session.tokenUsage, session.model);
 
     // 1. Update status bar label text in-place (smooth 1s tick, no hover flicker)
-    const newText = formatStatusBarText({
+    const newText = withBackgroundSuffix(formatStatusBarText({
       percentage: session.tokenUsage.percentage,
       totalTokens: session.tokenUsage.totalTokens,
       contextLimit: session.contextLimit,
@@ -260,7 +281,7 @@ export class StatusBarController implements vscode.Disposable {
       gitBranch: session.gitBranch,
       todos: session.todos,
       options: renderOpts,
-    });
+    }), runningBackgroundJobs(session).length);
 
     if (this.item.text !== newText) {
       this.item.text = newText;
@@ -288,7 +309,7 @@ export class StatusBarController implements vscode.Disposable {
 
     const stateBadge = session.isIdle ? t('status.stateIdle') : t('status.stateActive');
     const gwMap = this.configManager?.getGatewayModelMap();
-    const model = formatModelDisplayName(session.model, gwMap);
+    const model = this.modelLabel(session);
     let modelExtra = '';
     if (
       session.lastResponseModel &&
@@ -363,6 +384,17 @@ export class StatusBarController implements vscode.Disposable {
       }
     } else {
       activityText = t('status.activityIdle');
+    }
+
+    const ownRunning = runningBackgroundJobs(session);
+    if (ownRunning.length > 0) {
+      const lines = ownRunning.slice(0, 6).map((job) => {
+        const start = job.startTime instanceof Date ? job.startTime.getTime() : new Date(job.startTime).getTime();
+        const elapsed = start > 0 ? formatDuration(Math.max(0, Date.now() - start), true) : '';
+        const safeLabel = job.label.replace(/[`*\\]/g, '').replace(/[\r\n]+/g, ' ');
+        return '- `' + job.kind + '` ' + safeLabel + (elapsed ? ' · ' + elapsed : '');
+      });
+      activityText += '\n\n**' + t('status.backgroundTitle') + '**\n\n' + lines.join('\n');
     }
 
     // 3. Core usage metrics, duration & current activity (compact vertical spacing)

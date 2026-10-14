@@ -11,7 +11,7 @@ import {
 } from './configDir.js';
 import { getContextLimitForModel } from './contextLimit.js';
 import { setPricingOverrides, PricingOverrides } from './modelPricing.js';
-import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache, extractPlanTodos, extractMarkdownTodos } from './transcriptParser.js';
+import { parseTranscriptFile, generateForkTitle, rewriteTranscriptSessionIds, parseSubagentsDir, clearTranscriptCache, extractPlanTodos, extractMarkdownTodos, parseClaudeSessionRecord, backgroundJobsForLiveProcess } from './transcriptParser.js';
 import { fetchSubscriptionUsage, readOAuthToken } from './subscriptionUsage.js';
 import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData, TaskSource, TodoItem, SessionPlan } from './types.js';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
@@ -20,6 +20,38 @@ import { SessionAlertController } from './sessionAlerts.js';
 import { readProjectTodoPolicy, projectTodoPolicyWatchPaths, resolvePreferSource, allowChecklistFill, todoModeFromSource } from './projectTodoPolicy.js';
 
 export { generateForkTitle };
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === 'EPERM';
+  }
+}
+
+function readLiveClaudeSessionIds(configDir: string): Set<string> {
+  const dir = path.join(configDir, 'sessions');
+  const ids = new Set<string>();
+  let names: string[];
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return ids;
+  }
+  for (const name of names) {
+    if (!name.endsWith('.json')) continue;
+    let raw: string;
+    try {
+      raw = fs.readFileSync(path.join(dir, name), 'utf8');
+    } catch {
+      continue;
+    }
+    const record = parseClaudeSessionRecord(raw);
+    if (record && isProcessAlive(record.pid)) ids.add(record.sessionId);
+  }
+  return ids;
+}
 
 export class SessionManager implements vscode.Disposable {
   private _sessions: SessionInfo[] = [];
@@ -34,6 +66,7 @@ export class SessionManager implements vscode.Disposable {
   public readonly onDidUpdateSubscription = this._onDidUpdateSubscription.event;
 
   private fileWatcher: fs.FSWatcher | null = null;
+  private sessionWatcher: fs.FSWatcher | null = null;
   private refreshTimer: NodeJS.Timeout | null = null;
   private subscriptionTimer: NodeJS.Timeout | null = null;
   private debounceTimer: NodeJS.Timeout | null = null;
@@ -432,6 +465,18 @@ export class SessionManager implements vscode.Disposable {
     } catch (err) {
       console.warn('[Claude Hub] Failed to set up recursive watcher on projects dir:', err);
     }
+    this.watchClaudeSessions();
+  }
+
+  private watchClaudeSessions(): void {
+    if (this.sessionWatcher) return;
+    const dir = path.join(this.getConfigDir(), 'sessions');
+    if (!fs.existsSync(dir)) return;
+    try {
+      this.sessionWatcher = fs.watch(dir, () => this.scheduleScan());
+    } catch (err) {
+      console.warn('[Claude Hub] Failed to watch Claude sessions dir:', err);
+    }
   }
 
   private scheduleScan(): void {
@@ -528,6 +573,8 @@ export class SessionManager implements vscode.Disposable {
       }
 
       const configuredModel = this.configManager?.getConfiguredModel();
+      const liveSessionIds = readLiveClaudeSessionIds(this.getConfigDir());
+      this.watchClaudeSessions();
       const workspaceFolders = (vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath);
       const projectDirs = fs.readdirSync(projectsDir);
       const discoveredSessions: SessionInfo[] = [];
@@ -691,9 +738,8 @@ export class SessionManager implements vscode.Disposable {
           }
           const isCurrentWorkspace = isPathInWorkspace(projectPath, workspaceFolders);
 
-          // For current workspace sessions, prioritize currently configured model from settings
-          // (e.g. user just switched provider or model in dropdown before sending a prompt).
-          // Retain lastResponseModel for physical routing transparency.
+          // Current workspace follows the composer selection (ANTHROPIC_MODEL, else settings.model),
+          // not the previous turn's transcript model. Other projects keep their own transcript model.
           const effectiveModel =
             (isCurrentWorkspace && configuredModel) ? configuredModel : (parsed.model || configuredModel || '');
           const lastResponseModel =
@@ -848,6 +894,10 @@ export class SessionManager implements vscode.Disposable {
             tools,
             activeTools,
             agents: activeAgents,
+            backgroundJobs: backgroundJobsForLiveProcess(
+              parsed.backgroundJobs || [],
+              liveSessionIds.has(sessionId),
+            ),
             totalAgentsCount: totalAgentsCount > 0 ? totalAgentsCount : undefined,
             subagentsTotalTokens: subagentsTotalTokens > 0 ? subagentsTotalTokens : undefined,
             todos,
@@ -920,6 +970,14 @@ export class SessionManager implements vscode.Disposable {
         // ignore
       }
       this.fileWatcher = null;
+    }
+    if (this.sessionWatcher) {
+      try {
+        this.sessionWatcher.close();
+      } catch {
+        // ignore
+      }
+      this.sessionWatcher = null;
     }
     if (this.refreshTimer) clearInterval(this.refreshTimer);
     if (this.subscriptionTimer) clearInterval(this.subscriptionTimer);

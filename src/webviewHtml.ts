@@ -1400,6 +1400,41 @@ export function getWebviewContent(): string {
         }
       }
     }
+    .bgjob-row {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .bgjob-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex: 0 0 auto;
+      background: #8b949e;
+    }
+    .bgjob-dot.running {
+      background: #3fb950;
+      box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.18);
+    }
+    .bgjob-dot.fail {
+      background: #f85149;
+    }
+    .bgjob-main {
+      min-width: 0;
+      flex: 1;
+    }
+    .bgjob-label {
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+    .bgjob-meta {
+      color: var(--text-muted);
+      font-size: 10px;
+      margin-top: 1px;
+    }
   </style>
 </head>
 <body>
@@ -1514,11 +1549,11 @@ export function getWebviewContent(): string {
       </div>
 
 
-      <!-- Background jobs (≠ Hub todos; slash /tasks companion) -->
+      <!-- Background jobs (slash /tasks; visible while the session looks idle) -->
       <div id="bgjobs-container" style="margin-top: 8px; display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
-          <span title="Claude Code background agents/tools — not Hub Task/Checklist todos">🧵 后台任务 <span style="opacity:0.7">(/tasks)</span></span>
-          <button class="icon-btn" style="font-size:10px;padding:2px 6px;" onclick="sendMessage('openBackgroundTasks')" title="打开 /tasks">打开</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 4px;">
+          <span title="Claude Code 斜杠 /tasks 后台 shell 与异步 agent，不是会话待办">🧵 后台任务 <span style="opacity:0.7">(/tasks)</span> <span id="bgjobs-counter" class="status-pill">0</span></span>
+          <button class="icon-btn" style="font-size:10px;padding:2px 6px;" onclick="sendMessage('openBackgroundTasks')" title="在 Claude Code 中打开 /tasks">打开</button>
         </div>
         <div id="bgjobs-list" style="font-size: 11px;"></div>
       </div>
@@ -2394,28 +2429,75 @@ export function getWebviewContent(): string {
     }
 
     
+    function jobTimeMs(value) {
+      if (value == null || value === '') return 0;
+      if (typeof value === 'number') return value;
+      const parsed = new Date(value).getTime();
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function bgKindLabel(kind) {
+      if (kind === 'agent') return 'agent';
+      if (kind === 'shell') return 'shell';
+      return 'task';
+    }
+
+    function bgStatusLabel(status) {
+      if (status === 'running') return '运行中';
+      if (status === 'error') return '失败';
+      if (status === 'killed') return '已停止';
+      return '已完成';
+    }
+
     function renderBackgroundJobs(s) {
       const wrap = document.getElementById('bgjobs-container');
       const list = document.getElementById('bgjobs-list');
+      const counter = document.getElementById('bgjobs-counter');
       if (!wrap || !list) return;
-      if (!s) { wrap.style.display = 'none'; list.innerHTML = ''; return; }
-      const agents = (s.agents || []).filter(a => a.background || a.status === 'running');
-      const tools = (s.activeTools || []).filter(t => t.background || t.status === 'running' || t.status === 'background');
-      const items = [];
-      for (const a of agents.slice(0, 8)) {
-        items.push('<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">🤖 ' + escapeHtml(a.name || a.type || a.id || 'agent') + ' · ' + escapeHtml(a.status || '') + (a.worktreePath ? ' · <button class="agent-wt-btn" data-action="openWorktree" data-worktree-path="' + escapeAttribute(a.worktreePath) + '">wt</button>' : '') + '</div>');
+      const now = Date.now();
+      const recentMs = 20 * 60 * 1000;
+      const rows = [];
+      const seen = {};
+      function pushJob(job, project, sessionId) {
+        if (!job || !job.id) return;
+        const key = (sessionId || '') + ':' + job.id;
+        if (seen[key]) return;
+        const running = job.status === 'running';
+        const endMs = jobTimeMs(job.endTime);
+        if (!running && !(endMs > 0 && now - endMs < recentMs)) return;
+        seen[key] = true;
+        rows.push({ job: job, project: project || '' });
       }
-      for (const t of tools.slice(0, 8)) {
-        const label = (t.name || 'tool') + (t.target ? ' → ' + t.target : '');
-        items.push('<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">🛠️ ' + escapeHtml(label) + ' · ' + escapeHtml(t.status || '') + '</div>');
-      }
-      if (!items.length) {
+      const ownJobs = (s && s.backgroundJobs) || [];
+      for (let i = 0; i < ownJobs.length; i++) pushJob(ownJobs[i], '', s && s.sessionId);
+      rows.sort(function (a, b) {
+        const ar = a.job.status === 'running' ? 0 : 1;
+        const br = b.job.status === 'running' ? 0 : 1;
+        return ar - br;
+      });
+      const runningCount = rows.filter(function (row) { return row.job.status === 'running'; }).length;
+      if (counter) counter.textContent = String(runningCount);
+      if (!rows.length) {
         wrap.style.display = 'none';
         list.innerHTML = '';
         return;
       }
       wrap.style.display = 'block';
-      list.innerHTML = items.join('') + '<div style="opacity:0.65;margin-top:4px;">Hub 待办 ≠ 此面板。点“打开”发送 /tasks。</div>';
+      list.innerHTML = rows.slice(0, 8).map(function (row) {
+        const job = row.job;
+        const running = job.status === 'running';
+        const dotClass = running ? 'bgjob-dot running' : (job.status === 'error' ? 'bgjob-dot fail' : 'bgjob-dot');
+        const startMs = jobTimeMs(job.startTime);
+        const endMs = jobTimeMs(job.endTime);
+        const elapsedMs = running
+          ? (startMs > 0 ? Math.max(0, now - startMs) : 0)
+          : (startMs > 0 && endMs > startMs ? endMs - startMs : 0);
+        const elapsed = elapsedMs > 0 ? formatDuration(elapsedMs, true) : '';
+        const prefix = row.project ? escapeHtml(row.project) + ' · ' : '';
+        const meta = bgKindLabel(job.kind) + ' · ' + bgStatusLabel(job.status) + (elapsed ? ' · ' + elapsed : '');
+        const title = job.outputFile ? escapeAttribute(job.outputFile) : escapeAttribute(job.label || job.id || '');
+        return '<div class="bgjob-row" title="' + title + '"><span class="' + dotClass + '"></span><div class="bgjob-main"><div class="bgjob-label">' + prefix + escapeHtml(job.label || job.id || 'task') + '</div><div class="bgjob-meta">' + escapeHtml(meta) + '</div></div></div>';
+      }).join('') + '<div style="opacity:0.65;margin-top:4px;">这是斜杠 /tasks 后台任务，不是会话待办。点“打开”可在 Claude Code 里查看。</div>';
     }
 
     
@@ -2512,6 +2594,10 @@ export function getWebviewContent(): string {
         const tagsBadge = (s.tags && s.tags.length) ? (' <span title="' + escapeAttribute(s.tags.join(', ')) + '" style="background: rgba(86,156,214,0.15); color:#9cdcfe; font-size:9px; padding:1px 4px; border-radius:3px;">' + escapeHtml(s.tags.slice(0,3).join(' · ')) + (s.tags.length > 3 ? '…' : '') + '</span>') : '';
         const pinnedTag = s.pinned ? ' <span title="Pinned" style="background: rgba(204,167,0,0.2); color:#cca700; font-size:9px; padding:1px 4px; border-radius:3px;">PIN</span>' : '';
         const focusedTag = isFocused ? '<span class="status-pill focused" style="font-size: 9px;"><span class="badge-icon">📍</span><span class="badge-text">当前聚焦</span></span>' : '';
+        const bgRunning = (s.backgroundJobs || []).filter(function (job) { return job && job.status === 'running'; });
+        const bgBadge = bgRunning.length
+          ? ' <span class="status-pill active" style="font-size: 9px;" title="' + escapeAttribute(bgRunning[0].label || '后台任务') + '"><span class="badge-icon">🧵</span><span class="badge-text">后台 ' + bgRunning.length + '</span></span>'
+          : '';
         const activeTag = !s.isIdle ? '<span class="status-pill active" style="font-size: 9px;"><span class="badge-icon">⚡</span><span class="badge-text">活跃</span></span>' : '<span class="status-pill idle" style="font-size: 9px;"><span class="badge-icon">💤</span><span class="badge-text">闲置</span></span>';
         const cardClass = isFocused ? 'session-card focused' : 'session-card';
         const timeStr = formatRelativeTime(s.lastUpdated);
@@ -2552,7 +2638,7 @@ export function getWebviewContent(): string {
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
             '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + (s.workspaceFolderName ? ' · ' + escapeHtml(s.workspaceFolderName) : '') + '</span>' +
-            '<div class="session-header-badges">' + focusedTag + pinnedTag + tagsBadge + activeTag + agentsBadge + '</div>' +
+            '<div class="session-header-badges">' + focusedTag + pinnedTag + tagsBadge + bgBadge + activeTag + agentsBadge + '</div>' +
           '</div>' +
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
@@ -2903,6 +2989,7 @@ export function getWebviewContent(): string {
             return '<div>' + escapeHtml(m.label || m.key) + ': ' + p + '%</div>';
           }).join('');
         }
+        renderBackgroundJobs(s);
       }
 
       if (msg.type === 'loadConfig') {
@@ -2965,6 +3052,8 @@ export function getWebviewContent(): string {
       if (currentSession && (!currentSession.isIdle || (currentSession.activeTools && currentSession.activeTools.length > 0))) {
         updateLiveSessionDuration();
       }
+      const ownRunning = currentSession && currentSession.backgroundJobs && currentSession.backgroundJobs.some(function (job) { return job && job.status === 'running'; });
+      if (ownRunning) renderBackgroundJobs(currentSession);
     }, 1000);
 
     // Notify backend ready

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
-import { AgentEntry, TodoItem, TokenUsage, ToolEntry, SessionPlan, TaskSource, LastActivity } from './types.js';
+import { AgentEntry, BackgroundJob, BackgroundJobKind, BackgroundJobStatus, TodoItem, TokenUsage, ToolEntry, SessionPlan, TaskSource, LastActivity } from './types.js';
 
 export interface ParsedTranscript {
   sessionId?: string;
@@ -16,6 +16,7 @@ export interface ParsedTranscript {
   tools: ToolEntry[];
   activeTools: ToolEntry[];
   agents: AgentEntry[];
+  backgroundJobs: BackgroundJob[];
   todos: TodoItem[];
   plan?: SessionPlan;
   taskSource?: TaskSource;
@@ -621,6 +622,7 @@ function createEmptyTranscript(): ParsedTranscript {
     tools: [],
     activeTools: [],
     agents: [],
+    backgroundJobs: [],
     todos: [],
     pendingTaskCreates: [],
     skills: [],
@@ -633,6 +635,250 @@ function createEmptyTranscript(): ParsedTranscript {
   };
 }
 
+const BG_SHELL_ID = /Command running in background with ID:\s*([A-Za-z0-9_-]+)/;
+const BG_OUTPUT = /Output is being written to:\s*(.+?\.output)/;
+const BG_EXIT = /exit code (-?\d+)/i;
+const BG_NOTIFY_ID = /<task-id>([^<]+)<\/task-id>/g;
+
+function clipBackgroundLabel(value: string, max = 96): string {
+  const flat = value.replace(/\s+/g, ' ').trim();
+  if (!flat) return '';
+  return flat.length <= max ? flat : flat.slice(0, max - 3) + '...';
+}
+
+function decodeXmlText(value: string): string {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function mapNotificationStatus(raw: string): BackgroundJobStatus | undefined {
+  switch (raw.trim().toLowerCase()) {
+    case 'running':
+    case 'pending':
+    case 'in_progress':
+      return 'running';
+    case 'completed':
+    case 'success':
+    case 'succeeded':
+      return 'completed';
+    case 'failed':
+    case 'error':
+      return 'error';
+    case 'killed':
+    case 'stopped':
+    case 'cancelled':
+    case 'canceled':
+      return 'killed';
+    default:
+      return undefined;
+  }
+}
+
+function ensureBackgroundJob(
+  jobs: Map<string, BackgroundJob>,
+  id: string,
+  time: Date,
+  kind: BackgroundJobKind,
+): BackgroundJob {
+  const existing = jobs.get(id);
+  if (existing) return existing;
+  const created: BackgroundJob = {
+    id,
+    kind,
+    label: id,
+    status: 'running',
+    startTime: time,
+  };
+  jobs.set(id, created);
+  return created;
+}
+
+function setBackgroundStatus(
+  job: BackgroundJob,
+  status: BackgroundJobStatus,
+  time: Date,
+  summary?: string,
+): void {
+  if (status === 'running' && job.status !== 'running') return;
+  job.status = status;
+  if (status !== 'running') job.endTime = time;
+  if (!summary) return;
+  const decoded = decodeXmlText(summary);
+  const clipped = clipBackgroundLabel(decoded, 140);
+  if (clipped) job.summary = clipped;
+  const exit = decoded.match(BG_EXIT);
+  if (exit) job.exitCode = Number(exit[1]);
+}
+
+function noteBackgroundToolResult(
+  jobs: Map<string, BackgroundJob>,
+  name: string,
+  input: any,
+  result: any,
+  text: string,
+  time: Date,
+  toolUseId?: string,
+): void {
+  const res = result && typeof result === 'object' ? result : {};
+  const shellId =
+    (typeof res.backgroundTaskId === 'string' && res.backgroundTaskId) ||
+    text.match(BG_SHELL_ID)?.[1] ||
+    '';
+  if (shellId) {
+    const job = ensureBackgroundJob(jobs, shellId, time, 'shell');
+    if (toolUseId && !job.toolUseId) job.toolUseId = toolUseId;
+    if (job.status === 'running') {
+      job.kind = 'shell';
+      const command =
+        (typeof input?.command === 'string' && input.command) ||
+        (typeof res.command === 'string' && res.command) ||
+        '';
+      const label = clipBackgroundLabel(command);
+      if (label) job.label = label;
+      const output = text.match(BG_OUTPUT)?.[1];
+      if (output) job.outputFile = output;
+    }
+  }
+
+  const agentId = typeof res.agentId === 'string' ? res.agentId : '';
+  const agentLaunched =
+    res.isAsync === true ||
+    res.status === 'async_launched' ||
+    /working in the background/i.test(text);
+  if (agentId && agentLaunched) {
+    const job = ensureBackgroundJob(jobs, agentId, time, 'agent');
+    if (toolUseId && !job.toolUseId) job.toolUseId = toolUseId;
+    if (job.status === 'running') {
+      job.kind = 'agent';
+      const desc =
+        (typeof res.description === 'string' && res.description) ||
+        (typeof input?.description === 'string' && input.description) ||
+        '';
+      const label = clipBackgroundLabel(desc);
+      if (label) job.label = label;
+    }
+  }
+
+  const stoppedId = typeof res.task_id === 'string' ? res.task_id : '';
+  const stopped = name === 'TaskStop' || /successfully stopped task/i.test(text);
+  if (stoppedId && stopped) {
+    const kind: BackgroundJobKind =
+      res.task_type === 'local_bash' ? 'shell' : jobs.get(stoppedId)?.kind || 'other';
+    const job = ensureBackgroundJob(jobs, stoppedId, time, kind);
+    if (toolUseId && !job.toolUseId) job.toolUseId = toolUseId;
+    const command = typeof res.command === 'string' ? res.command : '';
+    const label = clipBackgroundLabel(command);
+    if (label) job.label = label;
+    setBackgroundStatus(job, 'killed', time);
+  }
+}
+
+function collectNotificationText(value: unknown, out: string[], depth = 0): void {
+  if (depth > 5 || out.length > 12) return;
+  if (typeof value === 'string') {
+    if (value.includes('<task-id>') && value.includes('<status>')) out.push(value);
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    for (const item of value) collectNotificationText(item, out, depth + 1);
+    return;
+  }
+  for (const child of Object.values(value as Record<string, unknown>)) {
+    collectNotificationText(child, out, depth + 1);
+  }
+}
+
+function noteBackgroundNotifications(raw: string, jobs: Map<string, BackgroundJob>, time: Date): void {
+  const idRe = new RegExp(BG_NOTIFY_ID.source, 'g');
+  let match: RegExpExecArray | null;
+  while ((match = idRe.exec(raw))) {
+    const after = raw.slice(match.index, match.index + 4000);
+    const statusRaw = after.match(/<status>([^<]+)<\/status>/)?.[1];
+    if (!statusRaw) continue;
+    const status = mapNotificationStatus(statusRaw);
+    if (!status) continue;
+    const summary = after.match(/<summary>([\s\S]*?)<\/summary>/)?.[1];
+    const job = ensureBackgroundJob(jobs, match[1], time, 'other');
+    setBackgroundStatus(job, status, time, summary);
+    const output = after.match(/<output-file>([^<]+)<\/output-file>/)?.[1];
+    if (output && !job.outputFile) job.outputFile = output;
+  }
+}
+
+function finalizeBackgroundJobs(jobs: Map<string, BackgroundJob>): BackgroundJob[] {
+  const all = Array.from(jobs.values());
+  const running = all.filter((job) => job.status === 'running');
+  const done = all.filter((job) => job.status !== 'running').slice(-12);
+  return [...running, ...done];
+}
+
+function backgroundKindFromTaskType(taskType: string): BackgroundJobKind {
+  if (taskType === 'local_bash' || taskType === 'bash') return 'shell';
+  if (taskType === 'local_agent' || taskType === 'local_workflow') return 'agent';
+  return 'other';
+}
+
+/**
+ * Claude Code `background_tasks_changed` is a full replacement list for the live process.
+ * Tasks absent from the payload are no longer running.
+ */
+export function applyBackgroundTaskSnapshot(
+  jobs: Map<string, BackgroundJob>,
+  tasks: unknown,
+  time: Date,
+): void {
+  if (!Array.isArray(tasks)) return;
+  const live = new Map<string, { kind: BackgroundJobKind; label: string }>();
+  for (const task of tasks) {
+    if (!task || typeof task !== 'object') continue;
+    const record = task as Record<string, unknown>;
+    const id = typeof record.task_id === 'string' ? record.task_id : '';
+    if (!id) continue;
+    const taskType = typeof record.task_type === 'string' ? record.task_type : '';
+    const description = typeof record.description === 'string' ? record.description : '';
+    live.set(id, {
+      kind: backgroundKindFromTaskType(taskType),
+      label: clipBackgroundLabel(description) || id,
+    });
+  }
+  for (const [id, job] of jobs) {
+    if (job.status === 'running' && !live.has(id)) setBackgroundStatus(job, 'completed', time);
+  }
+  for (const [id, item] of live) {
+    const job = ensureBackgroundJob(jobs, id, time, item.kind);
+    job.status = 'running';
+    job.endTime = undefined;
+    job.kind = item.kind;
+    if (item.label) job.label = item.label;
+  }
+}
+
+export function parseClaudeSessionRecord(raw: string): { sessionId: string; pid: number } | undefined {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+  if (!parsed || typeof parsed !== 'object') return undefined;
+  const record = parsed as Record<string, unknown>;
+  const sessionId = typeof record.sessionId === 'string' ? record.sessionId : '';
+  const pid = typeof record.pid === 'number' ? record.pid : Number.NaN;
+  if (!sessionId || !Number.isInteger(pid) || pid <= 0) return undefined;
+  return { sessionId, pid };
+}
+
+/** A dead Claude Code process has an empty background-task set. */
+export function backgroundJobsForLiveProcess(jobs: BackgroundJob[], processLive: boolean): BackgroundJob[] {
+  if (processLive) return jobs;
+  return jobs.filter((job) => job.status !== 'running');
+}
+
 async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript> {
   const fileStream = fs.createReadStream(filePath, { encoding: 'utf-8' });
   const rl = readline.createInterface({
@@ -643,6 +889,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   const toolMap = new Map<string, ToolEntry>();
   const toolInputMap = new Map<string, any>();
   const agentMap = new Map<string, AgentEntry>();
+  const backgroundJobs = new Map<string, BackgroundJob>();
   const pendingToolResults = new Map<string, { isError: boolean; endTime: Date; response: any; text: string }>();
   const activeToolIds = new Set<string>();
   const skillsSet = new Set<string>();
@@ -846,6 +1093,14 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     try {
       const entry = JSON.parse(line);
       const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
+      if (line.includes('<task-id>') && line.includes('<status>')) {
+        const chunks: string[] = [];
+        collectNotificationText(entry, chunks);
+        for (const chunk of chunks) noteBackgroundNotifications(chunk, backgroundJobs, ts);
+      }
+      if (entry.type === 'system' && entry.subtype === 'background_tasks_changed') {
+        applyBackgroundTaskSnapshot(backgroundJobs, entry.tasks, ts);
+      }
       const tsMs = !isNaN(ts.getTime()) ? ts.getTime() : null;
 
       if (tsMs !== null) {
@@ -1123,7 +1378,12 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             if (status === 'completed') {
               syncPlanFile(name, input);
               applyTaskResult(name, input, block.id, pending?.response, pending?.text || '');
-              if (pending?.text.includes('running in background')) toolEntry.background = true;
+              if (pending?.text && (pending.text.includes('running in background') || pending.text.includes('working in the background'))) {
+                toolEntry.background = true;
+              }
+              if (pending) {
+                noteBackgroundToolResult(backgroundJobs, name, input, pending.response, pending.text, pending.endTime, block.id);
+              }
             }
             if (name === 'Task' || name === 'Agent') {
               const agentEntry: AgentEntry = {
@@ -1157,15 +1417,30 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
                 syncPlanFile(existingTool.name, toolInput);
                 const text = extractBlockTextContent(block.content);
                 applyTaskResult(existingTool.name, toolInput, toolId, entry.toolUseResult, text);
-                if (text.includes('running in background')) existingTool.background = true;
+                if (text.includes('running in background') || text.includes('working in the background')) {
+                  existingTool.background = true;
+                }
+                noteBackgroundToolResult(
+                  backgroundJobs,
+                  existingTool.name,
+                  toolInput,
+                  entry.toolUseResult,
+                  text,
+                  ts,
+                  toolId,
+                );
               }
             } else {
+              const pendingText = extractBlockTextContent(block.content);
               pendingToolResults.set(toolId, {
                 isError: Boolean(block.is_error),
                 endTime: ts,
                 response: entry.toolUseResult,
-                text: extractBlockTextContent(block.content),
+                text: pendingText,
               });
+              if (!block.is_error) {
+                noteBackgroundToolResult(backgroundJobs, '', {}, entry.toolUseResult, pendingText, ts, toolId);
+              }
             }
 
             const existingAgent = agentMap.get(toolId);
@@ -1246,6 +1521,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     tools: recentTools,
     activeTools,
     agents: Array.from(agentMap.values()).slice(-10),
+    backgroundJobs: finalizeBackgroundJobs(backgroundJobs),
     todos,
     taskSource: wasCleared ? 'none' : taskSource,
     taskToolsObserved: !wasCleared && taskToolsObserved,

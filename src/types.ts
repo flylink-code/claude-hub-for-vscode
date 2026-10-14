@@ -77,6 +77,23 @@ export interface LastActivity {
   timestamp: number;
 }
 
+/** Claude Code slash `/tasks` job (background shell or async agent), not a Hub todo. */
+export type BackgroundJobKind = 'shell' | 'agent' | 'other';
+export type BackgroundJobStatus = 'running' | 'completed' | 'error' | 'killed';
+
+export interface BackgroundJob {
+  id: string;
+  kind: BackgroundJobKind;
+  label: string;
+  status: BackgroundJobStatus;
+  startTime: Date;
+  endTime?: Date;
+  outputFile?: string;
+  toolUseId?: string;
+  summary?: string;
+  exitCode?: number;
+}
+
 export interface UsageMeter {
   key: string;
   label: string;
@@ -105,6 +122,8 @@ export interface SessionInfo {
   tools: ToolEntry[];
   activeTools: ToolEntry[];
   agents: AgentEntry[];
+  /** Live slash `/tasks` jobs. Kept while the session looks idle. */
+  backgroundJobs?: BackgroundJob[];
   totalAgentsCount?: number;
   subagentsTotalTokens?: number;
   todos: TodoItem[];

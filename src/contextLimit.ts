@@ -69,11 +69,45 @@ export function formatModelDisplayName(
   if (m.includes('haiku')) return 'Haiku';
   if (m.includes('fable')) return 'Fable';
 
-  // Strip claude.<provider>. prefix (e.g. claude.sub2api.gpt-5.6-sol -> gpt-5.6-sol)
-  const multiDotMatch = /^claude\.[^.]+\.(.+)$/i.exec(model);
-  if (multiDotMatch && multiDotMatch[1]) {
-    return multiDotMatch[1];
-  }
+  const gatewayRest = gatewayModelRemainder(model);
+  if (gatewayRest) return gatewayRest;
 
   return model.replace(/^claude[.-]/i, '');
+}
+
+/**
+ * `claude.<provider>.<model>` → model.
+ * `claude.gemini-3.8-flash` is a single id whose version contains dots, not a provider prefix.
+ * Splitting that one yields a leading digit (`8-flash`), so it is left intact.
+ */
+export function gatewayModelRemainder(model: string): string | undefined {
+  const match = /^claude\.([^.]+)\.(.+)$/i.exec(model.trim());
+  if (!match) return undefined;
+  const rest = match[2];
+  if (/^\d/.test(rest)) return undefined;
+  return rest;
+}
+
+/** Composer effort chip, e.g. high → High. Empty when unset. */
+export function formatEffortLabel(effort?: string): string {
+  const level = (effort || '').trim().toLowerCase();
+  if (!level) return '';
+  if (level === 'xhigh') return 'xHigh';
+  return level.charAt(0).toUpperCase() + level.slice(1);
+}
+
+/**
+ * Display name for the model selected in Claude Code, including effort
+ * when it is not already part of the name ("gemini-3.8-flash High").
+ */
+export function formatSelectedModelName(
+  model: string,
+  customNames?: Record<string, string> | Map<string, string>,
+  effort?: string,
+): string {
+  const name = formatModelDisplayName(model, customNames);
+  const suffix = formatEffortLabel(effort);
+  if (!suffix) return name;
+  if (name.toLowerCase().includes(suffix.toLowerCase())) return name;
+  return `${name} ${suffix}`;
 }
