@@ -2026,7 +2026,10 @@ test('getWebviewContent keeps narrow layout rules scoped and consistent', () => 
   assert.ok(html.includes('class="todos-clear-text"'));
   assert.match(html, /<button[^>]+id="todos-clear-btn"[^>]+aria-label="隐藏当前待办"/);
   assert.match(html, /\.status-pill\s*\{[^}]*white-space: nowrap;[^}]*flex-shrink: 0;/);
+  assert.match(html, /\.agent-item-header\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/);
   assert.match(html, /\.agent-title-row\s*\{[^}]*min-width: 0;[^}]*flex: 1;[^}]*overflow: hidden;/);
+  assert.match(html, /\.agent-meta-branch\s*\{[^}]*max-width: 11em;/);
+  assert.ok(html.includes('agent-meta-branch'));
   assert.match(html, /\.agent-name\s*\{[^}]*min-width: 0;[^}]*flex: 1;[^}]*overflow: hidden;/);
   assert.match(html, /\.agent-badges\s*\{[^}]*min-width: 0;[^}]*max-width: 100%;[^}]*flex-wrap: wrap;[^}]*overflow: hidden;/);
   assert.match(html, /\.agent-meta-chip\s*\{[^}]*min-width: 0;[^}]*max-width: 100%;[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;/);

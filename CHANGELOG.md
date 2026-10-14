@@ -2,6 +2,16 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.16] - 2026-10-14
+
+### 中文
+
+- **协作代理拓扑：** 代理名称、状态芯片和任务说明分行显示，避免窄侧栏里 worktree 名称和说明叠在一起。
+
+### English
+
+- **Agent map:** The agent name, status chips, and task description each stay on their own line, so a long worktree id no longer covers the description in a narrow sidebar.
+
 ## [0.2.15] - 2026-10-14
 
 ### 中文
@@ -68,6 +78,7 @@
 - Replaced the square `🔄` emoji with a lightweight circular spinner, and fixed the spinner animation being unintentionally disabled by `prefers-reduced-motion` in Cursor Webviews.
 - Added regression coverage for narrow layouts, todo lifecycles, plan-progress replay, and spinner animation.
 
+[0.2.16]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.16
 [0.2.15]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.15
 [0.2.14]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.14
 [0.2.12]: https://github.com/flylink-code/claude-hub-for-vscode/releases/tag/v0.2.12

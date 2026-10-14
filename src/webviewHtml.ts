@@ -1202,6 +1202,33 @@ export function getWebviewContent(): string {
     }
 
     /* Agent Map & Subagents Tree */
+    .agents-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      font-weight: 500;
+      font-size: 11px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+
+    .agents-heading-title {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .agents-heading-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .agents-tree {
       display: flex;
       flex-direction: column;
@@ -1217,6 +1244,9 @@ export function getWebviewContent(): string {
       transition: all 0.15s ease;
       cursor: pointer;
       position: relative;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     .agent-item:hover {
@@ -1255,9 +1285,10 @@ export function getWebviewContent(): string {
 
     .agent-item-header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+      min-width: 0;
     }
 
     .agent-title-row {
@@ -1342,13 +1373,21 @@ export function getWebviewContent(): string {
       white-space: nowrap;
     }
 
+    .agent-meta-branch {
+      max-width: 11em;
+    }
+
     .agent-desc {
+      display: block;
+      width: 100%;
+      min-width: 0;
       font-size: 10px;
       color: var(--text-muted);
       margin-top: 3px;
-      line-height: 1.3;
+      line-height: 1.35;
       white-space: normal;
-      word-break: break-all;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .agent-detail-body {
@@ -1538,10 +1577,10 @@ export function getWebviewContent(): string {
 
       <!-- Agent Map: 协作代理拓扑 (有代理时自动展示) -->
       <div id="agents-container" style="margin-top: 8px; display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 11px; margin-bottom: 5px; cursor: pointer;" onclick="toggleAgentsList()">
-          <div style="display: flex; align-items: center; gap: 4px;">
+        <div class="agents-heading" onclick="toggleAgentsList()">
+          <div class="agents-heading-title">
             <span id="agents-caret" class="caret" style="display: inline-block; font-size: 9px; transition: transform 0.2s;">▼</span>
-            <span>🤖 协作代理拓扑<span class="header-sub"> (Agent Map)</span></span>
+            <span class="agents-heading-label">🤖 协作代理拓扑<span class="header-sub"> (Agent Map)</span></span>
           </div>
           <span id="agents-counter" class="status-pill">0</span>
         </div>
@@ -2903,7 +2942,9 @@ export function getWebviewContent(): string {
                 badges.push('<span class="agent-meta-chip">🛠️ ' + a.toolsCount + '</span>');
               }
               if (a.worktreeBranch) {
-                badges.push('<span class="agent-meta-chip" title="Worktree: ' + escapeAttribute(a.worktreeBranch) + '">🌿 ' + escapeHtml(a.worktreeBranch) + '</span>');
+                const branch = String(a.worktreeBranch);
+                const shown = branch.length > 18 ? branch.slice(0, 17) + '…' : branch;
+                badges.push('<span class="agent-meta-chip agent-meta-branch" title="Worktree: ' + escapeAttribute(branch) + '">🌿 ' + escapeHtml(shown) + '</span>');
               }
 
               const descHtml = a.description ? '<div class="agent-desc" title="' + escapeAttribute(a.description) + '">' + escapeHtml(a.description) + '</div>' : '';
