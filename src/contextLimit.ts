@@ -1,8 +1,11 @@
 const CONTEXT_1M = 1_000_000;
 const CONTEXT_200K = 200_000;
+/** Gemini 3.8 Flash and Gemini 4 Argon: 1,048,576. */
+const CONTEXT_GEMINI = 1_048_576;
+/** GPT-5.6 Sol/Terra/Luna and GPT-6: 1,050,000. */
+const CONTEXT_GPT = 1_050_000;
 
 const CONTEXT_200K_MODELS: readonly string[] = [
-  'haiku',
   'claude-3-5-sonnet',
   'claude-3-5-haiku',
   'claude-3-opus',
@@ -13,27 +16,55 @@ const CONTEXT_200K_MODELS: readonly string[] = [
   'claude-opus-4-5',
   'claude-sonnet-4-0',
   'claude-sonnet-4-5',
+  'haiku-4-5',
+  'haiku-4.5',
 ];
 
+function lookupModelLimit(model: string, modelContextLimits: Record<string, number>): number | undefined {
+  if (typeof modelContextLimits[model] === 'number') return modelContextLimits[model];
+  const id = model.toLowerCase();
+  for (const [key, value] of Object.entries(modelContextLimits)) {
+    if (key.toLowerCase() === id && typeof value === 'number') return value;
+  }
+  return undefined;
+}
+
+/**
+ * Published context window for the usage percentage, matched on the model name.
+ * Gemini 4 Argon and Gemini 3.8 Flash are both 1,048,576.
+ * GPT-5.6 and GPT-6 are 1,050,000. DeepSeek V4 and current Claude models are 1M.
+ * Haiku 4.5 and older Claude models stay at 200k.
+ * An explicit `[1m]` / `[200k]` marker on the id wins over the family default.
+ */
 export function getContextLimitForModel(
   model: string,
   userLimit = 200000,
   modelContextLimits: Record<string, number> = {},
 ): number {
-  if (model in modelContextLimits) {
-    return modelContextLimits[model];
-  }
+  const override = lookupModelLimit(model, modelContextLimits);
+  if (override !== undefined) return override;
 
   const id = model.toLowerCase().trim();
-  if (!id || (!id.startsWith('claude') && id !== 'auto')) {
-    return userLimit;
-  }
+  if (!id || id === 'auto' || id === 'claude.auto') return userLimit;
 
-  if (CONTEXT_200K_MODELS.some((m) => id.includes(m))) {
-    return CONTEXT_200K;
-  }
+  const published = publishedContextWindow(id);
+  if (published !== undefined) return published;
+
+  if (!id.startsWith('claude')) return userLimit;
+
+  if (CONTEXT_200K_MODELS.some((m) => id.includes(m))) return CONTEXT_200K;
 
   return CONTEXT_1M;
+}
+
+function publishedContextWindow(id: string): number | undefined {
+  if (/(^|[^a-z0-9])1m([^a-z0-9]|$)/.test(id)) return CONTEXT_1M;
+  if (/(^|[^a-z0-9])200k([^a-z0-9]|$)/.test(id)) return CONTEXT_200K;
+  if (id.includes('gemini-4') || id.includes('gemini-3')) return CONTEXT_GEMINI;
+  if (/gpt-(?:5\.6|5-6|6)/.test(id)) return CONTEXT_GPT;
+  if (id.includes('deepseek-v4') || id.includes('deepseek-flash')) return CONTEXT_1M;
+  if (id.includes('haiku-4.5') || id.includes('haiku-4-5')) return CONTEXT_200K;
+  return undefined;
 }
 
 export function formatModelDisplayName(
@@ -108,6 +139,6 @@ export function formatSelectedModelName(
   const name = formatModelDisplayName(model, customNames);
   const suffix = formatEffortLabel(effort);
   if (!suffix) return name;
-  if (name.toLowerCase().includes(suffix.toLowerCase())) return name;
+  if (/(?:^|[\s._-])(xhigh|max|high|medium|low)$/i.test(name)) return name;
   return `${name} ${suffix}`;
 }

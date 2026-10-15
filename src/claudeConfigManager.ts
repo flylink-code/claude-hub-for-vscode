@@ -263,9 +263,18 @@ export class ClaudeConfigManager {
     return fromEnv || undefined;
   }
 
-  /** Same selection as `getConfiguredModel`. The last reply does not delay it. */
-  public getActiveModel(_lastResponseModel?: string): string | undefined {
-    return this.getConfiguredModel();
+  /**
+   * Model this session is actually using.
+   * A concrete transcript model wins over the global picker.
+   * The picker wins only when the transcript is still on the relay default
+   * (`ANTHROPIC_MODEL`) or has no model yet.
+   */
+  public getActiveModel(sessionModel?: string): string | undefined {
+    const { fromEnv, fromSettings } = this.readModelSources();
+    const session = (sessionModel || '').trim();
+    if (isConcretePickerModel(session) && session !== fromEnv) return session;
+    if (isConcretePickerModel(fromSettings)) return fromSettings;
+    return session || fromEnv || undefined;
   }
 
   private readModelSources(): { fromEnv: string; fromSettings: string } {

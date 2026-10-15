@@ -69,6 +69,18 @@ test('getContextLimitForModel returns correct limits', () => {
   assert.strictEqual(getContextLimitForModel('claude-3-5-haiku-20241022'), 200000);
   assert.strictEqual(getContextLimitForModel('claude-opus-4-6'), 1000000);
   assert.strictEqual(getContextLimitForModel('custom-model', 150000), 150000);
+  assert.strictEqual(getContextLimitForModel('claude.gemini-3.8-flash'), 1048576);
+  assert.strictEqual(getContextLimitForModel('claude.gemini-4-argon-medium'), 1048576);
+  assert.strictEqual(getContextLimitForModel('claude.gpt-5.6-sol'), 1050000);
+  assert.strictEqual(getContextLimitForModel('claude.gpt-6-luna'), 1050000);
+  assert.strictEqual(getContextLimitForModel('claude.deepseek-v4-flash'), 1000000);
+  assert.strictEqual(getContextLimitForModel('claude-haiku-4.5'), 200000);
+  assert.strictEqual(getContextLimitForModel('claude-haiku-5-5'), 1000000);
+  assert.strictEqual(getContextLimitForModel('claude-opus-5-5'), 1000000);
+  assert.strictEqual(
+    getContextLimitForModel('claude.gemini-4-argon-medium', 200000, { 'claude.gemini-4-argon-medium': 128000 }),
+    128000,
+  );
 });
 
 test('formatModelDisplayName maps models cleanly', () => {
@@ -89,6 +101,7 @@ test('formatModelDisplayName maps models cleanly', () => {
   assert.strictEqual(formatSelectedModelName('claude.gemini-3.8-flash', gateway, 'high'), 'gemini-3.8-flash High');
   assert.strictEqual(formatSelectedModelName('claude.gpt-6-luna', gateway), 'gpt-6-luna');
   assert.strictEqual(formatSelectedModelName('claude.gemini-3.8-flash-high', gateway, 'high'), 'gemini-3.8-flash-high');
+  assert.strictEqual(formatSelectedModelName('claude.gemini-4-argon-medium', gateway, 'high'), 'gemini-4-argon-medium');
 });
 
 test('isPathInWorkspace matches case-insensitively on Windows', () => {
@@ -274,7 +287,8 @@ test('config directory provider is shared by Claude configuration and features',
       'utf8',
     );
     assert.strictEqual(manager.getConfiguredModel(), 'claude-sonnet-5-5-medium');
-    assert.strictEqual(manager.getActiveModel('claude.gpt-6-luna'), 'claude-sonnet-5-5-medium');
+    assert.strictEqual(manager.getActiveModel('claude.gpt-6-luna'), 'claude.gpt-6-luna');
+    assert.strictEqual(manager.getActiveModel(''), 'claude-sonnet-5-5-medium');
     fs.writeFileSync(
       path.join(tempDir, 'settings.json'),
       JSON.stringify({
@@ -297,6 +311,7 @@ test('config directory provider is shared by Claude configuration and features',
       'utf8',
     );
     assert.strictEqual(manager.getActiveModel('claude.gemini-3.8-flash'), 'claude.gpt-5.6-sol');
+    assert.strictEqual(manager.getActiveModel('claude.gemini-4-argon-medium'), 'claude.gemini-4-argon-medium');
     assert.strictEqual(manager.getConfiguredModel(), 'claude.gpt-5.6-sol');
     assert.strictEqual(manager.getEffortLevel(), 'high');
     assert.strictEqual(manager.getGatewayModels()[0].id, 'custom-model');

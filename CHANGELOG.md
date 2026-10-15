@@ -2,6 +2,18 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.18] - 2026-10-15
+
+### 中文
+
+- **上下文用量：** 按模型名称使用公开的上下文容量。`gemini-3.8` 与 `gemini-4-argon` 为 1,048,576，`gpt-5.6` / `gpt-6` 为 1,050,000，`deepseek-v4` 与现行 Claude 为 1M，Haiku 4.5 及更早模型为 200K。
+- **当前模型：** 进行中的会话显示它实际在用的模型。全局选择只在会话还停在中转站默认模型、或还没有自己的模型时生效。
+
+### English
+
+- **Context usage:** The percentage uses the published context window for the model name. `gemini-3.8` and `gemini-4-argon` are 1,048,576, `gpt-5.6` / `gpt-6` are 1,050,000, `deepseek-v4` and current Claude models are 1M, and Haiku 4.5 and older models are 200K.
+- **Selected model:** An in-progress session shows the model it is actually running. The global picker applies only while the session is still on the relay default, or has no model of its own.
+
 ## [0.2.17] - 2026-10-14
 
 ### 中文

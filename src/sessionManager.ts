@@ -738,10 +738,12 @@ export class SessionManager implements vscode.Disposable {
           }
           const isCurrentWorkspace = isPathInWorkspace(projectPath, workspaceFolders);
 
-          // Current workspace follows the picker (`settings.model`) as soon as it is saved.
-          // `ANTHROPIC_MODEL` is only the relay default. Other projects keep their transcript model.
-          const effectiveModel =
-            (isCurrentWorkspace && configuredModel) ? configuredModel : (parsed.model || configuredModel || '');
+          // Current workspace uses the model this session actually ran.
+          // The global picker replaces only the relay default, before this session has its own model.
+          const sessionModel = parsed.lastResponseModel || parsed.model || '';
+          const effectiveModel = isCurrentWorkspace
+            ? (this.configManager?.getActiveModel(sessionModel) || sessionModel || configuredModel || '')
+            : (parsed.model || configuredModel || '');
           const lastResponseModel =
             parsed.lastResponseModel || (parsed.model && parsed.model !== effectiveModel ? parsed.model : undefined);
 
