@@ -1,0 +1,84 @@
+{
+  "roots": ["src", "test", "scripts", "doc"],
+  "extensions": [
+    ".ts",
+    ".tsx",
+    ".mts",
+    ".cts",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".ps1",
+    ".bat",
+    ".cmd",
+    ".sh"
+  ],
+  "excludeSegments": [
+    ".claude",
+    ".git",
+    ".github",
+    ".vscode",
+    ".vscode-test",
+    "codemap",
+    "dist",
+    "example",
+    "images",
+    "node_modules",
+    "out",
+    "out-test",
+    "resources"
+  ],
+  "excludePatterns": [],
+  "outputDir": "doc/codemap",
+  "indexFile": "doc/CODE_MAP_INDEX.md",
+  "cacheFile": "doc/.codemap-cache.json",
+  "pageRows": 100,
+  "hubCount": 40,
+  "defaultModule": "tooling",
+  "modules": {
+    "src/extension.ts": "core-entry",
+    "src/commands.ts": "core-entry",
+    "src/types.ts": "core-entry",
+    "src/i18n.ts": "core-entry",
+
+    "src/dashboardView.ts": "ui-dashboard",
+    "src/webviewHtml.ts": "ui-dashboard",
+    "src/statusBar.ts": "ui-dashboard",
+    "src/statusBarFormatter.ts": "ui-dashboard",
+    "src/terminalManager.ts": "ui-dashboard",
+
+    "src/sessionManager.ts": "session-parser",
+    "src/transcriptParser.ts": "session-parser",
+    "src/transcriptSearch.ts": "session-parser",
+    "src/timelineEvents.ts": "session-parser",
+    "src/forkCompare.ts": "session-parser",
+
+    "src/sessionPins.ts": "session-ops",
+    "src/sessionTags.ts": "session-ops",
+    "src/sessionAlerts.ts": "session-ops",
+    "src/sessionExport.ts": "session-ops",
+
+    "src/nativeTasks.ts": "todo-tasks",
+    "src/taskIntegration.ts": "todo-tasks",
+    "src/todoDisplay.ts": "todo-tasks",
+    "src/projectTodoPolicy.ts": "todo-tasks",
+
+    "src/claudeConfigManager.ts": "config-features",
+    "src/claudeFeatures.ts": "config-features",
+    "src/configDir.ts": "config-features",
+
+    "src/contextLimit.ts": "usage-pricing",
+    "src/modelPricing.ts": "usage-pricing",
+    "src/workspaceCost.ts": "usage-pricing",
+    "src/subscriptionUsage.ts": "usage-pricing",
+
+    "src/*/": "src-*",
+    "src/": "core-entry",
+    "test/*/": "tests-*",
+    "test/": "tests",
+    "scripts/*/": "scripts-*",
+    "scripts/": "scripts",
+    "doc/": "tooling"
+  }
+}

@@ -7,7 +7,9 @@ out/sidebarProvider.js
 test/**
 src/**
 scripts/**
+doc/**
 example/**
+AGENTS.md
 .gitignore
 .vscodeignore
 tsconfig.json

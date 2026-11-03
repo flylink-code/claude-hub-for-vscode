@@ -445,6 +445,8 @@
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.74.0",
     "@vscode/vsce": "^4.0.0",
-    "typescript": "^5.3.3"
+    "tree-sitter-wasms": "^0.1.13",
+    "typescript": "^5.3.3",
+    "web-tree-sitter": "^0.25.10"
   }
 }
