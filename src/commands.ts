@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ClaudeConfigManager } from './claudeConfigManager.js';
+import { ClaudeFeaturesManager } from './claudeFeatures.js';
 import { ClaudeHubDashboardProvider } from './dashboardView.js';
 import { formatModelDisplayName } from './contextLimit.js';
 import { t } from './i18n.js';
@@ -16,17 +17,28 @@ import { extractTimelineEvents, formatTimelineMarkdown } from './timelineEvents.
 import { getSessionTags, setSessionTags, SUGGESTED_TAGS } from './sessionTags.js';
 import { togglePin } from './sessionPins.js';
 
-const SLASH_COMMANDS: Array<{ label: string; description: string; command: string }> = [
+export const SLASH_COMMANDS: Array<{ label: string; description: string; command: string }> = [
   { label: '/compact', description: 'Compact conversation context', command: '/compact' },
   { label: '/clear', description: 'Clear conversation', command: '/clear' },
+  { label: '/fast', description: 'Toggle fast output mode (Opus)', command: '/fast' },
+  { label: '/effort', description: 'Set reasoning effort level (low/medium/high/xhigh/max)', command: '/effort' },
+  { label: '/loop', description: 'Run a recurring prompt or slash command on an interval', command: '/loop' },
+  { label: '/workflows', description: 'Watch live multi-agent workflow progress', command: '/workflows' },
+  { label: '/agents', description: 'Manage custom and background agents', command: '/agents' },
+  { label: '/plugin', description: 'Manage Claude Code plugins', command: '/plugin' },
+  { label: '/memory', description: 'Open memory / CLAUDE.md / Auto Memory', command: '/memory' },
+  { label: '/tasks', description: 'Background tasks / jobs', command: '/tasks' },
   { label: '/cost', description: 'Show session cost', command: '/cost' },
   { label: '/model', description: 'Change model', command: '/model' },
-  { label: '/memory', description: 'Open memory / CLAUDE.md', command: '/memory' },
-  { label: '/tasks', description: 'Background tasks / jobs', command: '/tasks' },
-  { label: '/help', description: 'Show Claude Code help', command: '/help' },
+  { label: '/code-review', description: 'Review current diff or PR for bugs', command: '/code-review' },
+  { label: '/simplify', description: 'Review and simplify changed code', command: '/simplify' },
+  { label: '/security-review', description: 'Complete a security review of pending changes', command: '/security-review' },
+  { label: '/doctor', description: 'Diagnose and check Claude Code installation health', command: '/doctor' },
+  { label: '/init', description: 'Initialize a new CLAUDE.md codebase guide', command: '/init' },
   { label: '/status', description: 'Show status', command: '/status' },
   { label: '/diff', description: 'Show diff', command: '/diff' },
   { label: '/config', description: 'Open config', command: '/config' },
+  { label: '/help', description: 'Show Claude Code help', command: '/help' },
 ];
 
 async function pickSession(
@@ -149,12 +161,24 @@ export function registerCommands(
 
     vscode.commands.registerCommand('claudeHub.slashCommand', async () => {
       const session = sessionManager.focusedSession;
+      const featuresMgr = new ClaudeFeaturesManager(() => sessionManager.claudeConfigDir);
+      const installedSkills = featuresMgr.getSkills();
+      const seenCommands = new Set(SLASH_COMMANDS.map((c) => c.command.toLowerCase()));
+      const skillItems = installedSkills
+        .filter((sk) => !seenCommands.has(`/${sk.name.toLowerCase()}`))
+        .map((sk) => ({
+          label: `⚡ /${sk.name}`,
+          description: `[${sk.scope}] ${sk.description}`,
+          command: `/${sk.name}`,
+        }));
+
       const items = [
         ...SLASH_COMMANDS.map((c) => ({
           label: c.label,
           description: c.description,
           command: c.command,
         })),
+        ...skillItems,
         { label: t('cmd.slashCustom'), description: '', command: '__custom__' },
       ];
       const picked = await vscode.window.showQuickPick(items, {
@@ -169,8 +193,32 @@ export function registerCommands(
         });
         if (!custom?.trim()) return;
         command = custom.trim();
+      } else if (command === '/loop') {
+        const args = await vscode.window.showInputBox({
+          prompt: t('cmd.loopArgsPrompt'),
+          placeHolder: '5m /babysit-prs  (leave empty for interactive /loop)',
+        });
+        if (args === undefined) return;
+        if (args.trim()) {
+          command = `/loop ${args.trim()}`;
+        }
       }
       TerminalManager.sendSlashCommand(command, session?.projectPath);
+    }),
+
+    vscode.commands.registerCommand('claudeHub.startWorktreeSession', async (worktreeNameArg?: string) => {
+      const session = sessionManager.focusedSession;
+      let wtName = typeof worktreeNameArg === 'string' ? worktreeNameArg : undefined;
+      if (wtName === undefined) {
+        const input = await vscode.window.showInputBox({
+          prompt: t('cmd.worktreeNamePrompt'),
+          placeHolder: t('cmd.worktreeNamePlaceholder'),
+        });
+        if (input === undefined) return;
+        wtName = input.trim();
+      }
+      const cwd = session?.projectPath || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      TerminalManager.startWorktreeSession(wtName, cwd);
     }),
 
     vscode.commands.registerCommand('claudeHub.renameSession', async (targetSessionId?: string) => {

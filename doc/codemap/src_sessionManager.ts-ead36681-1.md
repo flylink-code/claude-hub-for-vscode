@@ -4,7 +4,7 @@
 
 [Module](session-parser.md) · [Source](../../src/sessionManager.ts) · page 1/3
 
-Source SHA-256: 99040983fae2a3d2f55200c18a0c5646c64d030b4ef98089dcea856d12d28526
+Source SHA-256: 575831e41586a9b084d7d4089699e0eb3aad306ef327975fe2ef52041e675627
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |

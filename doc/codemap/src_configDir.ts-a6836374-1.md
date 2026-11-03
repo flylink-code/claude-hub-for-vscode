@@ -4,26 +4,40 @@
 
 [Module](config-features.md) · [Source](../../src/configDir.ts) · page 1/1
 
-Source SHA-256: 5d3269c9c27a6063cd59144f4421076cc72aa0945730e1aaa4d3db1595eda7b6
+Source SHA-256: 6d6423f11fb3f68b82a17015cc628dad510211310fb771c70939c1935a1d3f8e
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| ClaudeConfigDirProvider | TypeAliasDeclaration |  | [4](../../src/configDir.ts#L4) |
-| resolveClaudeConfigDir | FunctionDeclaration |  | [6](../../src/configDir.ts#L6) |
-| setting | VariableDeclaration | resolveClaudeConfigDir | [7](../../src/configDir.ts#L7) |
-| envDir | VariableDeclaration | resolveClaudeConfigDir | [11](../../src/configDir.ts#L11) |
-| expandHome | FunctionDeclaration |  | [18](../../src/configDir.ts#L18) |
-| homedir | VariableDeclaration | expandHome | [19](../../src/configDir.ts#L19) |
-| getClaudeProjectsDir | FunctionDeclaration |  | [29](../../src/configDir.ts#L29) |
-| decodeProjectPath | FunctionDeclaration |  | [33](../../src/configDir.ts#L33) |
-| name | PropertySignature | decodeProjectPath | [33](../../src/configDir.ts#L33) |
-| fullPath | PropertySignature | decodeProjectPath | [33](../../src/configDir.ts#L33) |
-| decoded | VariableDeclaration | decodeProjectPath | [34](../../src/configDir.ts#L34) |
-| parts | VariableDeclaration | decodeProjectPath | [39](../../src/configDir.ts#L39) |
-| fullPath | VariableDeclaration | decodeProjectPath | [40](../../src/configDir.ts#L40) |
-| projectName | VariableDeclaration | decodeProjectPath | [41](../../src/configDir.ts#L41) |
-| startIndex | VariableDeclaration | decodeProjectPath | [47](../../src/configDir.ts#L47) |
-| normalizePath | FunctionDeclaration |  | [61](../../src/configDir.ts#L61) |
-| isPathInWorkspace | FunctionDeclaration |  | [65](../../src/configDir.ts#L65) |
-| normTarget | VariableDeclaration | isPathInWorkspace | [69](../../src/configDir.ts#L69) |
-| normWs | VariableDeclaration | isPathInWorkspace | [71](../../src/configDir.ts#L71) |
+| ClaudeConfigDirProvider | TypeAliasDeclaration |  | [5](../../src/configDir.ts#L5) |
+| resolveClaudeConfigDir | FunctionDeclaration |  | [7](../../src/configDir.ts#L7) |
+| setting | VariableDeclaration | resolveClaudeConfigDir | [8](../../src/configDir.ts#L8) |
+| envDir | VariableDeclaration | resolveClaudeConfigDir | [12](../../src/configDir.ts#L12) |
+| expandHome | FunctionDeclaration |  | [19](../../src/configDir.ts#L19) |
+| homedir | VariableDeclaration | expandHome | [20](../../src/configDir.ts#L20) |
+| getClaudeProjectsDir | FunctionDeclaration |  | [30](../../src/configDir.ts#L30) |
+| decodeProjectPath | FunctionDeclaration |  | [34](../../src/configDir.ts#L34) |
+| name | PropertySignature | decodeProjectPath | [34](../../src/configDir.ts#L34) |
+| fullPath | PropertySignature | decodeProjectPath | [34](../../src/configDir.ts#L34) |
+| decoded | VariableDeclaration | decodeProjectPath | [35](../../src/configDir.ts#L35) |
+| parts | VariableDeclaration | decodeProjectPath | [40](../../src/configDir.ts#L40) |
+| fullPath | VariableDeclaration | decodeProjectPath | [41](../../src/configDir.ts#L41) |
+| projectName | VariableDeclaration | decodeProjectPath | [42](../../src/configDir.ts#L42) |
+| startIndex | VariableDeclaration | decodeProjectPath | [48](../../src/configDir.ts#L48) |
+| normalizePath | FunctionDeclaration |  | [62](../../src/configDir.ts#L62) |
+| isPathInWorkspace | FunctionDeclaration |  | [66](../../src/configDir.ts#L66) |
+| normTarget | VariableDeclaration | isPathInWorkspace | [70](../../src/configDir.ts#L70) |
+| normWs | VariableDeclaration | isPathInWorkspace | [72](../../src/configDir.ts#L72) |
+| encodeProjectPath | FunctionDeclaration |  | [77](../../src/configDir.ts#L77) |
+| trimmed | VariableDeclaration | encodeProjectPath | [78](../../src/configDir.ts#L78) |
+| winMatch | VariableDeclaration | encodeProjectPath | [80](../../src/configDir.ts#L80) |
+| drive | VariableDeclaration | encodeProjectPath | [82](../../src/configDir.ts#L82) |
+| rest | VariableDeclaration | encodeProjectPath | [83](../../src/configDir.ts#L83) |
+| unixRest | VariableDeclaration | encodeProjectPath | [86](../../src/configDir.ts#L86) |
+| resolveProjectMemoryDir | FunctionDeclaration |  | [90](../../src/configDir.ts#L90) |
+| projectsDir | VariableDeclaration | resolveProjectMemoryDir | [95](../../src/configDir.ts#L95) |
+| sessionDir | VariableDeclaration | resolveProjectMemoryDir | [97](../../src/configDir.ts#L97) |
+| encoded | VariableDeclaration | resolveProjectMemoryDir | [104](../../src/configDir.ts#L104) |
+| dirs | VariableDeclaration | resolveProjectMemoryDir | [107](../../src/configDir.ts#L107) |
+| exact | VariableDeclaration | resolveProjectMemoryDir | [110](../../src/configDir.ts#L110) |
+| normTarget | VariableDeclaration | resolveProjectMemoryDir | [114](../../src/configDir.ts#L114) |
+| matched | VariableDeclaration | resolveProjectMemoryDir | [115](../../src/configDir.ts#L115) |

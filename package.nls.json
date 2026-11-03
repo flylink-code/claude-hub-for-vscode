@@ -77,5 +77,6 @@
   "config.modelAliases.desc": "Optional model alias map (alias -> canonical priced model id) for cost estimates.",
   "config.sessionListPageSize.desc": "Sessions shown per page in the Hub list (light virtualization).",
   "config.todoTools.enabled.desc": "Opt-in: write CLAUDE_CODE_ENABLE_TODO_TOOLS=1 and CLAUDE_CODE_ENABLE_TASKS=1 into the workspace .claude/settings.local.json so new Claude Code sessions get TaskCreate/TaskUpdate/TaskList, including on unrecognized models (env only, no Hub hooks).",
-  "command.toggleTodoTools": "Toggle official Task tools (TaskCreate / TaskUpdate / TaskList)"
+  "command.toggleTodoTools": "Toggle official Task tools (TaskCreate / TaskUpdate / TaskList)",
+  "command.startWorktreeSession": "Start Claude Session in Git Worktree (claude -w)"
 }

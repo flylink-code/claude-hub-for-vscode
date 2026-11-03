@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
-import { AgentEntry, BackgroundJob, BackgroundJobKind, BackgroundJobStatus, TodoItem, TokenUsage, ToolEntry, SessionPlan, TaskSource, LastActivity } from './types.js';
+import { AgentEntry, BackgroundJob, BackgroundJobKind, BackgroundJobStatus, TodoItem, TokenUsage, ToolEntry, SessionPlan, SessionLoopState, TaskSource, LastActivity } from './types.js';
 
 export interface ParsedTranscript {
   sessionId?: string;
@@ -17,6 +17,7 @@ export interface ParsedTranscript {
   activeTools: ToolEntry[];
   agents: AgentEntry[];
   backgroundJobs: BackgroundJob[];
+  loopState?: SessionLoopState;
   todos: TodoItem[];
   plan?: SessionPlan;
   taskSource?: TaskSource;
@@ -164,7 +165,35 @@ function normalizeTarget(toolName: string, input?: Record<string, unknown>): str
     case 'webfetch':
       return (input.url as string) ?? undefined;
     case 'Task':
+    case 'Agent':
       return (input.description as string) ?? (input.subagent_type as string) ?? undefined;
+    case 'ScheduleWakeup':
+      if (input.stop === true) return 'stop';
+      return `${input.delaySeconds ?? 60}s${input.reason ? ' · ' + String(input.reason) : ''}`;
+    case 'CronCreate':
+      return (input.cron as string) ?? (input.schedule as string) ?? (input.prompt as string) ?? undefined;
+    case 'CronDelete':
+      return (input.id as string) ?? (input.jobId as string) ?? undefined;
+    case 'Workflow':
+      return extractWorkflowMetaLabel(input) ?? undefined;
+  }
+  return undefined;
+}
+
+function extractWorkflowMetaLabel(input?: Record<string, unknown>): string | undefined {
+  if (!input) return undefined;
+  if (typeof input.name === 'string' && input.name.trim()) {
+    return input.name.trim();
+  }
+  if (typeof input.script === 'string') {
+    const metaBlock = /export\s+const\s+meta\s*=\s*\{([\s\S]*?)\}/.exec(input.script)?.[1] || input.script;
+    const nameMatch = /name\s*:\s*['"]([^'"]+)['"]/.exec(metaBlock)?.[1];
+    const descMatch = /description\s*:\s*['"]([^'"]+)['"]/.exec(metaBlock)?.[1];
+    if (nameMatch && descMatch) return `${nameMatch}: ${descMatch}`;
+    if (nameMatch || descMatch) return nameMatch || descMatch;
+  }
+  if (typeof input.scriptPath === 'string' && input.scriptPath.trim()) {
+    return path.basename(input.scriptPath.trim());
   }
   return undefined;
 }
@@ -725,9 +754,11 @@ function noteBackgroundToolResult(
 ): void {
   const res = result && typeof result === 'object' ? result : {};
   const shellId =
-    (typeof res.backgroundTaskId === 'string' && res.backgroundTaskId) ||
-    text.match(BG_SHELL_ID)?.[1] ||
-    '';
+    name !== 'Workflow'
+      ? (typeof res.backgroundTaskId === 'string' && res.backgroundTaskId) ||
+        text.match(BG_SHELL_ID)?.[1] ||
+        ''
+      : '';
   if (shellId) {
     const job = ensureBackgroundJob(jobs, shellId, time, 'shell');
     if (toolUseId && !job.toolUseId) job.toolUseId = toolUseId;
@@ -774,6 +805,26 @@ function noteBackgroundToolResult(
     const label = clipBackgroundLabel(command);
     if (label) job.label = label;
     setBackgroundStatus(job, 'killed', time);
+  }
+
+  const wfId =
+    (typeof res.workflowRunId === 'string' && res.workflowRunId) ||
+    (typeof res.runId === 'string' && res.runId) ||
+    (name === 'Workflow' && typeof res.backgroundTaskId === 'string' && res.backgroundTaskId) ||
+    (name === 'Workflow' && typeof res.task_id === 'string' && res.task_id) ||
+    (name === 'Workflow' && text.match(/(?:task|run|workflow)[\s_-]*id[:\s]+([a-zA-Z0-9_-]+)/i)?.[1]) ||
+    '';
+  if (wfId || name === 'Workflow') {
+    const effectiveWfId = wfId || toolUseId || '';
+    if (effectiveWfId) {
+      const job = ensureBackgroundJob(jobs, effectiveWfId, time, 'workflow');
+      if (toolUseId && !job.toolUseId) job.toolUseId = toolUseId;
+      if (job.status === 'running') {
+        job.kind = 'workflow';
+        const wfLabel = clipBackgroundLabel(extractWorkflowMetaLabel(input) || 'Workflow');
+        if (wfLabel) job.label = wfLabel;
+      }
+    }
   }
 }
 
@@ -1071,6 +1122,82 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   let lastEntryTimestamp: number | null = null;
   let activeDurationMs = 0;
   let currentTurnStartTime: Date | undefined;
+  let loopState: SessionLoopState | undefined;
+
+  const applyLoopTool = (name: string, input: any, result: any, text: string, time: Date): void => {
+    if (name === 'ScheduleWakeup') {
+      if (input?.stop === true) {
+        loopState = {
+          mode: 'dynamic',
+          active: false,
+          prompt: loopState?.prompt,
+          delaySeconds: loopState?.delaySeconds,
+          reason: loopState?.reason,
+          noopStreak: loopState?.noopStreak ?? 0,
+          tickCount: loopState?.tickCount ?? 0,
+          lastScheduledAt: loopState?.lastScheduledAt,
+          stoppedAt: time,
+        };
+        return;
+      }
+      const rawDelay = Number(input?.delaySeconds);
+      const clampedDelay = Number.isFinite(rawDelay)
+        ? Math.min(3600, Math.max(60, Math.round(rawDelay)))
+        : 60;
+      const isNoop = input?.noop === true;
+      const prevStreak = loopState?.mode === 'dynamic' ? (loopState.noopStreak || 0) : 0;
+      const prevTicks = loopState?.mode === 'dynamic' ? (loopState.tickCount || 0) : 0;
+      loopState = {
+        mode: 'dynamic',
+        active: true,
+        prompt: typeof input?.prompt === 'string' && input.prompt ? input.prompt : loopState?.prompt,
+        delaySeconds: clampedDelay,
+        reason: typeof input?.reason === 'string' && input.reason ? input.reason : undefined,
+        noopStreak: isNoop ? prevStreak + 1 : 0,
+        tickCount: prevTicks + 1,
+        lastScheduledAt: time,
+        nextWakeAt: new Date(time.getTime() + clampedDelay * 1000),
+      };
+      return;
+    }
+
+    if (name === 'CronCreate') {
+      const cronExpr =
+        typeof input?.cron === 'string'
+          ? input.cron
+          : typeof input?.schedule === 'string'
+          ? input.schedule
+          : '';
+      const resObj = result && typeof result === 'object' ? result : {};
+      const jobId =
+        (typeof resObj.id === 'string' && resObj.id) ||
+        (typeof resObj.jobId === 'string' && resObj.jobId) ||
+        text.match(/(?:cron|job|id)[:\s#]+([a-zA-Z0-9_-]+)/i)?.[1] ||
+        undefined;
+      loopState = {
+        mode: 'cron',
+        active: true,
+        prompt: typeof input?.prompt === 'string' && input.prompt ? input.prompt : loopState?.prompt,
+        cronExpression: cronExpr || undefined,
+        cronJobId: jobId || loopState?.cronJobId,
+        reason: cronExpr ? `Cron: ${cronExpr}` : undefined,
+        noopStreak: 0,
+        tickCount: (loopState?.mode === 'cron' ? loopState.tickCount : 0) + 1,
+        lastScheduledAt: time,
+      };
+      return;
+    }
+
+    if (name === 'CronDelete') {
+      if (loopState) {
+        loopState = {
+          ...loopState,
+          active: false,
+          stoppedAt: time,
+        };
+      }
+    }
+  };
 
   const usageByMessageId = new Map<string, {
     inputTokens: number;
@@ -1186,6 +1313,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
           explicitState.source = 'none';
           taskToolsObserved = false;
           agentMap.clear();
+          loopState = undefined;
         } else {
           if (lastClearIndex !== -1) {
             userMessagesAfterClear++;
@@ -1378,6 +1506,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             if (status === 'completed') {
               syncPlanFile(name, input);
               applyTaskResult(name, input, block.id, pending?.response, pending?.text || '');
+              applyLoopTool(name, input, pending?.response, pending?.text || '', pending?.endTime || ts);
               if (pending?.text && (pending.text.includes('running in background') || pending.text.includes('working in the background'))) {
                 toolEntry.background = true;
               }
@@ -1417,6 +1546,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
                 syncPlanFile(existingTool.name, toolInput);
                 const text = extractBlockTextContent(block.content);
                 applyTaskResult(existingTool.name, toolInput, toolId, entry.toolUseResult, text);
+                applyLoopTool(existingTool.name, toolInput, entry.toolUseResult, text, ts);
                 if (text.includes('running in background') || text.includes('working in the background')) {
                   existingTool.background = true;
                 }
@@ -1522,6 +1652,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     activeTools,
     agents: Array.from(agentMap.values()).slice(-10),
     backgroundJobs: finalizeBackgroundJobs(backgroundJobs),
+    loopState: wasCleared ? undefined : loopState,
     todos,
     taskSource: wasCleared ? 'none' : taskSource,
     taskToolsObserved: !wasCleared && taskToolsObserved,

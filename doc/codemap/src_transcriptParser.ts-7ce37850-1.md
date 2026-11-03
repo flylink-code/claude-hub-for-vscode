@@ -4,7 +4,7 @@
 
 [Module](session-parser.md) · [Source](../../src/transcriptParser.ts) · page 1/5
 
-Source SHA-256: f540ab019f8079dae4d1e3dcfd23bcaa9119231272f5a894c52c270251a9da43
+Source SHA-256: b10dc57783e5704d0f5abad8586cb1dfaa0cd44a68b8aa69bce1c5cdf5d3130e
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -22,89 +22,89 @@ Source SHA-256: f540ab019f8079dae4d1e3dcfd23bcaa9119231272f5a894c52c270251a9da43
 | activeTools | PropertySignature | ParsedTranscript | [17](../../src/transcriptParser.ts#L17) |
 | agents | PropertySignature | ParsedTranscript | [18](../../src/transcriptParser.ts#L18) |
 | backgroundJobs | PropertySignature | ParsedTranscript | [19](../../src/transcriptParser.ts#L19) |
-| todos | PropertySignature | ParsedTranscript | [20](../../src/transcriptParser.ts#L20) |
-| plan | PropertySignature | ParsedTranscript | [21](../../src/transcriptParser.ts#L21) |
-| taskSource | PropertySignature | ParsedTranscript | [22](../../src/transcriptParser.ts#L22) |
-| lastActivity | PropertySignature | ParsedTranscript | [23](../../src/transcriptParser.ts#L23) |
-| taskToolsObserved | PropertySignature | ParsedTranscript | [24](../../src/transcriptParser.ts#L24) |
-| pendingTaskCreates | PropertySignature | ParsedTranscript | [26](../../src/transcriptParser.ts#L26) |
-| observedTaskListId | PropertySignature | ParsedTranscript | [28](../../src/transcriptParser.ts#L28) |
-| skills | PropertySignature | ParsedTranscript | [29](../../src/transcriptParser.ts#L29) |
-| mcpServers | PropertySignature | ParsedTranscript | [30](../../src/transcriptParser.ts#L30) |
-| wasCleared | PropertySignature | ParsedTranscript | [31](../../src/transcriptParser.ts#L31) |
-| hadClearCommand | PropertySignature | ParsedTranscript | [32](../../src/transcriptParser.ts#L32) |
-| activeDurationMs | PropertySignature | ParsedTranscript | [33](../../src/transcriptParser.ts#L33) |
-| currentTurnStartTime | PropertySignature | ParsedTranscript | [34](../../src/transcriptParser.ts#L34) |
-| lastEntryTimestamp | PropertySignature | ParsedTranscript | [35](../../src/transcriptParser.ts#L35) |
-| CacheEntry | InterfaceDeclaration |  | [38](../../src/transcriptParser.ts#L38) |
-| mtimeMs | PropertySignature | CacheEntry | [39](../../src/transcriptParser.ts#L39) |
-| size | PropertySignature | CacheEntry | [40](../../src/transcriptParser.ts#L40) |
-| data | PropertySignature | CacheEntry | [41](../../src/transcriptParser.ts#L41) |
-| generateForkTitle | FunctionDeclaration |  | [44](../../src/transcriptParser.ts#L44) |
-| base | VariableDeclaration | generateForkTitle | [45](../../src/transcriptParser.ts#L45) |
-| openIdx | VariableDeclaration | generateForkTitle | [46](../../src/transcriptParser.ts#L46) |
-| prefix | VariableDeclaration | generateForkTitle | [48](../../src/transcriptParser.ts#L48) |
-| inner | VariableDeclaration | generateForkTitle | [49](../../src/transcriptParser.ts#L49) |
-| num | VariableDeclaration | generateForkTitle | [50](../../src/transcriptParser.ts#L50) |
-| nextNum | VariableDeclaration | generateForkTitle | [51](../../src/transcriptParser.ts#L51) |
-| MAX_TRANSCRIPT_CACHE_SIZE | VariableDeclaration |  | [57](../../src/transcriptParser.ts#L57) |
-| transcriptCache | VariableDeclaration |  | [58](../../src/transcriptParser.ts#L58) |
-| MCP_PATTERN | VariableDeclaration |  | [59](../../src/transcriptParser.ts#L59) |
-| clearTranscriptCache | FunctionDeclaration |  | [61](../../src/transcriptParser.ts#L61) |
-| extractBlockTextContent | FunctionDeclaration |  | [69](../../src/transcriptParser.ts#L69) |
-| rewriteSessionIdsInValue | FunctionDeclaration |  | [87](../../src/transcriptParser.ts#L87) |
-| output | VariableDeclaration | rewriteSessionIdsInValue | [97](../../src/transcriptParser.ts#L97) |
-| [childKey, childValue] | VariableDeclaration | rewriteSessionIdsInValue | [98](../../src/transcriptParser.ts#L98) |
-| childKey | BindingElement | rewriteSessionIdsInValue.[childKey, childValue] | [98](../../src/transcriptParser.ts#L98) |
-| childValue | BindingElement | rewriteSessionIdsInValue.[childKey, childValue] | [98](../../src/transcriptParser.ts#L98) |
-| rewriteTranscriptSessionIds | FunctionDeclaration |  | [107](../../src/transcriptParser.ts#L107) |
-| chunks | VariableDeclaration | rewriteTranscriptSessionIds | [112](../../src/transcriptParser.ts#L112) |
-| lineEnding | VariableDeclaration | rewriteTranscriptSessionIds | [116](../../src/transcriptParser.ts#L116) |
-| line | VariableDeclaration | rewriteTranscriptSessionIds | [117](../../src/transcriptParser.ts#L117) |
-| parsed | VariableDeclaration | rewriteTranscriptSessionIds | [131](../../src/transcriptParser.ts#L131) |
-| normalizeTarget | FunctionDeclaration |  | [140](../../src/transcriptParser.ts#L140) |
-| fp | VariableDeclaration | normalizeTarget | [147](../../src/transcriptParser.ts#L147) |
-| cmd | VariableDeclaration | normalizeTarget | [154](../../src/transcriptParser.ts#L154) |
-| clean | VariableDeclaration | normalizeTarget | [156](../../src/transcriptParser.ts#L156) |
-| CHECKLIST_REGEX | VariableDeclaration |  | [172](../../src/transcriptParser.ts#L172) |
-| PHASE_HEADING_REGEX | VariableDeclaration |  | [173](../../src/transcriptParser.ts#L173) |
-| ORDERED_STEP_REGEX | VariableDeclaration |  | [175](../../src/transcriptParser.ts#L175) |
-| UNORDERED_STEP_REGEX | VariableDeclaration |  | [176](../../src/transcriptParser.ts#L176) |
-| PLAN_SECTION_HEADER_REGEX | VariableDeclaration |  | [177](../../src/transcriptParser.ts#L177) |
-| stripCodeBlocks | FunctionDeclaration |  | [183](../../src/transcriptParser.ts#L183) |
-| lines | VariableDeclaration | stripCodeBlocks | [185](../../src/transcriptParser.ts#L185) |
-| result | VariableDeclaration | stripCodeBlocks | [186](../../src/transcriptParser.ts#L186) |
-| inCodeBlock | VariableDeclaration | stripCodeBlocks | [187](../../src/transcriptParser.ts#L187) |
-| codeBlockFence | VariableDeclaration | stripCodeBlocks | [188](../../src/transcriptParser.ts#L188) |
-| line | VariableDeclaration | stripCodeBlocks | [190](../../src/transcriptParser.ts#L190) |
-| trimmed | VariableDeclaration | stripCodeBlocks | [191](../../src/transcriptParser.ts#L191) |
-| fenceMatch | VariableDeclaration | stripCodeBlocks | [192](../../src/transcriptParser.ts#L192) |
-| cleanPlanText | FunctionDeclaration |  | [217](../../src/transcriptParser.ts#L217) |
-| cleaned | VariableDeclaration | cleanPlanText | [218](../../src/transcriptParser.ts#L218) |
-| endOfFirstSentence | VariableDeclaration | cleanPlanText | [232](../../src/transcriptParser.ts#L232) |
-| extractPlanTodos | FunctionDeclaration |  | [246](../../src/transcriptParser.ts#L246) |
-| checklist | VariableDeclaration | extractPlanTodos | [250](../../src/transcriptParser.ts#L250) |
-| stripped | VariableDeclaration | extractPlanTodos | [256](../../src/transcriptParser.ts#L256) |
-| lines | VariableDeclaration | extractPlanTodos | [257](../../src/transcriptParser.ts#L257) |
-| phaseItems | VariableDeclaration | extractPlanTodos | [259](../../src/transcriptParser.ts#L259) |
-| orderedSteps | VariableDeclaration | extractPlanTodos | [260](../../src/transcriptParser.ts#L260) |
-| sectionSteps | VariableDeclaration | extractPlanTodos | [261](../../src/transcriptParser.ts#L261) |
-| inPlanSection | VariableDeclaration | extractPlanTodos | [263](../../src/transcriptParser.ts#L263) |
-| rawLine | VariableDeclaration | extractPlanTodos | [265](../../src/transcriptParser.ts#L265) |
-| trimmed | VariableDeclaration | extractPlanTodos | [266](../../src/transcriptParser.ts#L266) |
-| phaseMatch | VariableDeclaration | extractPlanTodos | [277](../../src/transcriptParser.ts#L277) |
-| label | VariableDeclaration | extractPlanTodos | [279](../../src/transcriptParser.ts#L279) |
-| number | VariableDeclaration | extractPlanTodos | [280](../../src/transcriptParser.ts#L280) |
-| title | VariableDeclaration | extractPlanTodos | [281](../../src/transcriptParser.ts#L281) |
-| isChineseLabel | VariableDeclaration | extractPlanTodos | [283](../../src/transcriptParser.ts#L283) |
-| display | VariableDeclaration | extractPlanTodos | [284](../../src/transcriptParser.ts#L284) |
-| orderedMatch | VariableDeclaration | extractPlanTodos | [302](../../src/transcriptParser.ts#L302) |
-| content | VariableDeclaration | extractPlanTodos | [304](../../src/transcriptParser.ts#L304) |
-| unorderedMatch | VariableDeclaration | extractPlanTodos | [322](../../src/transcriptParser.ts#L322) |
-| content | VariableDeclaration | extractPlanTodos | [324](../../src/transcriptParser.ts#L324) |
-| candidates | VariableDeclaration | extractPlanTodos | [336](../../src/transcriptParser.ts#L336) |
-| seen | VariableDeclaration | extractPlanTodos | [355](../../src/transcriptParser.ts#L355) |
-| results | VariableDeclaration | extractPlanTodos | [356](../../src/transcriptParser.ts#L356) |
-| item | VariableDeclaration | extractPlanTodos | [357](../../src/transcriptParser.ts#L357) |
-| resolveTaskId | FunctionDeclaration |  | [372](../../src/transcriptParser.ts#L372) |
-| raw | VariableDeclaration | resolveTaskId | [374](../../src/transcriptParser.ts#L374) |
+| loopState | PropertySignature | ParsedTranscript | [20](../../src/transcriptParser.ts#L20) |
+| todos | PropertySignature | ParsedTranscript | [21](../../src/transcriptParser.ts#L21) |
+| plan | PropertySignature | ParsedTranscript | [22](../../src/transcriptParser.ts#L22) |
+| taskSource | PropertySignature | ParsedTranscript | [23](../../src/transcriptParser.ts#L23) |
+| lastActivity | PropertySignature | ParsedTranscript | [24](../../src/transcriptParser.ts#L24) |
+| taskToolsObserved | PropertySignature | ParsedTranscript | [25](../../src/transcriptParser.ts#L25) |
+| pendingTaskCreates | PropertySignature | ParsedTranscript | [27](../../src/transcriptParser.ts#L27) |
+| observedTaskListId | PropertySignature | ParsedTranscript | [29](../../src/transcriptParser.ts#L29) |
+| skills | PropertySignature | ParsedTranscript | [30](../../src/transcriptParser.ts#L30) |
+| mcpServers | PropertySignature | ParsedTranscript | [31](../../src/transcriptParser.ts#L31) |
+| wasCleared | PropertySignature | ParsedTranscript | [32](../../src/transcriptParser.ts#L32) |
+| hadClearCommand | PropertySignature | ParsedTranscript | [33](../../src/transcriptParser.ts#L33) |
+| activeDurationMs | PropertySignature | ParsedTranscript | [34](../../src/transcriptParser.ts#L34) |
+| currentTurnStartTime | PropertySignature | ParsedTranscript | [35](../../src/transcriptParser.ts#L35) |
+| lastEntryTimestamp | PropertySignature | ParsedTranscript | [36](../../src/transcriptParser.ts#L36) |
+| CacheEntry | InterfaceDeclaration |  | [39](../../src/transcriptParser.ts#L39) |
+| mtimeMs | PropertySignature | CacheEntry | [40](../../src/transcriptParser.ts#L40) |
+| size | PropertySignature | CacheEntry | [41](../../src/transcriptParser.ts#L41) |
+| data | PropertySignature | CacheEntry | [42](../../src/transcriptParser.ts#L42) |
+| generateForkTitle | FunctionDeclaration |  | [45](../../src/transcriptParser.ts#L45) |
+| base | VariableDeclaration | generateForkTitle | [46](../../src/transcriptParser.ts#L46) |
+| openIdx | VariableDeclaration | generateForkTitle | [47](../../src/transcriptParser.ts#L47) |
+| prefix | VariableDeclaration | generateForkTitle | [49](../../src/transcriptParser.ts#L49) |
+| inner | VariableDeclaration | generateForkTitle | [50](../../src/transcriptParser.ts#L50) |
+| num | VariableDeclaration | generateForkTitle | [51](../../src/transcriptParser.ts#L51) |
+| nextNum | VariableDeclaration | generateForkTitle | [52](../../src/transcriptParser.ts#L52) |
+| MAX_TRANSCRIPT_CACHE_SIZE | VariableDeclaration |  | [58](../../src/transcriptParser.ts#L58) |
+| transcriptCache | VariableDeclaration |  | [59](../../src/transcriptParser.ts#L59) |
+| MCP_PATTERN | VariableDeclaration |  | [60](../../src/transcriptParser.ts#L60) |
+| clearTranscriptCache | FunctionDeclaration |  | [62](../../src/transcriptParser.ts#L62) |
+| extractBlockTextContent | FunctionDeclaration |  | [70](../../src/transcriptParser.ts#L70) |
+| rewriteSessionIdsInValue | FunctionDeclaration |  | [88](../../src/transcriptParser.ts#L88) |
+| output | VariableDeclaration | rewriteSessionIdsInValue | [98](../../src/transcriptParser.ts#L98) |
+| [childKey, childValue] | VariableDeclaration | rewriteSessionIdsInValue | [99](../../src/transcriptParser.ts#L99) |
+| childKey | BindingElement | rewriteSessionIdsInValue.[childKey, childValue] | [99](../../src/transcriptParser.ts#L99) |
+| childValue | BindingElement | rewriteSessionIdsInValue.[childKey, childValue] | [99](../../src/transcriptParser.ts#L99) |
+| rewriteTranscriptSessionIds | FunctionDeclaration |  | [108](../../src/transcriptParser.ts#L108) |
+| chunks | VariableDeclaration | rewriteTranscriptSessionIds | [113](../../src/transcriptParser.ts#L113) |
+| lineEnding | VariableDeclaration | rewriteTranscriptSessionIds | [117](../../src/transcriptParser.ts#L117) |
+| line | VariableDeclaration | rewriteTranscriptSessionIds | [118](../../src/transcriptParser.ts#L118) |
+| parsed | VariableDeclaration | rewriteTranscriptSessionIds | [132](../../src/transcriptParser.ts#L132) |
+| normalizeTarget | FunctionDeclaration |  | [141](../../src/transcriptParser.ts#L141) |
+| fp | VariableDeclaration | normalizeTarget | [148](../../src/transcriptParser.ts#L148) |
+| cmd | VariableDeclaration | normalizeTarget | [155](../../src/transcriptParser.ts#L155) |
+| clean | VariableDeclaration | normalizeTarget | [157](../../src/transcriptParser.ts#L157) |
+| extractWorkflowMetaLabel | FunctionDeclaration |  | [183](../../src/transcriptParser.ts#L183) |
+| metaBlock | VariableDeclaration | extractWorkflowMetaLabel | [189](../../src/transcriptParser.ts#L189) |
+| nameMatch | VariableDeclaration | extractWorkflowMetaLabel | [190](../../src/transcriptParser.ts#L190) |
+| descMatch | VariableDeclaration | extractWorkflowMetaLabel | [191](../../src/transcriptParser.ts#L191) |
+| CHECKLIST_REGEX | VariableDeclaration |  | [201](../../src/transcriptParser.ts#L201) |
+| PHASE_HEADING_REGEX | VariableDeclaration |  | [202](../../src/transcriptParser.ts#L202) |
+| ORDERED_STEP_REGEX | VariableDeclaration |  | [204](../../src/transcriptParser.ts#L204) |
+| UNORDERED_STEP_REGEX | VariableDeclaration |  | [205](../../src/transcriptParser.ts#L205) |
+| PLAN_SECTION_HEADER_REGEX | VariableDeclaration |  | [206](../../src/transcriptParser.ts#L206) |
+| stripCodeBlocks | FunctionDeclaration |  | [212](../../src/transcriptParser.ts#L212) |
+| lines | VariableDeclaration | stripCodeBlocks | [214](../../src/transcriptParser.ts#L214) |
+| result | VariableDeclaration | stripCodeBlocks | [215](../../src/transcriptParser.ts#L215) |
+| inCodeBlock | VariableDeclaration | stripCodeBlocks | [216](../../src/transcriptParser.ts#L216) |
+| codeBlockFence | VariableDeclaration | stripCodeBlocks | [217](../../src/transcriptParser.ts#L217) |
+| line | VariableDeclaration | stripCodeBlocks | [219](../../src/transcriptParser.ts#L219) |
+| trimmed | VariableDeclaration | stripCodeBlocks | [220](../../src/transcriptParser.ts#L220) |
+| fenceMatch | VariableDeclaration | stripCodeBlocks | [221](../../src/transcriptParser.ts#L221) |
+| cleanPlanText | FunctionDeclaration |  | [246](../../src/transcriptParser.ts#L246) |
+| cleaned | VariableDeclaration | cleanPlanText | [247](../../src/transcriptParser.ts#L247) |
+| endOfFirstSentence | VariableDeclaration | cleanPlanText | [261](../../src/transcriptParser.ts#L261) |
+| extractPlanTodos | FunctionDeclaration |  | [275](../../src/transcriptParser.ts#L275) |
+| checklist | VariableDeclaration | extractPlanTodos | [279](../../src/transcriptParser.ts#L279) |
+| stripped | VariableDeclaration | extractPlanTodos | [285](../../src/transcriptParser.ts#L285) |
+| lines | VariableDeclaration | extractPlanTodos | [286](../../src/transcriptParser.ts#L286) |
+| phaseItems | VariableDeclaration | extractPlanTodos | [288](../../src/transcriptParser.ts#L288) |
+| orderedSteps | VariableDeclaration | extractPlanTodos | [289](../../src/transcriptParser.ts#L289) |
+| sectionSteps | VariableDeclaration | extractPlanTodos | [290](../../src/transcriptParser.ts#L290) |
+| inPlanSection | VariableDeclaration | extractPlanTodos | [292](../../src/transcriptParser.ts#L292) |
+| rawLine | VariableDeclaration | extractPlanTodos | [294](../../src/transcriptParser.ts#L294) |
+| trimmed | VariableDeclaration | extractPlanTodos | [295](../../src/transcriptParser.ts#L295) |
+| phaseMatch | VariableDeclaration | extractPlanTodos | [306](../../src/transcriptParser.ts#L306) |
+| label | VariableDeclaration | extractPlanTodos | [308](../../src/transcriptParser.ts#L308) |
+| number | VariableDeclaration | extractPlanTodos | [309](../../src/transcriptParser.ts#L309) |
+| title | VariableDeclaration | extractPlanTodos | [310](../../src/transcriptParser.ts#L310) |
+| isChineseLabel | VariableDeclaration | extractPlanTodos | [312](../../src/transcriptParser.ts#L312) |
+| display | VariableDeclaration | extractPlanTodos | [313](../../src/transcriptParser.ts#L313) |
+| orderedMatch | VariableDeclaration | extractPlanTodos | [331](../../src/transcriptParser.ts#L331) |
+| content | VariableDeclaration | extractPlanTodos | [333](../../src/transcriptParser.ts#L333) |
+| unorderedMatch | VariableDeclaration | extractPlanTodos | [351](../../src/transcriptParser.ts#L351) |
+| content | VariableDeclaration | extractPlanTodos | [353](../../src/transcriptParser.ts#L353) |
+| candidates | VariableDeclaration | extractPlanTodos | [365](../../src/transcriptParser.ts#L365) |

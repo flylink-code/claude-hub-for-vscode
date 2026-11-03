@@ -227,6 +227,19 @@ export const enMessages = {
   'tb.filterAll': 'Filter: all sessions (click for current workspace)',
   'tb.filterWsShort': 'WS',
   'tb.filterAllShort': 'All',
+  'tb.worktree': 'Start Claude session in a Git worktree (claude -w)',
+  'cmd.loopArgsPrompt': 'Optional /loop interval and prompt (e.g. 5m check CI status)',
+  'cmd.worktreeNamePrompt': 'Optional Git worktree name for `claude -w` (leave empty for auto-generated)',
+  'cmd.worktreeNamePlaceholder': 'feature-branch (optional)',
+  'memory.createdToast': 'Claude Hub: Created memory "{name}" and updated MEMORY.md.',
+  'memory.slugPrompt': 'Memory file slug (kebab-case, e.g. build-quirks)',
+  'memory.descPrompt': 'One-line summary for MEMORY.md recall index',
+  'memory.typePrompt': 'Select memory category',
+  'memory.deleteConfirm': 'Remove memory "{name}" and clean up its index entry in MEMORY.md?',
+  'memory.deleteBtn': 'Remove Memory',
+  'memory.deletedToast': 'Claude Hub: Removed memory "{name}" and updated MEMORY.md.',
+  'memory.updatedToast': 'Claude Hub: Updated memory "{name}".',
+  'memory.syncedToast': 'Claude Hub: Synced MEMORY.md (+{added} added, -{removed} stale removed).',
 };
 
 export const zhMessages: typeof enMessages = {
@@ -447,6 +460,19 @@ export const zhMessages: typeof enMessages = {
   'tb.filterAll': '当前过滤：显示全部会话（点击切换为仅当前工作区）',
   'tb.filterWsShort': '工作区',
   'tb.filterAllShort': '全部',
+  'tb.worktree': '在 Git Worktree 中启动新会话 (claude -w)',
+  'cmd.loopArgsPrompt': '可选：输入 /loop 间隔与提示词（如 5m 检查构建状态，留空则直接发送 /loop）',
+  'cmd.worktreeNamePrompt': '可选：输入 Git Worktree 名称用于 `claude -w`（留空则自动命名）',
+  'cmd.worktreeNamePlaceholder': 'feature-branch（可留空）',
+  'memory.createdToast': 'Claude Hub: 已创建记忆「{name}」并同步至 MEMORY.md。',
+  'memory.slugPrompt': '输入记忆文件标识（kebab-case，如 build-quirks）',
+  'memory.descPrompt': '输入一句话摘要（用于写入 MEMORY.md 索引）',
+  'memory.typePrompt': '选择记忆分类 (type)',
+  'memory.deleteConfirm': '确定要移除记忆「{name}」并从 MEMORY.md 索引中清理该条目吗？',
+  'memory.deleteBtn': '确认移除',
+  'memory.deletedToast': 'Claude Hub: 已移除记忆「{name}」并同步更新 MEMORY.md。',
+  'memory.updatedToast': 'Claude Hub: 已更新记忆「{name}」。',
+  'memory.syncedToast': 'Claude Hub: 已同步 MEMORY.md 索引（补全 {added} 项，清理失效引用 {removed} 项）。',
 };
 
 export type MessageKey = keyof typeof enMessages;

@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -159,6 +159,12 @@
       {
         "command": "claudeHub.toggleTodoTools",
         "title": "%command.toggleTodoTools%"
+      },
+      {
+        "command": "claudeHub.startWorktreeSession",
+        "title": "%command.startWorktreeSession%",
+        "icon": "$(git-branch)",
+        "category": "Claude Hub"
       }
     ],
     "menus": {

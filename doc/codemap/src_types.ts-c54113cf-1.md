@@ -4,7 +4,7 @@
 
 [Module](core-entry.md) · [Source](../../src/types.ts) · page 1/2
 
-Source SHA-256: 8f3a530139df36c55a481273dc275b150fc87123673d6919aa2da2296819335e
+Source SHA-256: e402b0610e7d45b0db25fdf928fa016fc64e712fee9a22174cd08ba8be1ef1a2
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -73,38 +73,38 @@ Source SHA-256: 8f3a530139df36c55a481273dc275b150fc87123673d6919aa2da2296819335e
 | timestamp | PropertySignature | LastActivity | [77](../../src/types.ts#L77) |
 | BackgroundJobKind | TypeAliasDeclaration |  | [81](../../src/types.ts#L81) |
 | BackgroundJobStatus | TypeAliasDeclaration |  | [82](../../src/types.ts#L82) |
-| BackgroundJob | InterfaceDeclaration |  | [84](../../src/types.ts#L84) |
-| id | PropertySignature | BackgroundJob | [85](../../src/types.ts#L85) |
-| kind | PropertySignature | BackgroundJob | [86](../../src/types.ts#L86) |
-| label | PropertySignature | BackgroundJob | [87](../../src/types.ts#L87) |
-| status | PropertySignature | BackgroundJob | [88](../../src/types.ts#L88) |
-| startTime | PropertySignature | BackgroundJob | [89](../../src/types.ts#L89) |
-| endTime | PropertySignature | BackgroundJob | [90](../../src/types.ts#L90) |
-| outputFile | PropertySignature | BackgroundJob | [91](../../src/types.ts#L91) |
-| toolUseId | PropertySignature | BackgroundJob | [92](../../src/types.ts#L92) |
-| summary | PropertySignature | BackgroundJob | [93](../../src/types.ts#L93) |
-| exitCode | PropertySignature | BackgroundJob | [94](../../src/types.ts#L94) |
-| UsageMeter | InterfaceDeclaration |  | [97](../../src/types.ts#L97) |
-| key | PropertySignature | UsageMeter | [98](../../src/types.ts#L98) |
-| label | PropertySignature | UsageMeter | [99](../../src/types.ts#L99) |
-| percentage | PropertySignature | UsageMeter | [100](../../src/types.ts#L100) |
-| resetsAt | PropertySignature | UsageMeter | [101](../../src/types.ts#L101) |
-| isActive | PropertySignature | UsageMeter | [102](../../src/types.ts#L102) |
-| SubscriptionUsageData | InterfaceDeclaration |  | [105](../../src/types.ts#L105) |
-| session | PropertySignature | SubscriptionUsageData | [106](../../src/types.ts#L106) |
-| meters | PropertySignature | SubscriptionUsageData | [107](../../src/types.ts#L107) |
-| lastUpdated | PropertySignature | SubscriptionUsageData | [108](../../src/types.ts#L108) |
-| SessionInfo | InterfaceDeclaration |  | [111](../../src/types.ts#L111) |
-| sessionId | PropertySignature | SessionInfo | [112](../../src/types.ts#L112) |
-| sessionFile | PropertySignature | SessionInfo | [113](../../src/types.ts#L113) |
-| projectName | PropertySignature | SessionInfo | [114](../../src/types.ts#L114) |
-| projectPath | PropertySignature | SessionInfo | [115](../../src/types.ts#L115) |
-| sessionTitle | PropertySignature | SessionInfo | [116](../../src/types.ts#L116) |
-| model | PropertySignature | SessionInfo | [117](../../src/types.ts#L117) |
-| lastResponseModel | PropertySignature | SessionInfo | [118](../../src/types.ts#L118) |
-| configuredModel | PropertySignature | SessionInfo | [119](../../src/types.ts#L119) |
-| contextLimit | PropertySignature | SessionInfo | [120](../../src/types.ts#L120) |
-| tokenUsage | PropertySignature | SessionInfo | [121](../../src/types.ts#L121) |
-| tools | PropertySignature | SessionInfo | [122](../../src/types.ts#L122) |
-| activeTools | PropertySignature | SessionInfo | [123](../../src/types.ts#L123) |
-| agents | PropertySignature | SessionInfo | [124](../../src/types.ts#L124) |
+| SessionLoopState | InterfaceDeclaration |  | [84](../../src/types.ts#L84) |
+| mode | PropertySignature | SessionLoopState | [85](../../src/types.ts#L85) |
+| active | PropertySignature | SessionLoopState | [86](../../src/types.ts#L86) |
+| prompt | PropertySignature | SessionLoopState | [87](../../src/types.ts#L87) |
+| delaySeconds | PropertySignature | SessionLoopState | [88](../../src/types.ts#L88) |
+| cronExpression | PropertySignature | SessionLoopState | [89](../../src/types.ts#L89) |
+| cronJobId | PropertySignature | SessionLoopState | [90](../../src/types.ts#L90) |
+| reason | PropertySignature | SessionLoopState | [91](../../src/types.ts#L91) |
+| noopStreak | PropertySignature | SessionLoopState | [92](../../src/types.ts#L92) |
+| tickCount | PropertySignature | SessionLoopState | [93](../../src/types.ts#L93) |
+| lastScheduledAt | PropertySignature | SessionLoopState | [94](../../src/types.ts#L94) |
+| nextWakeAt | PropertySignature | SessionLoopState | [95](../../src/types.ts#L95) |
+| stoppedAt | PropertySignature | SessionLoopState | [96](../../src/types.ts#L96) |
+| BackgroundJob | InterfaceDeclaration |  | [99](../../src/types.ts#L99) |
+| id | PropertySignature | BackgroundJob | [100](../../src/types.ts#L100) |
+| kind | PropertySignature | BackgroundJob | [101](../../src/types.ts#L101) |
+| label | PropertySignature | BackgroundJob | [102](../../src/types.ts#L102) |
+| status | PropertySignature | BackgroundJob | [103](../../src/types.ts#L103) |
+| startTime | PropertySignature | BackgroundJob | [104](../../src/types.ts#L104) |
+| endTime | PropertySignature | BackgroundJob | [105](../../src/types.ts#L105) |
+| outputFile | PropertySignature | BackgroundJob | [106](../../src/types.ts#L106) |
+| toolUseId | PropertySignature | BackgroundJob | [107](../../src/types.ts#L107) |
+| summary | PropertySignature | BackgroundJob | [108](../../src/types.ts#L108) |
+| exitCode | PropertySignature | BackgroundJob | [109](../../src/types.ts#L109) |
+| UsageMeter | InterfaceDeclaration |  | [112](../../src/types.ts#L112) |
+| key | PropertySignature | UsageMeter | [113](../../src/types.ts#L113) |
+| label | PropertySignature | UsageMeter | [114](../../src/types.ts#L114) |
+| percentage | PropertySignature | UsageMeter | [115](../../src/types.ts#L115) |
+| resetsAt | PropertySignature | UsageMeter | [116](../../src/types.ts#L116) |
+| isActive | PropertySignature | UsageMeter | [117](../../src/types.ts#L117) |
+| SubscriptionUsageData | InterfaceDeclaration |  | [120](../../src/types.ts#L120) |
+| session | PropertySignature | SubscriptionUsageData | [121](../../src/types.ts#L121) |
+| meters | PropertySignature | SubscriptionUsageData | [122](../../src/types.ts#L122) |
+| lastUpdated | PropertySignature | SubscriptionUsageData | [123](../../src/types.ts#L123) |
+| SessionInfo | InterfaceDeclaration |  | [126](../../src/types.ts#L126) |

@@ -19,7 +19,13 @@ import {
   parseClaudeSessionRecord,
   backgroundJobsForLiveProcess,
 } from '../src/transcriptParser.js';
-import { decodeProjectPath, isPathInWorkspace, resolveClaudeConfigDir } from '../src/configDir.js';
+import {
+  decodeProjectPath,
+  encodeProjectPath,
+  isPathInWorkspace,
+  resolveClaudeConfigDir,
+  resolveProjectMemoryDir,
+} from '../src/configDir.js';
 import { taskSnapshot, mergeDiskPlanTodos } from '../src/nativeTasks.js';
 import { formatModelDisplayName, formatSelectedModelName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
@@ -150,7 +156,7 @@ test('rewriteTranscriptSessionIds updates metadata without changing message text
 import { getWebviewContent } from '../src/webviewHtml.js';
 import { ClaudeConfigManager, matchModel, cleanModelKey } from '../src/claudeConfigManager.js';
 
-import { ClaudeFeaturesManager } from '../src/claudeFeatures.js';
+import { ClaudeFeaturesManager, parseFrontmatterFields } from '../src/claudeFeatures.js';
 
 test('getWebviewContent returns valid HTML with sections and controls', () => {
   const html = getWebviewContent();
@@ -2601,4 +2607,415 @@ test('background_tasks_changed replaces inferred running jobs', async () => {
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('parseTranscriptFile tracks ScheduleWakeup dynamic loop, noopStreak, and stop state', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-loop-test-'));
+  const testFile = path.join(tempDir, 'loop.jsonl');
+  try {
+    const lines = [
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T10:00:00.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_wake_1',
+            name: 'ScheduleWakeup',
+            input: {
+              delaySeconds: 180,
+              reason: 'watching CI deployment',
+              prompt: '/loop check CI',
+              noop: false,
+            },
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T10:00:01.000Z',
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_wake_1',
+            content: 'Wakeup scheduled in 180s',
+          }],
+        },
+      },
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T10:03:00.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_wake_2',
+            name: 'ScheduleWakeup',
+            input: {
+              delaySeconds: 240,
+              reason: 'still waiting for CI',
+              prompt: '/loop check CI',
+              noop: true,
+            },
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T10:03:01.000Z',
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_wake_2',
+            content: 'Wakeup scheduled in 240s',
+          }],
+        },
+      },
+    ];
+    fs.writeFileSync(testFile, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
+    clearTranscriptCache(testFile);
+    let parsed = await parseTranscriptFile(testFile);
+    assert.ok(parsed.loopState);
+    assert.strictEqual(parsed.loopState.active, true);
+    assert.strictEqual(parsed.loopState.mode, 'dynamic');
+    assert.strictEqual(parsed.loopState.delaySeconds, 240);
+    assert.strictEqual(parsed.loopState.reason, 'still waiting for CI');
+    assert.strictEqual(parsed.loopState.tickCount, 2);
+    assert.strictEqual(parsed.loopState.noopStreak, 1);
+    assert.ok(parsed.loopState.nextWakeAt instanceof Date);
+
+    // Stop the loop
+    lines.push(
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T10:07:00.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_wake_stop',
+            name: 'ScheduleWakeup',
+            input: { stop: true } as any,
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T10:07:01.000Z',
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_wake_stop',
+            content: 'Loop stopped',
+          }],
+        },
+      },
+    );
+    fs.writeFileSync(testFile, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
+    clearTranscriptCache(testFile);
+    parsed = await parseTranscriptFile(testFile);
+    assert.ok(parsed.loopState);
+    assert.strictEqual(parsed.loopState.active, false);
+    assert.ok(parsed.loopState.stoppedAt instanceof Date);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('parseTranscriptFile tracks CronCreate, CronDelete, and Workflow background jobs', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-cron-wf-'));
+  const testFile = path.join(tempDir, 'cron-wf.jsonl');
+  try {
+    const lines = [
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T11:00:00.000Z',
+        message: {
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_cron_1',
+              name: 'CronCreate',
+              input: { cron: '*/5 * * * *', prompt: 'check PR status' },
+            },
+            {
+              type: 'tool_use',
+              id: 'toolu_wf_1',
+              name: 'Workflow',
+              input: {
+                script: "export const meta = { name: 'review-changes', description: 'Review PR across dimensions' };",
+              },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T11:00:01.000Z',
+        toolUseResult: { id: 'cron_job_99' },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_cron_1',
+            content: 'Created cron job cron_job_99',
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T11:00:02.000Z',
+        toolUseResult: { backgroundTaskId: 'wf_run_01' },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_wf_1',
+            content: 'Workflow started with ID: wf_run_01',
+          }],
+        },
+      },
+    ];
+    fs.writeFileSync(testFile, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
+    clearTranscriptCache(testFile);
+    let parsed = await parseTranscriptFile(testFile);
+    assert.ok(parsed.loopState);
+    assert.strictEqual(parsed.loopState.active, true);
+    assert.strictEqual(parsed.loopState.mode, 'cron');
+    assert.strictEqual(parsed.loopState.cronExpression, '*/5 * * * *');
+    assert.strictEqual(parsed.loopState.cronJobId, 'cron_job_99');
+
+    const wfJob = (parsed.backgroundJobs || []).find((j) => j.id === 'wf_run_01');
+    assert.ok(wfJob);
+    assert.strictEqual(wfJob.kind, 'workflow');
+    assert.strictEqual(wfJob.status, 'running');
+    assert.ok(wfJob.label.includes('review-changes'));
+
+    // CronDelete stops the cron loop
+    lines.push(
+      {
+        type: 'assistant',
+        timestamp: '2026-10-14T11:10:00.000Z',
+        message: {
+          content: [{
+            type: 'tool_use',
+            id: 'toolu_cron_del',
+            name: 'CronDelete',
+            input: { id: 'cron_job_99' } as any,
+          }],
+        },
+      },
+      {
+        type: 'user',
+        timestamp: '2026-10-14T11:10:01.000Z',
+        toolUseResult: { id: 'cron_job_99' },
+        message: {
+          content: [{
+            type: 'tool_result',
+            tool_use_id: 'toolu_cron_del',
+            content: 'Deleted cron job',
+          }],
+        },
+      },
+    );
+    fs.writeFileSync(testFile, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
+    clearTranscriptCache(testFile);
+    parsed = await parseTranscriptFile(testFile);
+    assert.ok(parsed.loopState);
+    assert.strictEqual(parsed.loopState.active, false);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('ClaudeFeaturesManager handles Plugins, Plugin Skills, Custom Agents, and Auto Memory', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-features-test-'));
+  try {
+    const pluginsDir = path.join(tempDir, 'plugins');
+    const pluginInstallDir = path.join(pluginsDir, 'cache', 'demo-market', 'my-plugin', '1.2.0');
+    const pluginSkillDir = path.join(pluginInstallDir, 'skills', 'deploy-check');
+    const agentsDir = path.join(tempDir, 'agents');
+    fs.mkdirSync(pluginSkillDir, { recursive: true });
+    fs.mkdirSync(agentsDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(pluginSkillDir, 'SKILL.md'),
+      '---\ndescription: Check deployment readiness\n---\n# Deploy Check\n',
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(pluginsDir, 'installed_plugins.json'),
+      JSON.stringify({
+        version: 2,
+        plugins: {
+          'my-plugin@demo-market': [
+            {
+              scope: 'user',
+              installPath: pluginInstallDir,
+              version: '1.2.0',
+            },
+          ],
+        },
+      }),
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(tempDir, 'settings.json'),
+      JSON.stringify({
+        enabledPlugins: {
+          'my-plugin@demo-market': true,
+        },
+      }),
+      'utf8',
+    );
+    fs.writeFileSync(
+      path.join(agentsDir, 'reviewer.md'),
+      '---\nname: code-reviewer\ndescription: Security and quality reviewer\nmodel: sonnet\n---\nReview instructions.\n',
+      'utf8',
+    );
+
+    const mgr = new ClaudeFeaturesManager(() => tempDir);
+
+    // 1. Plugins & Plugin Skills
+    const plugins = mgr.getPlugins();
+    assert.strictEqual(plugins.length, 1);
+    assert.strictEqual(plugins[0].id, 'my-plugin@demo-market');
+    assert.strictEqual(plugins[0].name, 'my-plugin');
+    assert.strictEqual(plugins[0].marketplace, 'demo-market');
+    assert.strictEqual(plugins[0].enabled, true);
+    assert.strictEqual(plugins[0].skillsCount, 1);
+
+    let skills = mgr.getSkills();
+    assert.ok(skills.some((s) => s.name === 'my-plugin:deploy-check' && s.scope === 'plugin'));
+
+    // Toggle plugin off -> plugin skills should not appear in getSkills()
+    assert.strictEqual(mgr.togglePlugin('my-plugin@demo-market', false), true);
+    assert.strictEqual(mgr.getPlugins()[0].enabled, false);
+    skills = mgr.getSkills();
+    assert.strictEqual(skills.some((s) => s.name === 'my-plugin:deploy-check'), false);
+
+    // 2. Custom Agents
+    const customAgents = mgr.getCustomAgents();
+    assert.strictEqual(customAgents.length, 1);
+    assert.strictEqual(customAgents[0].name, 'code-reviewer');
+    assert.strictEqual(customAgents[0].model, 'sonnet');
+    assert.strictEqual(customAgents[0].scope, 'global');
+
+    // 3. Auto Memory
+    const fakeProjectPath = 'E:\\W-AI_WorkSpace\\demo_proj';
+    const memDir = resolveProjectMemoryDir(tempDir, fakeProjectPath);
+    assert.ok(memDir.includes(encodeProjectPath(fakeProjectPath)));
+
+    const createdFile = mgr.createMemoryEntry(memDir, {
+      name: 'Arch Rule',
+      description: 'Core architecture boundary rule',
+      type: 'project',
+      body: 'Always keep parser pure.',
+    });
+    assert.ok(fs.existsSync(createdFile));
+
+    const memInfo = mgr.getProjectMemories(fakeProjectPath);
+    assert.strictEqual(memInfo.hasIndex, true);
+    assert.strictEqual(memInfo.entries.length, 1);
+    assert.strictEqual(memInfo.entries[0].name, 'arch-rule');
+    assert.strictEqual(memInfo.entries[0].type, 'project');
+    assert.strictEqual(memInfo.entries[0].description, 'Core architecture boundary rule');
+
+    // Update memory entry metadata and verify MEMORY.md sync
+    assert.strictEqual(
+      mgr.updateMemoryEntryMeta(
+        createdFile,
+        { description: 'Updated boundary rule summary', type: 'feedback' },
+        memDir,
+      ),
+      true,
+    );
+    const updatedMem = mgr.getProjectMemories(fakeProjectPath);
+    assert.strictEqual(updatedMem.entries[0].type, 'feedback');
+    assert.strictEqual(updatedMem.entries[0].description, 'Updated boundary rule summary');
+    assert.ok(fs.readFileSync(updatedMem.indexFilePath, 'utf-8').includes('Updated boundary rule summary'));
+
+    // Sync memory index removes stale link and adds untracked file
+    fs.appendFileSync(updatedMem.indexFilePath, '- [ghost](ghost-file.md) — Stale link\n', 'utf-8');
+    const manualFile = path.join(memDir, 'manual-note.md');
+    fs.writeFileSync(
+      manualFile,
+      '---\nname: manual-note\ndescription: Manual note entry\nmetadata:\n  type: reference\n---\nBody\n',
+      'utf-8',
+    );
+    const syncRes = mgr.syncMemoryIndex(memDir);
+    assert.strictEqual(syncRes.removed, 1);
+    assert.strictEqual(syncRes.added, 1);
+    const syncedIndex = fs.readFileSync(updatedMem.indexFilePath, 'utf-8');
+    assert.ok(!syncedIndex.includes('ghost-file.md'));
+    assert.ok(syncedIndex.includes('(manual-note.md)'));
+
+    // Delete memory entry removes file and cleans MEMORY.md pointer line
+    assert.strictEqual(mgr.deleteMemoryEntry(createdFile, memDir), true);
+    assert.strictEqual(fs.existsSync(createdFile), false);
+    const afterDelete = mgr.getProjectMemories(fakeProjectPath);
+    assert.strictEqual(afterDelete.entries.length, 1);
+    assert.strictEqual(afterDelete.entries[0].name, 'manual-note');
+    assert.ok(!fs.readFileSync(afterDelete.indexFilePath, 'utf-8').includes('(arch-rule.md)'));
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('getWebviewContent includes Loop banner, Auto Memory, Plugins, Custom Agents, and Worktree controls', () => {
+  const html = getWebviewContent();
+  assert.ok(html.includes('id="loop-status-banner"'));
+  assert.ok(html.includes('function renderLoopBanner'));
+  assert.ok(html.includes('id="memory-list"'));
+  assert.ok(html.includes('id="plugins-list"'));
+  assert.ok(html.includes('id="custom-agents-list"'));
+  assert.ok(html.includes('data-action="togglePlugin"'));
+  assert.ok(html.includes('data-action="openMemoryIndex"'));
+  assert.ok(html.includes('data-action="createMemoryEntry"'));
+  assert.ok(html.includes('data-action="syncMemoryIndex"'));
+  assert.ok(html.includes('data-action="editMemoryEntry"'));
+  assert.ok(html.includes('data-action="deleteMemoryEntry"'));
+  assert.ok(html.includes('startWorktreeSession'));
+  assert.ok(html.includes('id="ext-category-tabs"'));
+  assert.ok(html.includes('id="ext-search-input"'));
+  assert.ok(html.includes('id="skill-scope-bar"'));
+  assert.ok(html.includes('data-action="setExtTab"'));
+  assert.ok(html.includes('data-action="setSkillScope"'));
+  assert.ok(html.includes('data-action="toggleSkillPluginGroup"'));
+  assert.ok(html.includes('data-action="filterPluginSkills"'));
+  assert.ok(html.includes('function renderExtensionsPanel'));
+  assert.ok(html.includes('id="memory-inline-form"'));
+  assert.ok(html.includes('id="mem-type-pills"'));
+  assert.ok(html.includes('data-action="selectMemType"'));
+  assert.ok(html.includes('data-action="submitMemoryForm"'));
+  assert.ok(html.includes('data-action="toggleExtGroup"'));
+  assert.ok(!html.includes('<select id="mem-form-type"'));
+  assert.ok(!html.includes('onclick="event.stopPropagation()"'));
+});
+
+test('parseFrontmatterFields supports YAML block scalar descriptions (>- and |) without returning raw indicator', () => {
+  const foldedFm = [
+    '---',
+    'name: code-map',
+    'description: >-',
+    '  Bootstrap and maintain a deterministic code map for any repository:',
+    '  tree-sitter/TypeScript symbol index rendered as Markdown pages.',
+    '---',
+    '# Body',
+  ].join('\n');
+  const parsedFolded = parseFrontmatterFields(foldedFm);
+  assert.strictEqual(parsedFolded.name, 'code-map');
+  assert.strictEqual(
+    parsedFolded.description,
+    'Bootstrap and maintain a deterministic code map for any repository: tree-sitter/TypeScript symbol index rendered as Markdown pages.',
+  );
+
+  const literalFm = [
+    '---',
+    'name: requirement-doc-writer',
+    'description: |',
+    '  把原始需求整理成公司统一排版的需求文档：',
+    '  项目说明→硬件→功能',
+    '---',
+  ].join('\n');
+  const parsedLiteral = parseFrontmatterFields(literalFm);
+  assert.strictEqual(parsedLiteral.name, 'requirement-doc-writer');
+  assert.ok(parsedLiteral.description.includes('把原始需求整理成公司统一排版的需求文档'));
+  assert.notStrictEqual(parsedLiteral.description, '|');
 });

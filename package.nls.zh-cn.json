@@ -77,5 +77,6 @@
   "config.modelAliases.desc": "可选：费用估算用的模型别名映射（别名 -> 规范价表 ID）。",
   "config.sessionListPageSize.desc": "Hub 会话列表每页条数（轻量分页虚拟化）。",
   "config.todoTools.enabled.desc": "可选：将 CLAUDE_CODE_ENABLE_TODO_TOOLS=1 与 CLAUDE_CODE_ENABLE_TASKS=1 写入工作区 .claude/settings.local.json，让新的 Claude Code 会话获得 TaskCreate/TaskUpdate/TaskList，包括 gpt 等未识别模型（仅环境变量，不安装 Hub hooks）。",
-  "command.toggleTodoTools": "切换官方 Task 工具（TaskCreate / TaskUpdate / TaskList）"
+  "command.toggleTodoTools": "切换官方 Task 工具（TaskCreate / TaskUpdate / TaskList）",
+  "command.startWorktreeSession": "在 Git Worktree 中启动 Claude 会话 (claude -w)"
 }

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -72,3 +73,56 @@ export function isPathInWorkspace(targetPath: string, workspaceFolders: string[]
     return normTarget === normWs || normTarget.startsWith(normWs + '/');
   });
 }
+
+export function encodeProjectPath(projectPath: string): string {
+  const trimmed = projectPath.trim().replace(/[\\/]+$/, '');
+  if (!trimmed) return 'default';
+  const winMatch = /^([a-zA-Z]):[\\/](.*)$/.exec(trimmed);
+  if (winMatch) {
+    const drive = winMatch[1].toLowerCase();
+    const rest = winMatch[2].replace(/[\\/_.:]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    return rest ? `${drive}--${rest}` : `${drive}--`;
+  }
+  const unixRest = trimmed.replace(/^\/+/, '').replace(/[\\/_.:]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return unixRest ? `-${unixRest}` : '-root';
+}
+
+export function resolveProjectMemoryDir(
+  configDir: string,
+  projectPath?: string,
+  sessionFile?: string,
+): string {
+  const projectsDir = getClaudeProjectsDir(configDir);
+  if (sessionFile) {
+    const sessionDir = path.dirname(sessionFile);
+    if (normalizePath(path.dirname(sessionDir)) === normalizePath(projectsDir)) {
+      return path.join(sessionDir, 'memory');
+    }
+  }
+
+  if (projectPath) {
+    const encoded = encodeProjectPath(projectPath);
+    if (fs.existsSync(projectsDir)) {
+      try {
+        const dirs = fs.readdirSync(projectsDir, { withFileTypes: true })
+          .filter((d) => d.isDirectory())
+          .map((d) => d.name);
+        const exact = dirs.find((d) => d.toLowerCase() === encoded.toLowerCase());
+        if (exact) {
+          return path.join(projectsDir, exact, 'memory');
+        }
+        const normTarget = normalizePath(projectPath);
+        const matched = dirs.find((d) => normalizePath(decodeProjectPath(d).fullPath) === normTarget);
+        if (matched) {
+          return path.join(projectsDir, matched, 'memory');
+        }
+      } catch {
+        // ignore read error
+      }
+    }
+    return path.join(projectsDir, encoded, 'memory');
+  }
+
+  return path.join(projectsDir, 'default', 'memory');
+}
+

@@ -4,30 +4,49 @@
 
 [Module](session-parser.md) · [Source](../../src/transcriptParser.ts) · page 5/5
 
-Source SHA-256: f540ab019f8079dae4d1e3dcfd23bcaa9119231272f5a894c52c270251a9da43
+Source SHA-256: b10dc57783e5704d0f5abad8586cb1dfaa0cd44a68b8aa69bce1c5cdf5d3130e
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| rl | VariableDeclaration | parseSubagentsDir | [1605](../../src/transcriptParser.ts#L1605) |
-| line | VariableDeclaration | parseSubagentsDir | [1610](../../src/transcriptParser.ts#L1610) |
-| trimmed | VariableDeclaration | parseSubagentsDir | [1611](../../src/transcriptParser.ts#L1611) |
-| row | VariableDeclaration | parseSubagentsDir | [1615](../../src/transcriptParser.ts#L1615) |
-| rowDate | VariableDeclaration | parseSubagentsDir | [1617](../../src/transcriptParser.ts#L1617) |
-| u | VariableDeclaration | parseSubagentsDir | [1624](../../src/transcriptParser.ts#L1624) |
-| inTok | VariableDeclaration | parseSubagentsDir | [1625](../../src/transcriptParser.ts#L1625) |
-| outTok | VariableDeclaration | parseSubagentsDir | [1626](../../src/transcriptParser.ts#L1626) |
-| cacheRead | VariableDeclaration | parseSubagentsDir | [1627](../../src/transcriptParser.ts#L1627) |
-| cacheCreate | VariableDeclaration | parseSubagentsDir | [1628](../../src/transcriptParser.ts#L1628) |
-| blk | VariableDeclaration | parseSubagentsDir | [1643](../../src/transcriptParser.ts#L1643) |
-| textBlock | VariableDeclaration | parseSubagentsDir | [1655](../../src/transcriptParser.ts#L1655) |
-| status | VariableDeclaration | parseSubagentsDir | [1671](../../src/transcriptParser.ts#L1671) |
-| durationMs | VariableDeclaration | parseSubagentsDir | [1689](../../src/transcriptParser.ts#L1689) |
-| name | VariableDeclaration | parseSubagentsDir | [1694](../../src/transcriptParser.ts#L1694) |
-| description | VariableDeclaration | parseSubagentsDir | [1695](../../src/transcriptParser.ts#L1695) |
-| cleanSnippet | VariableDeclaration | parseSubagentsDir | [1698](../../src/transcriptParser.ts#L1698) |
-| rootAgents | VariableDeclaration | parseSubagentsDir | [1733](../../src/transcriptParser.ts#L1733) |
-| childAgents | VariableDeclaration | parseSubagentsDir | [1734](../../src/transcriptParser.ts#L1734) |
-| ordered | VariableDeclaration | parseSubagentsDir | [1738](../../src/transcriptParser.ts#L1738) |
-| root | VariableDeclaration | parseSubagentsDir | [1739](../../src/transcriptParser.ts#L1739) |
-| children | VariableDeclaration | parseSubagentsDir | [1741](../../src/transcriptParser.ts#L1741) |
-| child | VariableDeclaration | parseSubagentsDir | [1747](../../src/transcriptParser.ts#L1747) |
+| parseSubagentsDir | FunctionDeclaration |  | [1693](../../src/transcriptParser.ts#L1693) |
+| entries | VariableDeclaration | parseSubagentsDir | [1701](../../src/transcriptParser.ts#L1701) |
+| metaFiles | VariableDeclaration | parseSubagentsDir | [1708](../../src/transcriptParser.ts#L1708) |
+| agents | VariableDeclaration | parseSubagentsDir | [1709](../../src/transcriptParser.ts#L1709) |
+| metaFile | VariableDeclaration | parseSubagentsDir | [1711](../../src/transcriptParser.ts#L1711) |
+| metaPath | VariableDeclaration | parseSubagentsDir | [1712](../../src/transcriptParser.ts#L1712) |
+| agentId | VariableDeclaration | parseSubagentsDir | [1713](../../src/transcriptParser.ts#L1713) |
+| jsonlPath | VariableDeclaration | parseSubagentsDir | [1714](../../src/transcriptParser.ts#L1714) |
+| meta | VariableDeclaration | parseSubagentsDir | [1716](../../src/transcriptParser.ts#L1716) |
+| content | VariableDeclaration | parseSubagentsDir | [1718](../../src/transcriptParser.ts#L1718) |
+| startTime | VariableDeclaration | parseSubagentsDir | [1724](../../src/transcriptParser.ts#L1724) |
+| lastTimestamp | VariableDeclaration | parseSubagentsDir | [1725](../../src/transcriptParser.ts#L1725) |
+| endTime | VariableDeclaration | parseSubagentsDir | [1726](../../src/transcriptParser.ts#L1726) |
+| lastStopReason | VariableDeclaration | parseSubagentsDir | [1727](../../src/transcriptParser.ts#L1727) |
+| promptSnippet | VariableDeclaration | parseSubagentsDir | [1728](../../src/transcriptParser.ts#L1728) |
+| toolCount | VariableDeclaration | parseSubagentsDir | [1729](../../src/transcriptParser.ts#L1729) |
+| totalTokens | VariableDeclaration | parseSubagentsDir | [1730](../../src/transcriptParser.ts#L1730) |
+| tokenUsage | VariableDeclaration | parseSubagentsDir | [1731](../../src/transcriptParser.ts#L1731) |
+| fileStream | VariableDeclaration | parseSubagentsDir | [1735](../../src/transcriptParser.ts#L1735) |
+| rl | VariableDeclaration | parseSubagentsDir | [1736](../../src/transcriptParser.ts#L1736) |
+| line | VariableDeclaration | parseSubagentsDir | [1741](../../src/transcriptParser.ts#L1741) |
+| trimmed | VariableDeclaration | parseSubagentsDir | [1742](../../src/transcriptParser.ts#L1742) |
+| row | VariableDeclaration | parseSubagentsDir | [1746](../../src/transcriptParser.ts#L1746) |
+| rowDate | VariableDeclaration | parseSubagentsDir | [1748](../../src/transcriptParser.ts#L1748) |
+| u | VariableDeclaration | parseSubagentsDir | [1755](../../src/transcriptParser.ts#L1755) |
+| inTok | VariableDeclaration | parseSubagentsDir | [1756](../../src/transcriptParser.ts#L1756) |
+| outTok | VariableDeclaration | parseSubagentsDir | [1757](../../src/transcriptParser.ts#L1757) |
+| cacheRead | VariableDeclaration | parseSubagentsDir | [1758](../../src/transcriptParser.ts#L1758) |
+| cacheCreate | VariableDeclaration | parseSubagentsDir | [1759](../../src/transcriptParser.ts#L1759) |
+| blk | VariableDeclaration | parseSubagentsDir | [1774](../../src/transcriptParser.ts#L1774) |
+| textBlock | VariableDeclaration | parseSubagentsDir | [1786](../../src/transcriptParser.ts#L1786) |
+| status | VariableDeclaration | parseSubagentsDir | [1802](../../src/transcriptParser.ts#L1802) |
+| durationMs | VariableDeclaration | parseSubagentsDir | [1820](../../src/transcriptParser.ts#L1820) |
+| name | VariableDeclaration | parseSubagentsDir | [1825](../../src/transcriptParser.ts#L1825) |
+| description | VariableDeclaration | parseSubagentsDir | [1826](../../src/transcriptParser.ts#L1826) |
+| cleanSnippet | VariableDeclaration | parseSubagentsDir | [1829](../../src/transcriptParser.ts#L1829) |
+| rootAgents | VariableDeclaration | parseSubagentsDir | [1864](../../src/transcriptParser.ts#L1864) |
+| childAgents | VariableDeclaration | parseSubagentsDir | [1865](../../src/transcriptParser.ts#L1865) |
+| ordered | VariableDeclaration | parseSubagentsDir | [1869](../../src/transcriptParser.ts#L1869) |
+| root | VariableDeclaration | parseSubagentsDir | [1870](../../src/transcriptParser.ts#L1870) |
+| children | VariableDeclaration | parseSubagentsDir | [1872](../../src/transcriptParser.ts#L1872) |
+| child | VariableDeclaration | parseSubagentsDir | [1878](../../src/transcriptParser.ts#L1878) |

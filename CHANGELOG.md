@@ -2,6 +2,22 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.19] - 2026-11-03
+
+### 中文
+
+- **扩展与记忆面板重构：** 新增顶部分类标签（`全部` / `⚡ 技能` / `🧩 插件` / `🔌 MCP` / `🧠 记忆` / `🤖 代理`）与实时关键字搜索框；五大子模块支持独立折叠/展开，空模块默认自动收起。
+- **技能与插件多条目优化：** 新增技能来源范围切换（`全部` / `本地` / `插件`）；插件提供的技能按插件分组折叠展示（默认收起，搜索或从插件卡片点击 `⚡ N skills` 时自动定位展开）；修复 `SKILL.md` 多行 YAML 块标量（`>-` / `|`）描述被解析为 `>-` 的问题。
+- **项目记忆（Auto Memory）完整管理：** 支持在面板内联表单（4 宫格分类胶囊 + 全宽输入行）或顶部向导中新建、编辑记忆条目，支持移除记忆文件并自动清理或一键同步 `MEMORY.md` 索引。
+- **插件、自定义代理、`/loop` 与 Worktree 支持：** 支持查看与启停已安装 Claude Plugins、浏览 `.claude/agents/*.md` 自定义代理、实时监控 `/loop`（`ScheduleWakeup` / `CronCreate`）倒计时状态，以及通过顶栏按钮或 `claudeHub.startWorktreeSession` 快速在 Git Worktree 中启动会话（`claude -w`）。
+
+### English
+
+- **Extensions & Memory panel redesign:** Added top category tabs (`All` / `Skills` / `Plugins` / `MCP` / `Memory` / `Agents`) and instant keyword search; each subsection is independently collapsible, and empty sections auto-collapse by default.
+- **Skills & Plugins scalability:** Added skill scope filter pills (`All` / `Local` / `Plugin`), collapsible per-plugin skill folders, and clickable `⚡ N skills` jump pills on plugin cards; fixed multi-line YAML block scalar (`>-` / `|`) descriptions in `SKILL.md`.
+- **Auto Memory lifecycle management:** Added an inline creation/editing form with a 4-pill category selector (`project` / `feedback` / `user` / `reference`), memory entry removal with automatic `MEMORY.md` cleanup, and one-click `MEMORY.md` index sync.
+- **Plugins, Custom Agents, `/loop`, and Worktree support:** Added installed Claude plugin toggles, custom agent discovery, live `/loop` (`ScheduleWakeup` / `CronCreate`) status banner, and `claudeHub.startWorktreeSession` (`claude -w`) quick launch.
+
 ## [0.2.18] - 2026-10-15
 
 ### 中文

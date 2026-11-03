@@ -1095,10 +1095,196 @@ export function getWebviewContent(): string {
     }
 
     /* Features / MCP / Skills */
+    .ext-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .ext-tabs-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .ext-tab-btn {
+      cursor: pointer;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+
+    .ext-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-main);
+    }
+
+    .ext-tab-btn.active {
+      background: rgba(224, 122, 95, 0.18);
+      border-color: rgba(224, 122, 95, 0.45);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .ext-tab-count {
+      font-size: 9px;
+      opacity: 0.8;
+      background: rgba(0, 0, 0, 0.22);
+      padding: 0 4px;
+      border-radius: 6px;
+    }
+
+    .ext-search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .ext-search-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 4px 22px 4px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      outline: none;
+    }
+
+    .ext-search-input:focus {
+      border-color: var(--claude-accent);
+    }
+
+    .ext-search-clear {
+      position: absolute;
+      right: 4px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 10px;
+      padding: 2px 4px;
+      line-height: 1;
+    }
+
+    .ext-search-clear:hover {
+      color: var(--text-main);
+    }
+
+    .ext-group {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.015);
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+
+    .ext-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .ext-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 8px;
+      cursor: pointer;
+      user-select: none;
+      background: rgba(255, 255, 255, 0.02);
+      gap: 6px;
+    }
+
+    .ext-group-header:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .ext-group-title {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      font-size: 11px;
+      min-width: 0;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .ext-group-title-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ext-group.collapsed .ext-group-header .caret {
+      transform: rotate(-90deg);
+    }
+
+    .ext-group-body {
+      padding: 6px 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .ext-group.collapsed .ext-group-body {
+      display: none;
+    }
+
+    .ext-group-badge {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+      font-weight: normal;
+      white-space: nowrap;
+    }
+
+    .ext-scope-pills {
+      display: inline-flex;
+      gap: 2px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 1px;
+      border-radius: 4px;
+    }
+
+    .ext-scope-pill {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .ext-scope-pill:hover {
+      color: var(--text-main);
+    }
+
+    .ext-scope-pill.active {
+      background: rgba(224, 122, 95, 0.22);
+      color: var(--claude-accent);
+      font-weight: 600;
+    }
+
     .feature-list {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+
+    #sec-extensions.single-tab-view .feature-list {
+      max-height: 360px;
     }
 
     .feature-item {
@@ -1106,9 +1292,246 @@ export function getWebviewContent(): string {
       justify-content: space-between;
       align-items: center;
       background: rgba(255, 255, 255, 0.03);
-      padding: 5px 8px;
+      padding: 4px 8px;
       border-radius: 4px;
       font-size: 11px;
+      gap: 6px;
+    }
+
+    .feature-item:hover {
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .skill-plugin-group {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.14);
+      overflow: hidden;
+    }
+
+    .skill-plugin-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 7px;
+      cursor: pointer;
+      font-size: 10.5px;
+      color: var(--text-main);
+      user-select: none;
+    }
+
+    .skill-plugin-group-header:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .skill-plugin-group.collapsed .skill-plugin-group-header .caret {
+      transform: rotate(-90deg);
+    }
+
+    .skill-plugin-group-body {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 4px 6px 6px 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .skill-plugin-group.collapsed .skill-plugin-group-body {
+      display: none;
+    }
+
+    .ext-more-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      font-size: 10px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .ext-more-btn:hover {
+      color: var(--text-main);
+      border-color: rgba(224, 122, 95, 0.4);
+      background: rgba(224, 122, 95, 0.08);
+    }
+
+    .ext-skill-jump-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: rgba(224, 122, 95, 0.14);
+      color: var(--claude-accent);
+      border: 1px solid rgba(224, 122, 95, 0.28);
+      border-radius: 8px;
+      padding: 0 5px;
+      font-size: 9px;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+
+    .ext-skill-jump-pill:hover {
+      background: rgba(224, 122, 95, 0.26);
+    }
+
+    .mem-item-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .mem-act-btn {
+      cursor: pointer;
+      font-size: 9.5px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .mem-act-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .mem-act-btn.primary {
+      color: var(--claude-accent);
+      border-color: rgba(224, 122, 95, 0.28);
+      background: rgba(224, 122, 95, 0.1);
+    }
+
+    .mem-act-btn.primary:hover {
+      background: rgba(224, 122, 95, 0.22);
+    }
+
+    .mem-act-btn.danger:hover {
+      color: var(--danger-color);
+      border-color: rgba(244, 71, 71, 0.45);
+      background: rgba(244, 71, 71, 0.14);
+    }
+
+    .mem-inline-form {
+      background: rgba(18, 20, 24, 0.75);
+      border: 1px solid rgba(224, 122, 95, 0.35);
+      border-radius: 6px;
+      padding: 8px 9px;
+      margin-bottom: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .mem-inline-form.visible {
+      display: flex;
+    }
+
+    .mem-inline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--claude-accent);
+    }
+
+    .mem-type-pills {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .mem-type-pill {
+      cursor: pointer;
+      font-size: 10px;
+      padding: 3px 4px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s ease;
+    }
+
+    .mem-type-pill:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-main);
+    }
+
+    .mem-type-pill.active[data-mem-type="project"] {
+      background: rgba(86, 156, 214, 0.2);
+      border-color: rgba(86, 156, 214, 0.55);
+      color: #9cdcfe;
+      font-weight: 600;
+    }
+
+    .mem-type-pill.active[data-mem-type="feedback"] {
+      background: rgba(204, 167, 0, 0.2);
+      border-color: rgba(204, 167, 0, 0.55);
+      color: var(--warning-color);
+      font-weight: 600;
+    }
+
+    .mem-type-pill.active[data-mem-type="user"] {
+      background: rgba(78, 201, 176, 0.2);
+      border-color: rgba(78, 201, 176, 0.55);
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    .mem-type-pill.active[data-mem-type="reference"] {
+      background: rgba(197, 134, 192, 0.2);
+      border-color: rgba(197, 134, 192, 0.55);
+      color: #c586c0;
+      font-weight: 600;
+    }
+
+    .mem-type-hint {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      line-height: 1.3;
+      padding: 0 1px;
+    }
+
+    .mem-inline-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .mem-inline-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    .mem-inline-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 4px;
+      padding: 4px 7px;
+      font-size: 11px;
+      outline: none;
+    }
+
+    .mem-inline-input:focus {
+      border-color: var(--claude-accent);
+    }
+
+    .mem-inline-input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .switch-btn {
@@ -1119,6 +1542,7 @@ export function getWebviewContent(): string {
       border: 1px solid rgba(255, 255, 255, 0.2);
       background: transparent;
       color: var(--text-muted);
+      flex-shrink: 0;
     }
 
     .switch-btn.on {
@@ -1491,6 +1915,7 @@ export function getWebviewContent(): string {
       <button class="icon-btn" type="button" data-i18n-title="tbSearch" title="" aria-label="" onclick="sendMessage(\'searchTranscript\')"><span class="icon-btn-icon" aria-hidden="true">🔍</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbCost" title="" aria-label="" onclick="sendMessage(\'workspaceCostReport\')"><span class="icon-btn-icon" aria-hidden="true">💵</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbTasks" title="" aria-label="" onclick="sendMessage(\'openBackgroundTasks\')"><span class="icon-btn-icon" aria-hidden="true">🧵</span><span class="icon-btn-text" data-role="label"></span></button>
+      <button class="icon-btn" type="button" data-i18n-title="tbWorktree" title="" aria-label="" onclick="sendMessage(\'startWorktreeSession\')"><span class="icon-btn-icon" aria-hidden="true">🌿</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" id="top-filter-btn" type="button" data-i18n-title="tbFilter" title="" aria-label="" onclick="sendMessage(\'toggleFilter\')"><span class="icon-btn-icon" aria-hidden="true">📁</span><span class="icon-btn-text" data-role="label"></span></button>
     </div>
   </div>
@@ -1543,6 +1968,19 @@ export function getWebviewContent(): string {
           <span id="running-tool-target" style="opacity: 0.8; margin-left: 4px;"></span>
         </div>
         <span id="running-tool-dur" class="status-pill">0s</span>
+      </div>
+
+      <!-- Loop Status Banner (Auto hidden when no loop in session) -->
+      <div id="loop-status-banner" class="running-bar" style="display: none; flex-direction: column; align-items: stretch; gap: 3px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span id="loop-status-icon">🔁</span>
+            <strong id="loop-mode-label" style="color: var(--claude-accent);">Loop</strong>
+            <span id="loop-meta-chips" style="opacity: 0.85; margin-left: 4px; font-size: 10px;"></span>
+          </div>
+          <span id="loop-countdown-pill" class="status-pill">--</span>
+        </div>
+        <div id="loop-reason-line" style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none;"></div>
       </div>
 
       <!-- Tasks Checklist (Auto collapsed when empty, collapsible header) -->
@@ -1649,27 +2087,153 @@ export function getWebviewContent(): string {
     </div>
   </div>
 
-  <!-- SECTION 3: 扩展能力 MCP & Skills (默认收起) -->
+  <!-- SECTION 3: 扩展能力 MCP, Plugins, Skills & Memory (默认收起) -->
   <div class="section-wrap collapsed" id="sec-extensions">
     <div class="section-header" onclick="toggleSection('sec-extensions')">
       <span class="section-header-title">
         <span class="caret">▼</span>
-        <span>🧩 扩展能力<span class="header-sub"> (MCP &amp; Skills)</span></span>
+        <span>🧩 扩展与记忆<span class="header-sub"> (Memory · Plugins · MCP · Skills)</span></span>
       </span>
       <span id="ext-count-badge" class="status-pill">0 项</span>
     </div>
     <div class="section-body">
 
+      <!-- 分类切换与快速搜索栏 -->
+      <div class="ext-toolbar">
+        <div class="ext-tabs-row" id="ext-category-tabs">
+          <button type="button" class="ext-tab-btn active" data-action="setExtTab" data-ext-tab="all">全部</button>
+          <button type="button" class="ext-tab-btn" data-action="setExtTab" data-ext-tab="skills">⚡ 技能 <span class="ext-tab-count" id="ext-tab-count-skills">0</span></button>
+          <button type="button" class="ext-tab-btn" data-action="setExtTab" data-ext-tab="plugins">🧩 插件 <span class="ext-tab-count" id="ext-tab-count-plugins">0</span></button>
+          <button type="button" class="ext-tab-btn" data-action="setExtTab" data-ext-tab="mcp">🔌 MCP <span class="ext-tab-count" id="ext-tab-count-mcp">0</span></button>
+          <button type="button" class="ext-tab-btn" data-action="setExtTab" data-ext-tab="memory">🧠 记忆 <span class="ext-tab-count" id="ext-tab-count-memory">0</span></button>
+          <button type="button" class="ext-tab-btn" data-action="setExtTab" data-ext-tab="agents">🤖 代理 <span class="ext-tab-count" id="ext-tab-count-agents">0</span></button>
+        </div>
+        <div class="ext-search-wrap">
+          <input type="text" id="ext-search-input" class="ext-search-input" placeholder="🔍 搜索技能、插件、MCP 或记忆..." oninput="onExtSearchInput(this.value)" />
+          <button type="button" id="ext-search-clear" class="ext-search-clear" onclick="clearExtSearch()" title="清空搜索" style="display: none;">✕</button>
+        </div>
+      </div>
+
+      <!-- Auto Memory -->
+      <div class="ext-group" id="ext-group-memory" data-ext-group="memory">
+        <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="memory">
+          <span class="ext-group-title">
+            <span class="caret">▼</span>
+            <span class="ext-group-title-text">🧠 项目记忆<span class="header-sub"> (Memory)</span></span>
+            <span class="ext-group-badge" id="ext-badge-memory">0</span>
+          </span>
+          <div style="display: flex; gap: 3px; flex-shrink: 0;">
+            <button class="icon-btn" type="button" style="font-size: 9.5px; padding: 1px 5px;" data-action="openMemoryIndex" title="打开或初始化项目的 MEMORY.md 索引">MEMORY.md</button>
+            <button class="icon-btn" type="button" style="font-size: 9.5px; padding: 1px 5px;" data-action="syncMemoryIndex" title="同步 MEMORY.md 索引（清理已删除文件引用并补全未登记条目）">🔄<span class="header-sub"> 同步</span></button>
+            <button class="icon-btn" type="button" style="font-size: 9.5px; padding: 1px 6px; color: var(--claude-accent); border-color: rgba(224,122,95,0.3);" data-action="createMemoryEntry" title="新建结构化项目记忆条目">+ 新建</button>
+          </div>
+        </div>
+        <div class="ext-group-body">
+          <div id="memory-inline-form" class="mem-inline-form">
+            <div class="mem-inline-header">
+              <span id="mem-form-title">➕ 新建项目记忆</span>
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <button type="button" class="mem-act-btn" data-action="openMemoryWizard" id="mem-form-wizard-btn" title="使用 VS Code 顶部命令面板输入框创建">顶部向导</button>
+                <button type="button" class="mem-act-btn" data-action="cancelMemoryForm" title="关闭表单">✕</button>
+              </div>
+            </div>
+            <input type="hidden" id="mem-form-type" value="project" />
+            <div class="mem-inline-field">
+              <span class="mem-inline-label">记忆分类 (Type)</span>
+              <div class="mem-type-pills" id="mem-type-pills">
+                <button type="button" class="mem-type-pill active" data-action="selectMemType" data-mem-type="project" title="project: 项目架构约束、进行中目标或非显而易见的约定">📁 项目约定</button>
+                <button type="button" class="mem-type-pill" data-action="selectMemType" data-mem-type="feedback" title="feedback: 开发协作纠偏、用户确认的工作方式">💬 协作纠偏</button>
+                <button type="button" class="mem-type-pill" data-action="selectMemType" data-mem-type="user" title="user: 用户角色、技术偏好与沟通习惯">👤 用户偏好</button>
+                <button type="button" class="mem-type-pill" data-action="selectMemType" data-mem-type="reference" title="reference: 外部文档、看板、工单或服务地址索引">🔗 外部参考</button>
+              </div>
+              <div class="mem-type-hint" id="mem-type-hint">记录项目架构约束、进行中目标或非显而易见的约定</div>
+            </div>
+            <div class="mem-inline-field">
+              <span class="mem-inline-label">文件标识 (Slug)</span>
+              <input type="text" id="mem-form-slug" class="mem-inline-input" placeholder="例如：build-quirks 或 arch-rule" onkeydown="if(event.key==='Enter'){submitMemoryInlineForm();}else if(event.key==='Escape'){closeMemoryInlineForm();}" />
+            </div>
+            <div class="mem-inline-field">
+              <span class="mem-inline-label">一句话摘要（写入 MEMORY.md 索引）</span>
+              <input type="text" id="mem-form-desc" class="mem-inline-input" placeholder="简明描述该条记忆的适用场景..." onkeydown="if(event.key==='Enter'){submitMemoryInlineForm();}else if(event.key==='Escape'){closeMemoryInlineForm();}" />
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 2px;">
+              <button type="button" class="mem-act-btn" style="padding: 3px 10px; font-size: 10px;" data-action="cancelMemoryForm">取消</button>
+              <button type="button" class="mem-act-btn primary" style="padding: 3px 10px; font-size: 10px; font-weight: 600;" data-action="submitMemoryForm" id="mem-form-submit-btn">保存并打开</button>
+            </div>
+          </div>
+          <div id="memory-list" class="feature-list">
+            <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plugins -->
+      <div class="ext-group" id="ext-group-plugins" data-ext-group="plugins">
+        <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="plugins">
+          <span class="ext-group-title">
+            <span class="caret">▼</span>
+            <span class="ext-group-title-text">🧩 已安装插件<span class="header-sub"> (Plugins)</span></span>
+            <span class="ext-group-badge" id="ext-badge-plugins">0</span>
+          </span>
+        </div>
+        <div class="ext-group-body">
+          <div id="plugins-list" class="feature-list">
+            <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- MCP Servers -->
-      <div style="font-weight: 600; font-size: 11px; margin-bottom: 4px;">🔌 MCP 服务器</div>
-      <div id="mcp-servers-list" class="feature-list" style="margin-bottom: 10px;">
-        <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+      <div class="ext-group" id="ext-group-mcp" data-ext-group="mcp">
+        <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="mcp">
+          <span class="ext-group-title">
+            <span class="caret">▼</span>
+            <span class="ext-group-title-text">🔌 MCP 服务器</span>
+            <span class="ext-group-badge" id="ext-badge-mcp">0</span>
+          </span>
+        </div>
+        <div class="ext-group-body">
+          <div id="mcp-servers-list" class="feature-list">
+            <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Agents -->
+      <div class="ext-group" id="ext-group-agents" data-ext-group="agents">
+        <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="agents">
+          <span class="ext-group-title">
+            <span class="caret">▼</span>
+            <span class="ext-group-title-text">🤖 自定义代理<span class="header-sub"> (Agents)</span></span>
+            <span class="ext-group-badge" id="ext-badge-agents">0</span>
+          </span>
+        </div>
+        <div class="ext-group-body">
+          <div id="custom-agents-list" class="feature-list">
+            <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+          </div>
+        </div>
       </div>
 
       <!-- Skills -->
-      <div style="font-weight: 600; font-size: 11px; margin-bottom: 4px;">⚡ 已安装技能 (Skills)</div>
-      <div id="skills-list" class="feature-list">
-        <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+      <div class="ext-group" id="ext-group-skills" data-ext-group="skills">
+        <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="skills">
+          <span class="ext-group-title">
+            <span class="caret">▼</span>
+            <span class="ext-group-title-text">⚡ 已安装技能<span class="header-sub"> (Skills)</span></span>
+            <span class="ext-group-badge" id="ext-badge-skills">0</span>
+          </span>
+          <div class="ext-scope-pills" id="skill-scope-bar">
+            <button type="button" class="ext-scope-pill active" data-action="setSkillScope" data-skill-scope="all" id="skill-scope-all">全部</button>
+            <button type="button" class="ext-scope-pill" data-action="setSkillScope" data-skill-scope="local" id="skill-scope-local">本地</button>
+            <button type="button" class="ext-scope-pill" data-action="setSkillScope" data-skill-scope="plugin" id="skill-scope-plugin">插件</button>
+          </div>
+        </div>
+        <div class="ext-group-body">
+          <div id="skills-list" class="feature-list">
+            <div style="color: var(--text-muted); font-size: 11px;">加载中...</div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -1754,7 +2318,7 @@ export function getWebviewContent(): string {
       if (typeof ui.chipDone === 'string') hubUiStrings.chipDone = ui.chipDone;
       if (typeof ui.expand === 'string') hubUiStrings.expand = ui.expand;
       if (typeof ui.collapse === 'string') hubUiStrings.collapse = ui.collapse;
-      const copyKeys = ['tbRefresh','tbRefreshShort','tbSlash','tbSearch','tbCost','tbTasks','tbFilter','tbFilterWs','tbFilterAll','tbFilterWsShort','tbFilterAllShort','todoToolsTitle','todoToolsToggle','todoToolsCaveat','todoToolsOn','todoToolsOff','todoToolsEffectiveOn','todoToolsEffectiveOff','todoToolsObserved','todoToolsHooksNote','hubTodosTitle','hubTodosHint','clearHideOnly','pickList','needsList','creating','depends','blocks','sourceNative','sourceTasks','sourceTodoWrite','sourcePlan','sourceMarkdown','sourceNone','listId','optInHint','modeTask','modeChecklist','modeNone','checklistAlso','checklistHidden'];
+      const copyKeys = ['tbRefresh','tbRefreshShort','tbSlash','tbSearch','tbCost','tbTasks','tbWorktree','tbFilter','tbFilterWs','tbFilterAll','tbFilterWsShort','tbFilterAllShort','todoToolsTitle','todoToolsToggle','todoToolsCaveat','todoToolsOn','todoToolsOff','todoToolsEffectiveOn','todoToolsEffectiveOff','todoToolsObserved','todoToolsHooksNote','hubTodosTitle','hubTodosHint','clearHideOnly','pickList','needsList','creating','depends','blocks','sourceNative','sourceTasks','sourceTodoWrite','sourcePlan','sourceMarkdown','sourceNone','listId','optInHint','modeTask','modeChecklist','modeNone','checklistAlso','checklistHidden'];
       for (const k of copyKeys) { if (typeof ui[k] === 'string') hubUiStrings[k] = ui[k]; }
       const titleEl = document.getElementById('todos-title-label');
       if (titleEl && hubUiStrings.hubTodosTitle) {
@@ -2167,7 +2731,8 @@ export function getWebviewContent(): string {
       }
     }
 
-    function toggleAgentDetail(detailId, agentKey) {
+    function toggleAgentDetail(detailId, agentKey, ev) {
+      if (ev && ev.target instanceof Element && ev.target.closest('[data-action]')) return;
       const el = document.getElementById(detailId);
       if (!el) return;
       const isHidden = (el.style.display === 'none' || !el.style.display);
@@ -2211,8 +2776,33 @@ export function getWebviewContent(): string {
         sendMessage(action, { sessionId: actionElement.getAttribute('data-session-id') || '' });
       } else if (action === 'openWorktree') {
         sendMessage(action, { worktreePath: actionElement.getAttribute('data-worktree-path') || '' });
-      } else if (action === 'slashCommand' || action === 'workspaceCostReport' || action === 'searchTranscript' || action === 'openBackgroundTasks') {
+      } else if (action === 'slashCommand' || action === 'workspaceCostReport' || action === 'searchTranscript' || action === 'openBackgroundTasks' || action === 'openMemoryIndex' || action === 'syncMemoryIndex' || action === 'startWorktreeSession') {
         sendMessage(action, {});
+      } else if (action === 'createMemoryEntry') {
+        openMemoryInlineForm('create');
+      } else if (action === 'openMemoryWizard') {
+        closeMemoryInlineForm();
+        sendMessage('createMemoryEntry', {});
+      } else if (action === 'submitMemoryForm') {
+        submitMemoryInlineForm();
+      } else if (action === 'cancelMemoryForm') {
+        closeMemoryInlineForm();
+      } else if (action === 'selectMemType') {
+        selectMemoryFormType(actionElement.getAttribute('data-mem-type') || 'project');
+      } else if (action === 'deleteMemoryEntry') {
+        sendMessage(action, {
+          filePath: actionElement.getAttribute('data-file-path') || '',
+          name: actionElement.getAttribute('data-memory-name') || ''
+        });
+      } else if (action === 'editMemoryEntry') {
+        openMemoryInlineForm('edit', {
+          filePath: actionElement.getAttribute('data-file-path') || '',
+          name: actionElement.getAttribute('data-memory-name') || '',
+          description: actionElement.getAttribute('data-memory-desc') || '',
+          memoryType: actionElement.getAttribute('data-memory-type') || 'project'
+        });
+      } else if (action === 'toggleExtGroup') {
+        toggleExtGroup(actionElement.getAttribute('data-ext-group') || '');
       } else if (action === 'openSessionFile') {
         sendMessage(action, { filePath: actionElement.getAttribute('data-file-path') || '' });
       } else if (action === 'toggleMcp') {
@@ -2220,10 +2810,572 @@ export function getWebviewContent(): string {
           name: actionElement.getAttribute('data-name') || '',
           enabled: actionElement.getAttribute('data-enabled') === 'true'
         });
+      } else if (action === 'togglePlugin') {
+        sendMessage(action, {
+          id: actionElement.getAttribute('data-id') || '',
+          enabled: actionElement.getAttribute('data-enabled') === 'true'
+        });
       } else if (action === 'openSkill') {
         sendMessage(action, { filePath: actionElement.getAttribute('data-file-path') || '' });
+      } else if (action === 'setExtTab') {
+        setExtTab(actionElement.getAttribute('data-ext-tab') || 'all');
+      } else if (action === 'setSkillScope') {
+        setSkillScope(actionElement.getAttribute('data-skill-scope') || 'all');
+      } else if (action === 'toggleMorePlugins') {
+        extShowAllPlugins = !extShowAllPlugins;
+        renderExtensionsPanel();
+      } else if (action === 'toggleMoreLocalSkills') {
+        extShowAllLocalSkills = !extShowAllLocalSkills;
+        renderExtensionsPanel();
+      } else if (action === 'toggleSkillPluginGroup') {
+        const grp = actionElement.getAttribute('data-plugin-group') || '';
+        if (grp) {
+          if (expandedPluginSkillGroups.has(grp)) {
+            expandedPluginSkillGroups.delete(grp);
+          } else {
+            expandedPluginSkillGroups.add(grp);
+          }
+          renderExtensionsPanel();
+        }
+      } else if (action === 'filterPluginSkills') {
+        const pluginName = actionElement.getAttribute('data-plugin-name') || '';
+        if (pluginName) {
+          if (extActiveTab !== 'all' && extActiveTab !== 'skills') {
+            extActiveTab = 'skills';
+          }
+          extGroupManualState['skills'] = false;
+          if (extSkillScope === 'local') {
+            extSkillScope = 'all';
+          }
+          expandedPluginSkillGroups.add(pluginName);
+          renderExtensionsPanel();
+          const grpEl = document.getElementById('skill-plugin-grp-' + pluginName.replace(/[^a-zA-Z0-9_-]/g, '_'));
+          if (grpEl && grpEl.scrollIntoView) {
+            grpEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
       }
     });
+
+    // Extensions & Memory State
+    let extData = {
+      projectMemory: null,
+      plugins: [],
+      mcpServers: [],
+      customAgents: [],
+      skills: []
+    };
+    let extActiveTab = 'all';
+    let extSearchQuery = '';
+    let extSkillScope = 'all';
+    let extShowAllPlugins = false;
+    let extShowAllLocalSkills = false;
+    const extGroupManualState = {};
+    const expandedPluginSkillGroups = new Set();
+
+    function setExtTab(tab) {
+      extActiveTab = tab || 'all';
+      renderExtensionsPanel();
+    }
+
+    function setSkillScope(scope) {
+      extSkillScope = scope || 'all';
+      renderExtensionsPanel();
+    }
+
+    function onExtSearchInput(val) {
+      extSearchQuery = String(val || '');
+      const clearBtn = document.getElementById('ext-search-clear');
+      if (clearBtn) {
+        clearBtn.style.display = extSearchQuery.trim() ? 'block' : 'none';
+      }
+      renderExtensionsPanel();
+    }
+
+    function clearExtSearch() {
+      extSearchQuery = '';
+      const inputEl = document.getElementById('ext-search-input');
+      if (inputEl) inputEl.value = '';
+      const clearBtn = document.getElementById('ext-search-clear');
+      if (clearBtn) clearBtn.style.display = 'none';
+      renderExtensionsPanel();
+    }
+
+    let memFormMode = 'create';
+    let memEditingFilePath = '';
+    const memTypeHints = {
+      project: '记录项目架构约束、进行中目标或非显而易见的约定',
+      feedback: '记录开发协作纠偏、用户确认的工作方式（含 Why / How to apply）',
+      user: '记录用户角色、技术偏好与沟通习惯',
+      reference: '记录外部文档、看板、工单或服务地址索引'
+    };
+
+    function selectMemoryFormType(memType) {
+      const validType = (memType === 'feedback' || memType === 'user' || memType === 'reference') ? memType : 'project';
+      const typeEl = document.getElementById('mem-form-type');
+      if (typeEl) typeEl.value = validType;
+      const pillsWrap = document.getElementById('mem-type-pills');
+      if (pillsWrap) {
+        pillsWrap.querySelectorAll('.mem-type-pill').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-mem-type') === validType);
+        });
+      }
+      const hintEl = document.getElementById('mem-type-hint');
+      if (hintEl) {
+        hintEl.textContent = memTypeHints[validType] || memTypeHints.project;
+      }
+    }
+
+    function openMemoryInlineForm(mode, data) {
+      memFormMode = mode === 'edit' ? 'edit' : 'create';
+      memEditingFilePath = (data && data.filePath) ? String(data.filePath) : '';
+      extGroupManualState['memory'] = false;
+
+      const formEl = document.getElementById('memory-inline-form');
+      const titleEl = document.getElementById('mem-form-title');
+      const wizardBtn = document.getElementById('mem-form-wizard-btn');
+      const slugEl = document.getElementById('mem-form-slug');
+      const descEl = document.getElementById('mem-form-desc');
+      const submitBtn = document.getElementById('mem-form-submit-btn');
+
+      if (!formEl) return;
+      formEl.classList.add('visible');
+
+      if (memFormMode === 'edit') {
+        if (titleEl) titleEl.textContent = '✏️ 编辑记忆：' + ((data && data.name) || '');
+        if (wizardBtn) wizardBtn.style.display = 'none';
+        selectMemoryFormType((data && data.memoryType) || 'project');
+        if (slugEl) {
+          slugEl.value = (data && data.name) || '';
+          slugEl.disabled = true;
+          slugEl.style.borderColor = '';
+        }
+        if (descEl) descEl.value = (data && data.description) || '';
+        if (submitBtn) submitBtn.textContent = '保存修改';
+        renderExtensionsPanel();
+        if (descEl) descEl.focus();
+      } else {
+        if (titleEl) titleEl.textContent = '➕ 新建项目记忆';
+        if (wizardBtn) wizardBtn.style.display = 'inline-block';
+        selectMemoryFormType('project');
+        if (slugEl) {
+          slugEl.value = '';
+          slugEl.disabled = false;
+          slugEl.style.borderColor = '';
+        }
+        if (descEl) descEl.value = '';
+        if (submitBtn) submitBtn.textContent = '保存并打开';
+        renderExtensionsPanel();
+        if (slugEl) slugEl.focus();
+      }
+    }
+
+    function closeMemoryInlineForm() {
+      const formEl = document.getElementById('memory-inline-form');
+      if (formEl) formEl.classList.remove('visible');
+      memEditingFilePath = '';
+      renderExtensionsPanel();
+    }
+
+    function submitMemoryInlineForm() {
+      const typeEl = document.getElementById('mem-form-type');
+      const slugEl = document.getElementById('mem-form-slug');
+      const descEl = document.getElementById('mem-form-desc');
+      const memoryType = typeEl ? typeEl.value : 'project';
+      const slug = slugEl ? slugEl.value.trim() : '';
+      const description = descEl ? descEl.value.trim() : '';
+
+      if (memFormMode === 'edit' && memEditingFilePath) {
+        sendMessage('editMemoryEntry', {
+          filePath: memEditingFilePath,
+          name: slug,
+          description: description || slug,
+          memoryType,
+          directSave: true
+        });
+        closeMemoryInlineForm();
+        return;
+      }
+
+      if (!slug) {
+        if (slugEl) {
+          slugEl.style.borderColor = 'var(--danger-color)';
+          slugEl.focus();
+        }
+        return;
+      }
+      if (slugEl) slugEl.style.borderColor = '';
+      sendMessage('createMemoryEntry', {
+        slug,
+        name: slug,
+        description: description || slug,
+        memoryType
+      });
+      closeMemoryInlineForm();
+    }
+
+    function toggleExtGroup(groupKey) {
+      if (!groupKey) return;
+      const el = document.getElementById('ext-group-' + groupKey);
+      if (!el) return;
+      const nextCollapsed = !el.classList.contains('collapsed');
+      extGroupManualState[groupKey] = nextCollapsed;
+      renderExtensionsPanel();
+    }
+
+    function renderSkillItemHtml(sk, inPluginGroup) {
+      const skillPath = sk.filePath || sk.path || '';
+      const rawName = String(sk.name || '');
+      const displayName = (inPluginGroup && rawName.indexOf(':') > -1)
+        ? rawName.split(':').slice(1).join(':')
+        : rawName;
+      let scopeChip = '';
+      if (sk.scope === 'workspace') {
+        scopeChip = '<span style="background: rgba(78,201,176,0.18); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-right: 4px;">workspace</span>';
+      } else if (sk.scope === 'plugin') {
+        scopeChip = '<span style="background: rgba(197,134,192,0.16); color: #c586c0; font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-right: 4px;">plugin</span>';
+      } else if (sk.scope) {
+        scopeChip = '<span style="background: rgba(224,122,95,0.15); color: var(--claude-accent); font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-right: 4px;">' + escapeHtml(sk.scope) + '</span>';
+      }
+      const desc = sk.description || '无描述';
+      const tooltip = rawName + (sk.description ? ' — ' + sk.description : '');
+      return '<div class="feature-item" style="cursor: pointer;" data-action="openSkill" data-file-path="' + escapeAttribute(skillPath) + '" title="' + escapeAttribute(tooltip) + '">' +
+        '<div style="min-width: 0; flex: 1;">' +
+          '<div style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + scopeChip + escapeHtml(displayName) + '</div>' +
+          '<div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(desc) + '</div>' +
+        '</div>' +
+        '<span style="font-size: 10px; color: var(--claude-accent); margin-left: 6px; flex-shrink: 0;">查看</span>' +
+      '</div>';
+    }
+
+    function renderExtensionsPanel() {
+      const q = extSearchQuery.trim().toLowerCase();
+      const memInfo = extData.projectMemory || null;
+      const allMemEntries = (memInfo && Array.isArray(memInfo.entries)) ? memInfo.entries : [];
+      const allPlugins = Array.isArray(extData.plugins) ? extData.plugins : [];
+      const allMcp = Array.isArray(extData.mcpServers) ? extData.mcpServers : [];
+      const allAgents = Array.isArray(extData.customAgents) ? extData.customAgents : [];
+      const allSkills = Array.isArray(extData.skills) ? extData.skills : [];
+
+      const memEntries = q ? allMemEntries.filter(m =>
+        String(m.name || '').toLowerCase().includes(q) ||
+        String(m.description || '').toLowerCase().includes(q) ||
+        String(m.type || '').toLowerCase().includes(q)
+      ) : allMemEntries;
+
+      const plugins = q ? allPlugins.filter(p =>
+        String(p.name || '').toLowerCase().includes(q) ||
+        String(p.marketplace || '').toLowerCase().includes(q) ||
+        String(p.description || '').toLowerCase().includes(q)
+      ) : allPlugins;
+
+      const mcpServers = q ? allMcp.filter(s =>
+        String(s.name || '').toLowerCase().includes(q) ||
+        String(s.command || '').toLowerCase().includes(q) ||
+        String(s.url || '').toLowerCase().includes(q)
+      ) : allMcp;
+
+      const customAgents = q ? allAgents.filter(ag =>
+        String(ag.name || '').toLowerCase().includes(q) ||
+        String(ag.description || '').toLowerCase().includes(q) ||
+        String(ag.scope || '').toLowerCase().includes(q) ||
+        String(ag.model || '').toLowerCase().includes(q)
+      ) : allAgents;
+
+      const skillsMatchedSearch = q ? allSkills.filter(sk =>
+        String(sk.name || '').toLowerCase().includes(q) ||
+        String(sk.description || '').toLowerCase().includes(q) ||
+        String(sk.scope || '').toLowerCase().includes(q) ||
+        String(sk.pluginId || '').toLowerCase().includes(q)
+      ) : allSkills;
+
+      // Update Top Category Tabs & Badges
+      const secExt = document.getElementById('sec-extensions');
+      if (secExt) {
+        secExt.classList.toggle('single-tab-view', extActiveTab !== 'all');
+      }
+      const tabCounts = {
+        skills: q ? skillsMatchedSearch.length : allSkills.length,
+        plugins: q ? plugins.length : allPlugins.length,
+        mcp: q ? mcpServers.length : allMcp.length,
+        memory: q ? memEntries.length : allMemEntries.length,
+        agents: q ? customAgents.length : allAgents.length
+      };
+      ['skills', 'plugins', 'mcp', 'memory', 'agents'].forEach(k => {
+        const el = document.getElementById('ext-tab-count-' + k);
+        if (el) el.textContent = String(tabCounts[k]);
+      });
+      const tabContainer = document.getElementById('ext-category-tabs');
+      if (tabContainer) {
+        tabContainer.querySelectorAll('.ext-tab-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-ext-tab') === extActiveTab);
+        });
+      }
+
+      // Group visibility & collapse states
+      const groupCounts = {
+        memory: memEntries.length,
+        plugins: plugins.length,
+        mcp: mcpServers.length,
+        agents: customAgents.length,
+        skills: skillsMatchedSearch.length
+      };
+      const rawCounts = {
+        memory: allMemEntries.length,
+        plugins: allPlugins.length,
+        mcp: allMcp.length,
+        agents: allAgents.length,
+        skills: allSkills.length
+      };
+
+      ['memory', 'plugins', 'mcp', 'agents', 'skills'].forEach(key => {
+        const grpEl = document.getElementById('ext-group-' + key);
+        if (!grpEl) return;
+        if (extActiveTab !== 'all') {
+          grpEl.style.display = (extActiveTab === key) ? 'block' : 'none';
+          grpEl.classList.remove('collapsed');
+        } else if (q) {
+          grpEl.style.display = (groupCounts[key] > 0) ? 'block' : 'none';
+          grpEl.classList.remove('collapsed');
+        } else {
+          grpEl.style.display = 'block';
+          const manual = extGroupManualState[key];
+          const shouldCollapse = (typeof manual === 'boolean') ? manual : (rawCounts[key] === 0 && key !== 'memory');
+          grpEl.classList.toggle('collapsed', shouldCollapse);
+        }
+      });
+
+      // Sub-header badges
+      const memBadge = document.getElementById('ext-badge-memory');
+      if (memBadge) memBadge.textContent = memEntries.length + ' 项';
+
+      const enabledPluginsCount = plugins.filter(p => p.enabled === true || p.isEnabled === true).length;
+      const plugBadge = document.getElementById('ext-badge-plugins');
+      if (plugBadge) {
+        plugBadge.textContent = plugins.length > 0 ? (enabledPluginsCount + '/' + plugins.length + ' ON') : '0';
+      }
+
+      const enabledMcpCount = mcpServers.filter(s => s.isEnabled === true || s.enabled === true).length;
+      const mcpBadge = document.getElementById('ext-badge-mcp');
+      if (mcpBadge) {
+        mcpBadge.textContent = mcpServers.length > 0 ? (enabledMcpCount + '/' + mcpServers.length + ' ON') : '0';
+      }
+
+      const agBadge = document.getElementById('ext-badge-agents');
+      if (agBadge) agBadge.textContent = String(customAgents.length);
+
+      // 1. Memory List
+      const memoryList = document.getElementById('memory-list');
+      if (memoryList) {
+        if (memEntries.length > 0) {
+          memoryList.innerHTML = memEntries.map(m => {
+            const mType = m.type || 'project';
+            let badgeStyle = 'background: rgba(86,156,214,0.18); color: #9cdcfe;';
+            if (mType === 'feedback') badgeStyle = 'background: rgba(204,167,0,0.18); color: var(--warning-color);';
+            else if (mType === 'user') badgeStyle = 'background: rgba(78,201,176,0.18); color: var(--success-color);';
+            else if (mType === 'reference') badgeStyle = 'background: rgba(197,134,192,0.18); color: #c586c0;';
+            const typeBadge = '<span style="' + badgeStyle + ' font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-right: 4px;">' + escapeHtml(mType) + '</span>';
+            const filePathAttr = escapeAttribute(m.filePath || '');
+            const nameAttr = escapeAttribute(m.name || m.slug || '');
+            const descText = m.description || m.fileName || '';
+            const descAttr = escapeAttribute(descText);
+            const typeAttr = escapeAttribute(mType);
+            return '<div class="feature-item" style="cursor: pointer;" data-action="openSkill" data-file-path="' + filePathAttr + '" title="' + escapeAttribute((m.name || '') + (descText ? ' — ' + descText : '')) + '">' +
+              '<div style="min-width: 0; flex: 1;">' +
+                '<div style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + typeBadge + escapeHtml(m.name) + '</div>' +
+                '<div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(descText) + '</div>' +
+              '</div>' +
+              '<div class="mem-item-actions">' +
+                '<button type="button" class="mem-act-btn primary" data-action="openSkill" data-file-path="' + filePathAttr + '" title="在编辑器中打开记忆文件">打开</button>' +
+                '<button type="button" class="mem-act-btn" data-action="editMemoryEntry" data-file-path="' + filePathAttr + '" data-memory-name="' + nameAttr + '" data-memory-desc="' + descAttr + '" data-memory-type="' + typeAttr + '" title="修改记忆分类与摘要并同步 MEMORY.md">编辑</button>' +
+                '<button type="button" class="mem-act-btn danger" data-action="deleteMemoryEntry" data-file-path="' + filePathAttr + '" data-memory-name="' + nameAttr + '" title="移除该记忆文件并从 MEMORY.md 索引中清理">移除</button>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+        } else {
+          const indexHint = q ? '无匹配的项目记忆' : ((memInfo && memInfo.hasIndex) ? '已存在 MEMORY.md 索引，暂无独立记忆卡片' : '当前项目暂无 Auto Memory，点右上角“+ 新建”添加');
+          const inlineFormEl = document.getElementById('memory-inline-form');
+          const isFormVisible = inlineFormEl && inlineFormEl.classList.contains('visible');
+          memoryList.innerHTML = isFormVisible ? '' : '<div style="color: var(--text-muted); font-size: 11px;">' + escapeHtml(indexHint) + '</div>';
+        }
+      }
+
+      // 2. Plugins List (with folding when > 6)
+      const pluginsList = document.getElementById('plugins-list');
+      if (pluginsList) {
+        if (plugins.length > 0) {
+          const maxVisiblePlugins = (!q && extActiveTab === 'all' && !extShowAllPlugins) ? 6 : plugins.length;
+          const shownPlugins = plugins.slice(0, maxVisiblePlugins);
+          let pluginsHtml = shownPlugins.map(p => {
+            const enabled = p.enabled === true || p.isEnabled === true;
+            const onCls = enabled ? 'switch-btn on' : 'switch-btn';
+            const onTxt = enabled ? 'ON' : 'OFF';
+            const metaParts = [];
+            if (p.marketplace) metaParts.push('@' + p.marketplace);
+            if (p.version) metaParts.push('v' + p.version);
+            const skillsJumpPill = p.skillsCount
+              ? '<button type="button" class="ext-skill-jump-pill" data-action="filterPluginSkills" data-plugin-name="' + escapeAttribute(p.name) + '" title="点击展开 ' + escapeAttribute(p.name) + ' 提供的 ' + p.skillsCount + ' 项技能">⚡ ' + p.skillsCount + ' skills</button>'
+              : '';
+            return '<div class="feature-item">' +
+              '<div style="min-width: 0; flex: 1;">' +
+                '<div style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center;">' +
+                  '<span style="overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(p.name) + '</span>' +
+                  skillsJumpPill +
+                '</div>' +
+                '<div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(metaParts.join(' · ')) + '</div>' +
+              '</div>' +
+              '<button class="' + onCls + '" data-action="togglePlugin" data-id="' + escapeAttribute(p.id) + '" data-enabled="' + (!enabled) + '">' + onTxt + '</button>' +
+            '</div>';
+          }).join('');
+          if (!q && extActiveTab === 'all' && plugins.length > 6) {
+            const remain = plugins.length - 6;
+            pluginsHtml += '<button type="button" class="ext-more-btn" data-action="toggleMorePlugins">' +
+              (extShowAllPlugins ? '▲ 收起插件列表' : ('▼ 展开剩余 ' + remain + ' 个插件')) +
+            '</button>';
+          }
+          pluginsList.innerHTML = pluginsHtml;
+        } else {
+          pluginsList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">' + (q ? '无匹配的插件' : '未检测到已安装的 Claude Plugins') + '</div>';
+        }
+      }
+
+      // 3. MCP Servers List
+      const mcpList = document.getElementById('mcp-servers-list');
+      if (mcpList) {
+        if (mcpServers.length > 0) {
+          mcpList.innerHTML = mcpServers.map(s => {
+            const enabled = s.isEnabled === true || s.enabled === true;
+            const onCls = enabled ? 'switch-btn on' : 'switch-btn';
+            const onTxt = enabled ? 'ON' : 'OFF';
+            return '<div class="feature-item">' +
+              '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(s.name) + '</span>' +
+              '<button class="' + onCls + '" data-action="toggleMcp" data-name="' + escapeAttribute(s.name) + '" data-enabled="' + (!enabled) + '">' + onTxt + '</button>' +
+            '</div>';
+          }).join('');
+        } else {
+          mcpList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">' + (q ? '无匹配的 MCP 服务' : '未检测到外部 MCP 配置') + '</div>';
+        }
+      }
+
+      // 4. Custom Agents List
+      const customAgentsList = document.getElementById('custom-agents-list');
+      if (customAgentsList) {
+        if (customAgents.length > 0) {
+          customAgentsList.innerHTML = customAgents.map(ag => {
+            const scopeTag = '<span style="background: rgba(78,201,176,0.16); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-right: 4px;">' + escapeHtml(ag.scope || 'global') + '</span>';
+            const modelTag = ag.model ? ' <span style="opacity: 0.7; font-size: 9px;">(' + escapeHtml(ag.model) + ')</span>' : '';
+            return '<div class="feature-item" style="cursor: pointer;" data-action="openSkill" data-file-path="' + escapeAttribute(ag.filePath || '') + '">' +
+              '<div style="min-width: 0; flex: 1;">' +
+                '<div style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + scopeTag + escapeHtml(ag.name) + modelTag + '</div>' +
+                '<div style="font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(ag.description || '') + '</div>' +
+              '</div>' +
+              '<span style="font-size: 10px; color: var(--claude-accent); margin-left: 6px; flex-shrink: 0;">查看</span>' +
+            '</div>';
+          }).join('');
+        } else {
+          customAgentsList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">' + (q ? '无匹配的自定义代理' : '暂无自定义代理 (.claude/agents/*.md)') + '</div>';
+        }
+      }
+
+      // 5. Skills List (with Local vs Plugin scope filtering, per-plugin collapsible folders, and folding)
+      const localSkillsAll = skillsMatchedSearch.filter(sk => sk.scope !== 'plugin').sort((a, b) => {
+        if (a.scope === b.scope) return String(a.name || '').localeCompare(String(b.name || ''));
+        return a.scope === 'workspace' ? -1 : 1;
+      });
+      const pluginSkillsAll = skillsMatchedSearch.filter(sk => sk.scope === 'plugin');
+
+      const skBadge = document.getElementById('ext-badge-skills');
+      if (skBadge) {
+        skBadge.textContent = skillsMatchedSearch.length + ' 项';
+      }
+
+      const scopeAllBtn = document.getElementById('skill-scope-all');
+      const scopeLocalBtn = document.getElementById('skill-scope-local');
+      const scopePluginBtn = document.getElementById('skill-scope-plugin');
+      if (scopeAllBtn) {
+        scopeAllBtn.textContent = '全部 ' + skillsMatchedSearch.length;
+        scopeAllBtn.classList.toggle('active', extSkillScope === 'all');
+      }
+      if (scopeLocalBtn) {
+        scopeLocalBtn.textContent = '本地 ' + localSkillsAll.length;
+        scopeLocalBtn.classList.toggle('active', extSkillScope === 'local');
+      }
+      if (scopePluginBtn) {
+        scopePluginBtn.textContent = '插件 ' + pluginSkillsAll.length;
+        scopePluginBtn.classList.toggle('active', extSkillScope === 'plugin');
+      }
+
+      const skillsList = document.getElementById('skills-list');
+      if (skillsList) {
+        const showLocal = extSkillScope === 'all' || extSkillScope === 'local';
+        const showPlugin = extSkillScope === 'all' || extSkillScope === 'plugin';
+        const parts = [];
+
+        if (showLocal && localSkillsAll.length > 0) {
+          const maxLocal = (!q && extActiveTab === 'all' && extSkillScope === 'all' && !extShowAllLocalSkills) ? 6 : localSkillsAll.length;
+          const visibleLocal = localSkillsAll.slice(0, maxLocal);
+          parts.push(visibleLocal.map(sk => renderSkillItemHtml(sk, false)).join(''));
+          if (!q && extActiveTab === 'all' && extSkillScope === 'all' && localSkillsAll.length > 6) {
+            const remLocal = localSkillsAll.length - 6;
+            parts.push(
+              '<button type="button" class="ext-more-btn" data-action="toggleMoreLocalSkills">' +
+                (extShowAllLocalSkills ? '▲ 收起本地技能' : ('▼ 展开剩余 ' + remLocal + ' 项本地技能')) +
+              '</button>'
+            );
+          }
+        }
+
+        if (showPlugin && pluginSkillsAll.length > 0) {
+          const groupMap = new Map();
+          pluginSkillsAll.forEach(sk => {
+            const rawName = String(sk.name || '');
+            const prefix = rawName.indexOf(':') > -1
+              ? rawName.split(':')[0]
+              : (sk.pluginId ? String(sk.pluginId).split('@')[0] : 'plugin');
+            if (!groupMap.has(prefix)) groupMap.set(prefix, []);
+            groupMap.get(prefix).push(sk);
+          });
+
+          groupMap.forEach((grpSkills, pluginName) => {
+            const autoExpand = Boolean(q) || (extSkillScope === 'plugin' && groupMap.size === 1) || expandedPluginSkillGroups.has(pluginName);
+            const grpCls = autoExpand ? 'skill-plugin-group' : 'skill-plugin-group collapsed';
+            const safeId = 'skill-plugin-grp-' + String(pluginName).replace(/[^a-zA-Z0-9_-]/g, '_');
+            parts.push(
+              '<div class="' + grpCls + '" id="' + safeId + '" data-plugin-group="' + escapeAttribute(pluginName) + '">' +
+                '<div class="skill-plugin-group-header" data-action="toggleSkillPluginGroup" data-plugin-group="' + escapeAttribute(pluginName) + '" title="点击展开/收起 ' + escapeAttribute(pluginName) + ' 插件的技能列表">' +
+                  '<span style="display: flex; align-items: center; gap: 5px; font-weight: 500;">' +
+                    '<span class="caret">▼</span>' +
+                    '<span>🧩 ' + escapeHtml(pluginName) + '</span>' +
+                  '</span>' +
+                  '<span class="ext-group-badge">' + grpSkills.length + ' 项技能</span>' +
+                '</div>' +
+                '<div class="skill-plugin-group-body">' +
+                  grpSkills.map(sk => renderSkillItemHtml(sk, true)).join('') +
+                '</div>' +
+              '</div>'
+            );
+          });
+        }
+
+        if (parts.length > 0) {
+          skillsList.innerHTML = parts.join('');
+        } else {
+          const emptySkillMsg = q
+            ? '无匹配的技能'
+            : (extSkillScope === 'local' ? '暂无本地 (Global / Workspace) 技能' : (extSkillScope === 'plugin' ? '暂无已启用插件提供的技能' : '暂无本地 Skills 技能'));
+          skillsList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">' + escapeHtml(emptySkillMsg) + '</div>';
+        }
+      }
+
+      const totalExt =
+        allMcp.length +
+        allPlugins.length +
+        allAgents.length +
+        allMemEntries.length +
+        allSkills.length;
+      const badgeEl = document.getElementById('ext-count-badge');
+      if (badgeEl) badgeEl.innerText = totalExt + ' 项';
+    }
 
     // Sessions State
     let allSessions = [];
@@ -2262,6 +3414,7 @@ export function getWebviewContent(): string {
         tbSearch: hubUiStrings.tbSearch || 'Search transcript',
         tbCost: hubUiStrings.tbCost || 'Workspace cost report',
         tbTasks: hubUiStrings.tbTasks || 'Background /tasks (not Hub todos)',
+        tbWorktree: hubUiStrings.tbWorktree || 'Start worktree session (claude -w)',
         tbFilter: hubUiStrings.tbFilter || 'Toggle workspace / all sessions filter',
       };
       document.querySelectorAll('.top-actions .icon-btn[data-i18n-title]').forEach((btn) => {
@@ -2478,7 +3631,72 @@ export function getWebviewContent(): string {
     function bgKindLabel(kind) {
       if (kind === 'agent') return 'agent';
       if (kind === 'shell') return 'shell';
+      if (kind === 'workflow') return 'workflow';
       return 'task';
+    }
+
+    function renderLoopBanner(s) {
+      const banner = document.getElementById('loop-status-banner');
+      if (!banner) return;
+      const lp = s && s.loopState;
+      if (!lp) {
+        banner.style.display = 'none';
+        return;
+      }
+      banner.style.display = 'flex';
+      const modeEl = document.getElementById('loop-mode-label');
+      const chipsEl = document.getElementById('loop-meta-chips');
+      const pillEl = document.getElementById('loop-countdown-pill');
+      const reasonEl = document.getElementById('loop-reason-line');
+
+      if (modeEl) {
+        modeEl.textContent = lp.mode === 'cron' ? 'Cron Loop' : 'Dynamic Loop';
+      }
+      if (chipsEl) {
+        const metaParts = [];
+        if (lp.mode === 'cron' && lp.cronExpression) {
+          metaParts.push(lp.cronExpression);
+        } else if (lp.delaySeconds) {
+          metaParts.push('间隔 ' + lp.delaySeconds + 's');
+        }
+        if (lp.tickCount) {
+          metaParts.push('Tick #' + lp.tickCount);
+        }
+        if (lp.noopStreak && lp.noopStreak > 0) {
+          metaParts.push('静默×' + lp.noopStreak);
+        }
+        chipsEl.textContent = metaParts.join(' · ');
+      }
+      if (pillEl) {
+        if (!lp.active) {
+          pillEl.className = 'status-pill idle';
+          pillEl.textContent = '已停止';
+        } else if (lp.nextWakeAt) {
+          const wakeMs = jobTimeMs(lp.nextWakeAt);
+          const remMs = wakeMs > 0 ? wakeMs - Date.now() : 0;
+          if (remMs > 0) {
+            pillEl.className = 'status-pill active';
+            pillEl.textContent = '⏳ ' + formatDuration(remMs, true);
+          } else {
+            pillEl.className = 'status-pill active';
+            pillEl.textContent = '⚡ 待唤醒';
+          }
+        } else {
+          pillEl.className = 'status-pill active';
+          pillEl.textContent = '运行中';
+        }
+      }
+      if (reasonEl) {
+        const detail = lp.reason || lp.prompt || '';
+        if (detail) {
+          reasonEl.style.display = 'block';
+          reasonEl.textContent = (lp.reason ? '原因: ' : '任务: ') + detail;
+          reasonEl.title = detail;
+        } else {
+          reasonEl.style.display = 'none';
+          reasonEl.textContent = '';
+        }
+      }
     }
 
     function bgStatusLabel(status) {
@@ -2633,6 +3851,9 @@ export function getWebviewContent(): string {
         const bgBadge = bgRunning.length
           ? ' <span class="status-pill active" style="font-size: 9px;" title="' + escapeAttribute(bgRunning[0].label || '后台任务') + '"><span class="badge-icon">🧵</span><span class="badge-text">后台 ' + bgRunning.length + '</span></span>'
           : '';
+        const loopBadge = (s.loopState && s.loopState.active)
+          ? ' <span class="status-pill active" style="font-size: 9px;" title="' + escapeAttribute(s.loopState.reason || s.loopState.prompt || 'Loop 定时唤醒中') + '"><span class="badge-icon">🔁</span><span class="badge-text">' + (s.loopState.mode === 'cron' ? 'Cron' : (s.loopState.delaySeconds ? s.loopState.delaySeconds + 's' : 'Loop')) + '</span></span>'
+          : '';
         const activeTag = !s.isIdle ? '<span class="status-pill active" style="font-size: 9px;"><span class="badge-icon">⚡</span><span class="badge-text">活跃</span></span>' : '<span class="status-pill idle" style="font-size: 9px;"><span class="badge-icon">💤</span><span class="badge-text">闲置</span></span>';
         const cardClass = isFocused ? 'session-card focused' : 'session-card';
         const timeStr = formatRelativeTime(s.lastUpdated);
@@ -2673,7 +3894,7 @@ export function getWebviewContent(): string {
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
             '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + (s.workspaceFolderName ? ' · ' + escapeHtml(s.workspaceFolderName) : '') + '</span>' +
-            '<div class="session-header-badges">' + focusedTag + pinnedTag + tagsBadge + bgBadge + activeTag + agentsBadge + '</div>' +
+            '<div class="session-header-badges">' + focusedTag + pinnedTag + tagsBadge + loopBadge + bgBadge + activeTag + agentsBadge + '</div>' +
           '</div>' +
           '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
           '<div class="session-meta-row">' +
@@ -2953,12 +4174,12 @@ export function getWebviewContent(): string {
               if (a.parentAgentId) details.push('<div><strong>父代理:</strong> ' + escapeHtml(a.parentAgentId) + '</div>');
               if (a.worktreePath) {
                 details.push('<div><strong>工作区:</strong> ' + escapeHtml(a.worktreePath) + '</div>');
-                details.push('<div class="agent-wt-actions"><button class="agent-wt-btn" data-action="openWorktree" data-worktree-path="' + escapeAttribute(a.worktreePath) + '" onclick="event.stopPropagation()">📂 Worktree</button></div>');
+                details.push('<div class="agent-wt-actions"><button class="agent-wt-btn" data-action="openWorktree" data-worktree-path="' + escapeAttribute(a.worktreePath) + '">📂 Worktree</button></div>');
               }
               const isExpanded = expandedAgentKeys.has(agentKey);
               const detailContent = details.length > 0 ? '<div id="' + agentDetailId + '" class="agent-detail-body" style="display: ' + (isExpanded ? 'flex' : 'none') + ';">' + details.join('') + '</div>' : '';
 
-              return '<div class="' + cardClass + '" onclick="toggleAgentDetail(\\'' + agentDetailId + '\\', \\'' + escapeAttribute(agentKey) + '\\')">' +
+              return '<div class="' + cardClass + '" onclick="toggleAgentDetail(\\'' + agentDetailId + '\\', \\'' + escapeAttribute(agentKey) + '\\', event)">' +
                 '<div class="agent-item-header">' +
                   '<div class="agent-title-row">' +
                     '<span class="' + dotClass + '"></span>' +
@@ -3001,6 +4222,7 @@ export function getWebviewContent(): string {
         }
 
         updateLiveSessionDuration();
+        renderLoopBanner(s);
 
         // Subscription Rate Limits (opt-in OAuth meters)
         if (msg.subscription && (msg.subscription.session || (msg.subscription.meters && msg.subscription.meters.length))) {
@@ -3048,46 +4270,24 @@ export function getWebviewContent(): string {
       }
 
       if (msg.type === 'loadExtensions') {
-        const mcpList = document.getElementById('mcp-servers-list');
-        if (msg.mcpServers && msg.mcpServers.length > 0) {
-          mcpList.innerHTML = msg.mcpServers.map(s => {
-            const enabled = s.isEnabled === true || s.enabled === true;
-            const onCls = enabled ? 'switch-btn on' : 'switch-btn';
-            const onTxt = enabled ? 'ON' : 'OFF';
-            return '<div class="feature-item">' +
-              '<span>' + escapeHtml(s.name) + '</span>' +
-              '<button class="' + onCls + '" data-action="toggleMcp" data-name="' + escapeAttribute(s.name) + '" data-enabled="' + (!enabled) + '">' + onTxt + '</button>' +
-            '</div>';
-          }).join('');
-        } else {
-          mcpList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">未检测到外部 MCP 配置</div>';
-        }
-
-        const skillsList = document.getElementById('skills-list');
-        if (msg.skills && msg.skills.length > 0) {
-          skillsList.innerHTML = msg.skills.map(sk => {
-            const skillPath = sk.filePath || sk.path || '';
-            return '<div class="feature-item" style="cursor: pointer;" data-action="openSkill" data-file-path="' + escapeAttribute(skillPath) + '">' +
-              '<div>' +
-                '<div style="font-weight: 500;">' + escapeHtml(sk.name) + '</div>' +
-                '<div style="font-size: 10px; color: var(--text-muted);">' + escapeHtml(sk.description || '无描述') + '</div>' +
-              '</div>' +
-              '<span style="font-size: 10px; color: var(--claude-accent);">查看</span>' +
-            '</div>';
-          }).join('');
-        } else {
-          skillsList.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">暂无本地 Skills 技能</div>';
-        }
-
-        const totalExt = (msg.mcpServers ? msg.mcpServers.length : 0) + (msg.skills ? msg.skills.length : 0);
-        document.getElementById('ext-count-badge').innerText = totalExt + ' 项';
+        extData = {
+          projectMemory: msg.projectMemory || null,
+          plugins: Array.isArray(msg.plugins) ? msg.plugins : [],
+          mcpServers: Array.isArray(msg.mcpServers) ? msg.mcpServers : [],
+          customAgents: Array.isArray(msg.customAgents) ? msg.customAgents : [],
+          skills: Array.isArray(msg.skills) ? msg.skills : []
+        };
+        renderExtensionsPanel();
       }
     });
 
-    // 1-second live ticker for session duration and running tools
+    // 1-second live ticker for session duration, running tools, loop countdown, and background jobs
     setInterval(() => {
       if (currentSession && (!currentSession.isIdle || (currentSession.activeTools && currentSession.activeTools.length > 0))) {
         updateLiveSessionDuration();
+      }
+      if (currentSession && currentSession.loopState && currentSession.loopState.active) {
+        renderLoopBanner(currentSession);
       }
       const ownRunning = currentSession && currentSession.backgroundJobs && currentSession.backgroundJobs.some(function (job) { return job && job.status === 'running'; });
       if (ownRunning) renderBackgroundJobs(currentSession);

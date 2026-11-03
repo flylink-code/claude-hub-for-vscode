@@ -4,41 +4,55 @@
 
 [Module](core-entry.md) · [Source](../../src/types.ts) · page 2/2
 
-Source SHA-256: 8f3a530139df36c55a481273dc275b150fc87123673d6919aa2da2296819335e
+Source SHA-256: e402b0610e7d45b0db25fdf928fa016fc64e712fee9a22174cd08ba8be1ef1a2
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| backgroundJobs | PropertySignature | SessionInfo | [126](../../src/types.ts#L126) |
-| totalAgentsCount | PropertySignature | SessionInfo | [127](../../src/types.ts#L127) |
-| subagentsTotalTokens | PropertySignature | SessionInfo | [128](../../src/types.ts#L128) |
-| todos | PropertySignature | SessionInfo | [129](../../src/types.ts#L129) |
-| plan | PropertySignature | SessionInfo | [130](../../src/types.ts#L130) |
-| taskSource | PropertySignature | SessionInfo | [131](../../src/types.ts#L131) |
-| taskListId | PropertySignature | SessionInfo | [132](../../src/types.ts#L132) |
-| todoMode | PropertySignature | SessionInfo | [134](../../src/types.ts#L134) |
-| preferSource | PropertySignature | SessionInfo | [136](../../src/types.ts#L136) |
-| checklistAvailable | PropertySignature | SessionInfo | [138](../../src/types.ts#L138) |
-| checklistFillAllowed | PropertySignature | SessionInfo | [140](../../src/types.ts#L140) |
-| lastActivity | PropertySignature | SessionInfo | [141](../../src/types.ts#L141) |
-| taskToolsObserved | PropertySignature | SessionInfo | [142](../../src/types.ts#L142) |
-| pendingTaskCreates | PropertySignature | SessionInfo | [144](../../src/types.ts#L144) |
-| toolUseId | PropertySignature | SessionInfo.pendingTaskCreates | [144](../../src/types.ts#L144) |
-| subject | PropertySignature | SessionInfo.pendingTaskCreates | [144](../../src/types.ts#L144) |
-| description | PropertySignature | SessionInfo.pendingTaskCreates | [144](../../src/types.ts#L144) |
-| taskListNeedsSelection | PropertySignature | SessionInfo | [146](../../src/types.ts#L146) |
-| projectTodoPolicy | PropertySignature | SessionInfo | [147](../../src/types.ts#L147) |
-| skills | PropertySignature | SessionInfo | [148](../../src/types.ts#L148) |
-| mcpServers | PropertySignature | SessionInfo | [149](../../src/types.ts#L149) |
-| gitBranch | PropertySignature | SessionInfo | [150](../../src/types.ts#L150) |
-| sessionCreated | PropertySignature | SessionInfo | [151](../../src/types.ts#L151) |
-| lastUpdated | PropertySignature | SessionInfo | [152](../../src/types.ts#L152) |
-| durationMs | PropertySignature | SessionInfo | [153](../../src/types.ts#L153) |
-| totalSpanMs | PropertySignature | SessionInfo | [154](../../src/types.ts#L154) |
-| currentTurnStartTime | PropertySignature | SessionInfo | [155](../../src/types.ts#L155) |
-| isIdle | PropertySignature | SessionInfo | [156](../../src/types.ts#L156) |
-| isCurrentWorkspace | PropertySignature | SessionInfo | [157](../../src/types.ts#L157) |
-| wasCleared | PropertySignature | SessionInfo | [158](../../src/types.ts#L158) |
-| cwd | PropertySignature | SessionInfo | [159](../../src/types.ts#L159) |
-| parentSessionId | PropertySignature | SessionInfo | [161](../../src/types.ts#L161) |
-| workspaceFolderName | PropertySignature | SessionInfo | [163](../../src/types.ts#L163) |
-| FilterMode | TypeAliasDeclaration |  | [166](../../src/types.ts#L166) |
+| sessionId | PropertySignature | SessionInfo | [127](../../src/types.ts#L127) |
+| sessionFile | PropertySignature | SessionInfo | [128](../../src/types.ts#L128) |
+| projectName | PropertySignature | SessionInfo | [129](../../src/types.ts#L129) |
+| projectPath | PropertySignature | SessionInfo | [130](../../src/types.ts#L130) |
+| sessionTitle | PropertySignature | SessionInfo | [131](../../src/types.ts#L131) |
+| model | PropertySignature | SessionInfo | [132](../../src/types.ts#L132) |
+| lastResponseModel | PropertySignature | SessionInfo | [133](../../src/types.ts#L133) |
+| configuredModel | PropertySignature | SessionInfo | [134](../../src/types.ts#L134) |
+| contextLimit | PropertySignature | SessionInfo | [135](../../src/types.ts#L135) |
+| tokenUsage | PropertySignature | SessionInfo | [136](../../src/types.ts#L136) |
+| tools | PropertySignature | SessionInfo | [137](../../src/types.ts#L137) |
+| activeTools | PropertySignature | SessionInfo | [138](../../src/types.ts#L138) |
+| agents | PropertySignature | SessionInfo | [139](../../src/types.ts#L139) |
+| backgroundJobs | PropertySignature | SessionInfo | [141](../../src/types.ts#L141) |
+| loopState | PropertySignature | SessionInfo | [143](../../src/types.ts#L143) |
+| totalAgentsCount | PropertySignature | SessionInfo | [144](../../src/types.ts#L144) |
+| subagentsTotalTokens | PropertySignature | SessionInfo | [145](../../src/types.ts#L145) |
+| todos | PropertySignature | SessionInfo | [146](../../src/types.ts#L146) |
+| plan | PropertySignature | SessionInfo | [147](../../src/types.ts#L147) |
+| taskSource | PropertySignature | SessionInfo | [148](../../src/types.ts#L148) |
+| taskListId | PropertySignature | SessionInfo | [149](../../src/types.ts#L149) |
+| todoMode | PropertySignature | SessionInfo | [151](../../src/types.ts#L151) |
+| preferSource | PropertySignature | SessionInfo | [153](../../src/types.ts#L153) |
+| checklistAvailable | PropertySignature | SessionInfo | [155](../../src/types.ts#L155) |
+| checklistFillAllowed | PropertySignature | SessionInfo | [157](../../src/types.ts#L157) |
+| lastActivity | PropertySignature | SessionInfo | [158](../../src/types.ts#L158) |
+| taskToolsObserved | PropertySignature | SessionInfo | [159](../../src/types.ts#L159) |
+| pendingTaskCreates | PropertySignature | SessionInfo | [161](../../src/types.ts#L161) |
+| toolUseId | PropertySignature | SessionInfo.pendingTaskCreates | [161](../../src/types.ts#L161) |
+| subject | PropertySignature | SessionInfo.pendingTaskCreates | [161](../../src/types.ts#L161) |
+| description | PropertySignature | SessionInfo.pendingTaskCreates | [161](../../src/types.ts#L161) |
+| taskListNeedsSelection | PropertySignature | SessionInfo | [163](../../src/types.ts#L163) |
+| projectTodoPolicy | PropertySignature | SessionInfo | [164](../../src/types.ts#L164) |
+| skills | PropertySignature | SessionInfo | [165](../../src/types.ts#L165) |
+| mcpServers | PropertySignature | SessionInfo | [166](../../src/types.ts#L166) |
+| gitBranch | PropertySignature | SessionInfo | [167](../../src/types.ts#L167) |
+| sessionCreated | PropertySignature | SessionInfo | [168](../../src/types.ts#L168) |
+| lastUpdated | PropertySignature | SessionInfo | [169](../../src/types.ts#L169) |
+| durationMs | PropertySignature | SessionInfo | [170](../../src/types.ts#L170) |
+| totalSpanMs | PropertySignature | SessionInfo | [171](../../src/types.ts#L171) |
+| currentTurnStartTime | PropertySignature | SessionInfo | [172](../../src/types.ts#L172) |
+| isIdle | PropertySignature | SessionInfo | [173](../../src/types.ts#L173) |
+| isCurrentWorkspace | PropertySignature | SessionInfo | [174](../../src/types.ts#L174) |
+| wasCleared | PropertySignature | SessionInfo | [175](../../src/types.ts#L175) |
+| cwd | PropertySignature | SessionInfo | [176](../../src/types.ts#L176) |
+| parentSessionId | PropertySignature | SessionInfo | [178](../../src/types.ts#L178) |
+| workspaceFolderName | PropertySignature | SessionInfo | [180](../../src/types.ts#L180) |
+| FilterMode | TypeAliasDeclaration |  | [183](../../src/types.ts#L183) |

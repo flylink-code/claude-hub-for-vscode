@@ -77,9 +77,24 @@ export interface LastActivity {
   timestamp: number;
 }
 
-/** Claude Code slash `/tasks` job (background shell or async agent), not a Hub todo. */
-export type BackgroundJobKind = 'shell' | 'agent' | 'other';
+/** Claude Code slash `/tasks` job (background shell, async agent, or multi-agent workflow), not a Hub todo. */
+export type BackgroundJobKind = 'shell' | 'agent' | 'workflow' | 'other';
 export type BackgroundJobStatus = 'running' | 'completed' | 'error' | 'killed';
+
+export interface SessionLoopState {
+  mode: 'dynamic' | 'cron';
+  active: boolean;
+  prompt?: string;
+  delaySeconds?: number;
+  cronExpression?: string;
+  cronJobId?: string;
+  reason?: string;
+  noopStreak: number;
+  tickCount: number;
+  lastScheduledAt?: Date;
+  nextWakeAt?: Date;
+  stoppedAt?: Date;
+}
 
 export interface BackgroundJob {
   id: string;
@@ -124,6 +139,8 @@ export interface SessionInfo {
   agents: AgentEntry[];
   /** Live slash `/tasks` jobs. Kept while the session looks idle. */
   backgroundJobs?: BackgroundJob[];
+  /** Active or recently stopped `/loop` (ScheduleWakeup or CronCreate) state. */
+  loopState?: SessionLoopState;
   totalAgentsCount?: number;
   subagentsTotalTokens?: number;
   todos: TodoItem[];

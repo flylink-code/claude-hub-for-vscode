@@ -900,6 +900,7 @@ export class SessionManager implements vscode.Disposable {
               parsed.backgroundJobs || [],
               liveSessionIds.has(sessionId),
             ),
+            loopState: parsed.loopState,
             totalAgentsCount: totalAgentsCount > 0 ? totalAgentsCount : undefined,
             subagentsTotalTokens: subagentsTotalTokens > 0 ? subagentsTotalTokens : undefined,
             todos,

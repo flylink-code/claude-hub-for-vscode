@@ -4,7 +4,7 @@
 
 [Module](session-parser.md) · [Source](../../src/sessionManager.ts) · page 3/3
 
-Source SHA-256: 99040983fae2a3d2f55200c18a0c5646c64d030b4ef98089dcea856d12d28526
+Source SHA-256: 575831e41586a9b084d7d4089699e0eb3aad306ef327975fe2ef52041e675627
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -35,6 +35,6 @@ Source SHA-256: 99040983fae2a3d2f55200c18a0c5646c64d030b4ef98089dcea856d12d28526
 | activeDurationMs | VariableDeclaration | SessionManager.scanSessions | [872](../../src/sessionManager.ts#L872) |
 | recentDiff | VariableDeclaration | SessionManager.scanSessions | [874](../../src/sessionManager.ts#L874) |
 | totalSpanMs | VariableDeclaration | SessionManager.scanSessions | [880](../../src/sessionManager.ts#L880) |
-| discoveredWatchMd | VariableDeclaration | SessionManager.scanSessions | [949](../../src/sessionManager.ts#L949) |
-| err | VariableDeclaration | SessionManager.scanSessions | [956](../../src/sessionManager.ts#L956) |
-| dispose | MethodDeclaration | SessionManager | [964](../../src/sessionManager.ts#L964) |
+| discoveredWatchMd | VariableDeclaration | SessionManager.scanSessions | [950](../../src/sessionManager.ts#L950) |
+| err | VariableDeclaration | SessionManager.scanSessions | [957](../../src/sessionManager.ts#L957) |
+| dispose | MethodDeclaration | SessionManager | [965](../../src/sessionManager.ts#L965) |

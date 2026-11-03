@@ -4,7 +4,7 @@
 
 [Module](ui-dashboard.md) · [Source](../../src/terminalManager.ts) · page 1/1
 
-Source SHA-256: 1c356d59fb86e4886b33bc33dbb16663426c89c312f0c5848a0a240b17b5f62f
+Source SHA-256: 0eb33db8c107ba8fd4a13b26712ec319682891e3712bdc3cc908b796bc86bf56
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -21,3 +21,8 @@ Source SHA-256: 1c356d59fb86e4886b33bc33dbb16663426c89c312f0c5848a0a240b17b5f62f
 | cleanCmd | VariableDeclaration | TerminalManager.sendSlashCommand | [42](../../src/terminalManager.ts#L42) |
 | openTerminalInPath | MethodDeclaration | TerminalManager | [46](../../src/terminalManager.ts#L46) |
 | terminal | VariableDeclaration | TerminalManager.openTerminalInPath | [47](../../src/terminalManager.ts#L47) |
+| startWorktreeSession | MethodDeclaration | TerminalManager | [57](../../src/terminalManager.ts#L57) |
+| cleanName | VariableDeclaration | TerminalManager.startWorktreeSession | [58](../../src/terminalManager.ts#L58) |
+| folder | VariableDeclaration | TerminalManager.startWorktreeSession | [59](../../src/terminalManager.ts#L59) |
+| termTitle | VariableDeclaration | TerminalManager.startWorktreeSession | [60](../../src/terminalManager.ts#L60) |
+| terminal | VariableDeclaration | TerminalManager.startWorktreeSession | [61](../../src/terminalManager.ts#L61) |

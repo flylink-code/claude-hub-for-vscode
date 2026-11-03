@@ -4,107 +4,107 @@
 
 [Module](tests.md) · [Source](../../test/parser.test.ts) · page 2/3
 
-Source SHA-256: 6ab3473b8941eef28e7eb97b3f0c21460947817410014fc3fe2f40b165287e13
+Source SHA-256: 30d57e97a495dde08108aa464f79aa301c967b295f9f07d74e11c72909e38c4b
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| text | VariableDeclaration |  | [1223](../../test/parser.test.ts#L1223) |
-| todos | VariableDeclaration |  | [1259](../../test/parser.test.ts#L1259) |
-| tempDir | VariableDeclaration |  | [1278](../../test/parser.test.ts#L1278) |
-| filePath | VariableDeclaration |  | [1279](../../test/parser.test.ts#L1279) |
-| lines | VariableDeclaration |  | [1282](../../test/parser.test.ts#L1282) |
-| parsed | VariableDeclaration |  | [1307](../../test/parser.test.ts#L1307) |
-| resumed | VariableDeclaration |  | [1318](../../test/parser.test.ts#L1318) |
-| tempDir | VariableDeclaration |  | [1328](../../test/parser.test.ts#L1328) |
-| filePath | VariableDeclaration |  | [1329](../../test/parser.test.ts#L1329) |
-| lines | VariableDeclaration |  | [1332](../../test/parser.test.ts#L1332) |
-| parsed | VariableDeclaration |  | [1349](../../test/parser.test.ts#L1349) |
-| tempDir | VariableDeclaration |  | [1362](../../test/parser.test.ts#L1362) |
-| filePath | VariableDeclaration |  | [1363](../../test/parser.test.ts#L1363) |
-| lines | VariableDeclaration |  | [1366](../../test/parser.test.ts#L1366) |
-| parsed | VariableDeclaration |  | [1383](../../test/parser.test.ts#L1383) |
-| tempDir | VariableDeclaration |  | [1393](../../test/parser.test.ts#L1393) |
-| filePath | VariableDeclaration |  | [1394](../../test/parser.test.ts#L1394) |
-| lines | VariableDeclaration |  | [1397](../../test/parser.test.ts#L1397) |
-| parsed | VariableDeclaration |  | [1433](../../test/parser.test.ts#L1433) |
-| clearedParsed | VariableDeclaration |  | [1453](../../test/parser.test.ts#L1453) |
-| tempDir | VariableDeclaration |  | [1462](../../test/parser.test.ts#L1462) |
-| filePath | VariableDeclaration |  | [1463](../../test/parser.test.ts#L1463) |
-| lines | VariableDeclaration |  | [1466](../../test/parser.test.ts#L1466) |
-| parsed | VariableDeclaration |  | [1493](../../test/parser.test.ts#L1493) |
-| tempDir | VariableDeclaration |  | [1519](../../test/parser.test.ts#L1519) |
-| filePath | VariableDeclaration |  | [1520](../../test/parser.test.ts#L1520) |
-| lines | VariableDeclaration |  | [1523](../../test/parser.test.ts#L1523) |
-| parsed | VariableDeclaration |  | [1548](../../test/parser.test.ts#L1548) |
-| planTodos | VariableDeclaration |  | [1559](../../test/parser.test.ts#L1559) |
-| completed | VariableDeclaration |  | [1577](../../test/parser.test.ts#L1577) |
-| tempDir | VariableDeclaration |  | [1597](../../test/parser.test.ts#L1597) |
-| filePath | VariableDeclaration |  | [1598](../../test/parser.test.ts#L1598) |
-| planPath | VariableDeclaration |  | [1599](../../test/parser.test.ts#L1599) |
-| tool | VariableDeclaration |  | [1600](../../test/parser.test.ts#L1600) |
-| result | VariableDeclaration |  | [1603](../../test/parser.test.ts#L1603) |
-| lines | VariableDeclaration |  | [1606](../../test/parser.test.ts#L1606) |
-| replay | VariableDeclaration |  | [1610](../../test/parser.test.ts#L1610) |
-| editInput | VariableDeclaration |  | [1616](../../test/parser.test.ts#L1616) |
-| tempDir | VariableDeclaration |  | [1639](../../test/parser.test.ts#L1639) |
-| filePath | VariableDeclaration |  | [1640](../../test/parser.test.ts#L1640) |
-| planPath | VariableDeclaration |  | [1641](../../test/parser.test.ts#L1641) |
-| tool | VariableDeclaration |  | [1642](../../test/parser.test.ts#L1642) |
-| result | VariableDeclaration |  | [1645](../../test/parser.test.ts#L1645) |
-| lines | VariableDeclaration |  | [1649](../../test/parser.test.ts#L1649) |
-| parsed | VariableDeclaration |  | [1656](../../test/parser.test.ts#L1656) |
-| tempDir | VariableDeclaration |  | [1664](../../test/parser.test.ts#L1664) |
-| filePath | VariableDeclaration |  | [1665](../../test/parser.test.ts#L1665) |
-| lines | VariableDeclaration |  | [1668](../../test/parser.test.ts#L1668) |
-| parsed | VariableDeclaration |  | [1715](../../test/parser.test.ts#L1715) |
-| tempDir | VariableDeclaration |  | [1741](../../test/parser.test.ts#L1741) |
-| filePath | VariableDeclaration |  | [1742](../../test/parser.test.ts#L1742) |
-| lines | VariableDeclaration |  | [1745](../../test/parser.test.ts#L1745) |
-| parsed | VariableDeclaration |  | [1775](../../test/parser.test.ts#L1775) |
-| t0 | VariableDeclaration |  | [1785](../../test/parser.test.ts#L1785) |
-| t1 | VariableDeclaration |  | [1786](../../test/parser.test.ts#L1786) |
-| t2 | VariableDeclaration |  | [1787](../../test/parser.test.ts#L1787) |
-| allAgents | VariableDeclaration |  | [1789](../../test/parser.test.ts#L1789) |
-| currentTurnStartTime | VariableDeclaration |  | [1801](../../test/parser.test.ts#L1801) |
-| hasRunning | VariableDeclaration |  | [1802](../../test/parser.test.ts#L1802) |
-| turnStartMs | VariableDeclaration |  | [1805](../../test/parser.test.ts#L1805) |
-| activeAgents | VariableDeclaration |  | [1806](../../test/parser.test.ts#L1806) |
-| agentEndMs | VariableDeclaration | activeAgents | [1807](../../test/parser.test.ts#L1807) |
-| tempDir | VariableDeclaration |  | [1821](../../test/parser.test.ts#L1821) |
-| filePath | VariableDeclaration |  | [1822](../../test/parser.test.ts#L1822) |
-| lines | VariableDeclaration |  | [1825](../../test/parser.test.ts#L1825) |
-| parsed | VariableDeclaration |  | [1890](../../test/parser.test.ts#L1890) |
-| tempDir | VariableDeclaration |  | [1915](../../test/parser.test.ts#L1915) |
-| filePath | VariableDeclaration |  | [1916](../../test/parser.test.ts#L1916) |
-| lines | VariableDeclaration |  | [1919](../../test/parser.test.ts#L1919) |
-| parsed | VariableDeclaration |  | [1967](../../test/parser.test.ts#L1967) |
-| t0 | VariableDeclaration |  | [1980](../../test/parser.test.ts#L1980) |
-| t1 | VariableDeclaration |  | [1981](../../test/parser.test.ts#L1981) |
-| tTurn | VariableDeclaration |  | [1982](../../test/parser.test.ts#L1982) |
-| tNow | VariableDeclaration |  | [1983](../../test/parser.test.ts#L1983) |
-| allAgents | VariableDeclaration |  | [1985](../../test/parser.test.ts#L1985) |
-| id | PropertySignature | allAgents | [1986](../../test/parser.test.ts#L1986) |
-| name | PropertySignature | allAgents | [1987](../../test/parser.test.ts#L1987) |
-| type | PropertySignature | allAgents | [1988](../../test/parser.test.ts#L1988) |
-| status | PropertySignature | allAgents | [1989](../../test/parser.test.ts#L1989) |
-| startTime | PropertySignature | allAgents | [1990](../../test/parser.test.ts#L1990) |
-| endTime | PropertySignature | allAgents | [1991](../../test/parser.test.ts#L1991) |
-| turnStartMs | VariableDeclaration |  | [2010](../../test/parser.test.ts#L2010) |
-| activeAgents | VariableDeclaration |  | [2011](../../test/parser.test.ts#L2011) |
-| agentEndMs | VariableDeclaration | activeAgents | [2013](../../test/parser.test.ts#L2013) |
-| tempDir | VariableDeclaration |  | [2027](../../test/parser.test.ts#L2027) |
-| filePath | VariableDeclaration |  | [2028](../../test/parser.test.ts#L2028) |
-| parsed1 | VariableDeclaration |  | [2041](../../test/parser.test.ts#L2041) |
-| html | VariableDeclaration |  | [2054](../../test/parser.test.ts#L2054) |
-| width | VariableDeclaration |  | [2056](../../test/parser.test.ts#L2056) |
-| script | VariableDeclaration |  | [2077](../../test/parser.test.ts#L2077) |
-| html | VariableDeclaration |  | [2083](../../test/parser.test.ts#L2083) |
-| start | VariableDeclaration |  | [2085](../../test/parser.test.ts#L2085) |
-| end | VariableDeclaration |  | [2086](../../test/parser.test.ts#L2086) |
-| script | VariableDeclaration |  | [2088](../../test/parser.test.ts#L2088) |
-| state | VariableDeclaration |  | [2089](../../test/parser.test.ts#L2089) |
-| counterEl | VariableDeclaration |  | [2094](../../test/parser.test.ts#L2094) |
-| todos | VariableDeclaration |  | [2095](../../test/parser.test.ts#L2095) |
-| html | VariableDeclaration |  | [2107](../../test/parser.test.ts#L2107) |
-| branch | VariableDeclaration |  | [2110](../../test/parser.test.ts#L2110) |
-| html | VariableDeclaration |  | [2118](../../test/parser.test.ts#L2118) |
+| text | VariableDeclaration |  | [1229](../../test/parser.test.ts#L1229) |
+| todos | VariableDeclaration |  | [1265](../../test/parser.test.ts#L1265) |
+| tempDir | VariableDeclaration |  | [1284](../../test/parser.test.ts#L1284) |
+| filePath | VariableDeclaration |  | [1285](../../test/parser.test.ts#L1285) |
+| lines | VariableDeclaration |  | [1288](../../test/parser.test.ts#L1288) |
+| parsed | VariableDeclaration |  | [1313](../../test/parser.test.ts#L1313) |
+| resumed | VariableDeclaration |  | [1324](../../test/parser.test.ts#L1324) |
+| tempDir | VariableDeclaration |  | [1334](../../test/parser.test.ts#L1334) |
+| filePath | VariableDeclaration |  | [1335](../../test/parser.test.ts#L1335) |
+| lines | VariableDeclaration |  | [1338](../../test/parser.test.ts#L1338) |
+| parsed | VariableDeclaration |  | [1355](../../test/parser.test.ts#L1355) |
+| tempDir | VariableDeclaration |  | [1368](../../test/parser.test.ts#L1368) |
+| filePath | VariableDeclaration |  | [1369](../../test/parser.test.ts#L1369) |
+| lines | VariableDeclaration |  | [1372](../../test/parser.test.ts#L1372) |
+| parsed | VariableDeclaration |  | [1389](../../test/parser.test.ts#L1389) |
+| tempDir | VariableDeclaration |  | [1399](../../test/parser.test.ts#L1399) |
+| filePath | VariableDeclaration |  | [1400](../../test/parser.test.ts#L1400) |
+| lines | VariableDeclaration |  | [1403](../../test/parser.test.ts#L1403) |
+| parsed | VariableDeclaration |  | [1439](../../test/parser.test.ts#L1439) |
+| clearedParsed | VariableDeclaration |  | [1459](../../test/parser.test.ts#L1459) |
+| tempDir | VariableDeclaration |  | [1468](../../test/parser.test.ts#L1468) |
+| filePath | VariableDeclaration |  | [1469](../../test/parser.test.ts#L1469) |
+| lines | VariableDeclaration |  | [1472](../../test/parser.test.ts#L1472) |
+| parsed | VariableDeclaration |  | [1499](../../test/parser.test.ts#L1499) |
+| tempDir | VariableDeclaration |  | [1525](../../test/parser.test.ts#L1525) |
+| filePath | VariableDeclaration |  | [1526](../../test/parser.test.ts#L1526) |
+| lines | VariableDeclaration |  | [1529](../../test/parser.test.ts#L1529) |
+| parsed | VariableDeclaration |  | [1554](../../test/parser.test.ts#L1554) |
+| planTodos | VariableDeclaration |  | [1565](../../test/parser.test.ts#L1565) |
+| completed | VariableDeclaration |  | [1583](../../test/parser.test.ts#L1583) |
+| tempDir | VariableDeclaration |  | [1603](../../test/parser.test.ts#L1603) |
+| filePath | VariableDeclaration |  | [1604](../../test/parser.test.ts#L1604) |
+| planPath | VariableDeclaration |  | [1605](../../test/parser.test.ts#L1605) |
+| tool | VariableDeclaration |  | [1606](../../test/parser.test.ts#L1606) |
+| result | VariableDeclaration |  | [1609](../../test/parser.test.ts#L1609) |
+| lines | VariableDeclaration |  | [1612](../../test/parser.test.ts#L1612) |
+| replay | VariableDeclaration |  | [1616](../../test/parser.test.ts#L1616) |
+| editInput | VariableDeclaration |  | [1622](../../test/parser.test.ts#L1622) |
+| tempDir | VariableDeclaration |  | [1645](../../test/parser.test.ts#L1645) |
+| filePath | VariableDeclaration |  | [1646](../../test/parser.test.ts#L1646) |
+| planPath | VariableDeclaration |  | [1647](../../test/parser.test.ts#L1647) |
+| tool | VariableDeclaration |  | [1648](../../test/parser.test.ts#L1648) |
+| result | VariableDeclaration |  | [1651](../../test/parser.test.ts#L1651) |
+| lines | VariableDeclaration |  | [1655](../../test/parser.test.ts#L1655) |
+| parsed | VariableDeclaration |  | [1662](../../test/parser.test.ts#L1662) |
+| tempDir | VariableDeclaration |  | [1670](../../test/parser.test.ts#L1670) |
+| filePath | VariableDeclaration |  | [1671](../../test/parser.test.ts#L1671) |
+| lines | VariableDeclaration |  | [1674](../../test/parser.test.ts#L1674) |
+| parsed | VariableDeclaration |  | [1721](../../test/parser.test.ts#L1721) |
+| tempDir | VariableDeclaration |  | [1747](../../test/parser.test.ts#L1747) |
+| filePath | VariableDeclaration |  | [1748](../../test/parser.test.ts#L1748) |
+| lines | VariableDeclaration |  | [1751](../../test/parser.test.ts#L1751) |
+| parsed | VariableDeclaration |  | [1781](../../test/parser.test.ts#L1781) |
+| t0 | VariableDeclaration |  | [1791](../../test/parser.test.ts#L1791) |
+| t1 | VariableDeclaration |  | [1792](../../test/parser.test.ts#L1792) |
+| t2 | VariableDeclaration |  | [1793](../../test/parser.test.ts#L1793) |
+| allAgents | VariableDeclaration |  | [1795](../../test/parser.test.ts#L1795) |
+| currentTurnStartTime | VariableDeclaration |  | [1807](../../test/parser.test.ts#L1807) |
+| hasRunning | VariableDeclaration |  | [1808](../../test/parser.test.ts#L1808) |
+| turnStartMs | VariableDeclaration |  | [1811](../../test/parser.test.ts#L1811) |
+| activeAgents | VariableDeclaration |  | [1812](../../test/parser.test.ts#L1812) |
+| agentEndMs | VariableDeclaration | activeAgents | [1813](../../test/parser.test.ts#L1813) |
+| tempDir | VariableDeclaration |  | [1827](../../test/parser.test.ts#L1827) |
+| filePath | VariableDeclaration |  | [1828](../../test/parser.test.ts#L1828) |
+| lines | VariableDeclaration |  | [1831](../../test/parser.test.ts#L1831) |
+| parsed | VariableDeclaration |  | [1896](../../test/parser.test.ts#L1896) |
+| tempDir | VariableDeclaration |  | [1921](../../test/parser.test.ts#L1921) |
+| filePath | VariableDeclaration |  | [1922](../../test/parser.test.ts#L1922) |
+| lines | VariableDeclaration |  | [1925](../../test/parser.test.ts#L1925) |
+| parsed | VariableDeclaration |  | [1973](../../test/parser.test.ts#L1973) |
+| t0 | VariableDeclaration |  | [1986](../../test/parser.test.ts#L1986) |
+| t1 | VariableDeclaration |  | [1987](../../test/parser.test.ts#L1987) |
+| tTurn | VariableDeclaration |  | [1988](../../test/parser.test.ts#L1988) |
+| tNow | VariableDeclaration |  | [1989](../../test/parser.test.ts#L1989) |
+| allAgents | VariableDeclaration |  | [1991](../../test/parser.test.ts#L1991) |
+| id | PropertySignature | allAgents | [1992](../../test/parser.test.ts#L1992) |
+| name | PropertySignature | allAgents | [1993](../../test/parser.test.ts#L1993) |
+| type | PropertySignature | allAgents | [1994](../../test/parser.test.ts#L1994) |
+| status | PropertySignature | allAgents | [1995](../../test/parser.test.ts#L1995) |
+| startTime | PropertySignature | allAgents | [1996](../../test/parser.test.ts#L1996) |
+| endTime | PropertySignature | allAgents | [1997](../../test/parser.test.ts#L1997) |
+| turnStartMs | VariableDeclaration |  | [2016](../../test/parser.test.ts#L2016) |
+| activeAgents | VariableDeclaration |  | [2017](../../test/parser.test.ts#L2017) |
+| agentEndMs | VariableDeclaration | activeAgents | [2019](../../test/parser.test.ts#L2019) |
+| tempDir | VariableDeclaration |  | [2033](../../test/parser.test.ts#L2033) |
+| filePath | VariableDeclaration |  | [2034](../../test/parser.test.ts#L2034) |
+| parsed1 | VariableDeclaration |  | [2047](../../test/parser.test.ts#L2047) |
+| html | VariableDeclaration |  | [2060](../../test/parser.test.ts#L2060) |
+| width | VariableDeclaration |  | [2062](../../test/parser.test.ts#L2062) |
+| script | VariableDeclaration |  | [2083](../../test/parser.test.ts#L2083) |
+| html | VariableDeclaration |  | [2089](../../test/parser.test.ts#L2089) |
+| start | VariableDeclaration |  | [2091](../../test/parser.test.ts#L2091) |
+| end | VariableDeclaration |  | [2092](../../test/parser.test.ts#L2092) |
+| script | VariableDeclaration |  | [2094](../../test/parser.test.ts#L2094) |
+| state | VariableDeclaration |  | [2095](../../test/parser.test.ts#L2095) |
+| counterEl | VariableDeclaration |  | [2100](../../test/parser.test.ts#L2100) |
+| todos | VariableDeclaration |  | [2101](../../test/parser.test.ts#L2101) |
+| html | VariableDeclaration |  | [2113](../../test/parser.test.ts#L2113) |
+| branch | VariableDeclaration |  | [2116](../../test/parser.test.ts#L2116) |
+| html | VariableDeclaration |  | [2124](../../test/parser.test.ts#L2124) |

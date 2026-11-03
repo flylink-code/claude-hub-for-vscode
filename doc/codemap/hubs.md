@@ -4,48 +4,48 @@
 
 [Root index](../CODE_MAP_INDEX.md)
 
-44 files · 2778 symbols · import edges: 233 resolved, 0 ambiguous, 34 unresolved.
+44 files · 3135 symbols · import edges: 239 resolved, 0 ambiguous, 34 unresolved.
 
 Edges come from `use`/`import` statements: relative specifiers for TypeScript, `crate`/`self`/`super` module paths plus a unique-name fallback for Rust. Lexical evidence, not type-checked resolution: an ambiguous or unresolved import is counted, never guessed.
 
 | Symbol | Kind | Module | In-degree | Line |
 | --- | --- | --- | ---: | --- |
-| SessionInfo | InterfaceDeclaration | core-entry | 13 | [111](../../src/types.ts#L111) |
+| SessionInfo | InterfaceDeclaration | core-entry | 13 | [126](../../src/types.ts#L126) |
 | getWebviewContent | FunctionDeclaration | ui-dashboard | 7 | [1](../../src/webviewHtml.ts#L1) |
 | ClaudeConfigManager | ClassDeclaration | config-features | 6 | [86](../../src/claudeConfigManager.ts#L86) |
-| resolveClaudeConfigDir | FunctionDeclaration | config-features | 6 | [6](../../src/configDir.ts#L6) |
-| ClaudeConfigDirProvider | TypeAliasDeclaration | config-features | 5 | [4](../../src/configDir.ts#L4) |
+| resolveClaudeConfigDir | FunctionDeclaration | config-features | 6 | [7](../../src/configDir.ts#L7) |
+| ClaudeConfigDirProvider | TypeAliasDeclaration | config-features | 5 | [5](../../src/configDir.ts#L5) |
 | estimateCostUsd | FunctionDeclaration | usage-pricing | 5 | [422](../../src/modelPricing.ts#L422) |
-| t | FunctionDeclaration | core-entry | 5 | [473](../../src/i18n.ts#L473) |
+| t | FunctionDeclaration | core-entry | 5 | [499](../../src/i18n.ts#L499) |
+| ClaudeFeaturesManager | ClassDeclaration | config-features | 4 | [142](../../src/claudeFeatures.ts#L142) |
 | SessionManager | ClassDeclaration | session-parser | 4 | [56](../../src/sessionManager.ts#L56) |
 | formatModelDisplayName | FunctionDeclaration | usage-pricing | 4 | [70](../../src/contextLimit.ts#L70) |
-| ClaudeFeaturesManager | ClassDeclaration | config-features | 3 | [38](../../src/claudeFeatures.ts#L38) |
 | SessionPlan | InterfaceDeclaration | core-entry | 3 | [54](../../src/types.ts#L54) |
-| SubscriptionUsageData | InterfaceDeclaration | core-entry | 3 | [105](../../src/types.ts#L105) |
+| SubscriptionUsageData | InterfaceDeclaration | core-entry | 3 | [120](../../src/types.ts#L120) |
 | TaskIntegrationManager | ClassDeclaration | todo-tasks | 3 | [91](../../src/taskIntegration.ts#L91) |
 | TaskSource | TypeAliasDeclaration | core-entry | 3 | [52](../../src/types.ts#L52) |
 | TodoItem | InterfaceDeclaration | core-entry | 3 | [42](../../src/types.ts#L42) |
 | formatCostForDisplay | FunctionDeclaration | usage-pricing | 3 | [470](../../src/modelPricing.ts#L470) |
 | formatCostUsd | FunctionDeclaration | usage-pricing | 3 | [462](../../src/modelPricing.ts#L462) |
 | formatSelectedModelName | FunctionDeclaration | usage-pricing | 3 | [134](../../src/contextLimit.ts#L134) |
-| isPathInWorkspace | FunctionDeclaration | config-features | 3 | [65](../../src/configDir.ts#L65) |
-| parseTranscriptFile | FunctionDeclaration | session-parser | 3 | [581](../../src/transcriptParser.ts#L581) |
+| isPathInWorkspace | FunctionDeclaration | config-features | 3 | [66](../../src/configDir.ts#L66) |
+| parseTranscriptFile | FunctionDeclaration | session-parser | 3 | [610](../../src/transcriptParser.ts#L610) |
 | AgentEntry | InterfaceDeclaration | core-entry | 2 | [21](../../src/types.ts#L21) |
-| BackgroundJob | InterfaceDeclaration | core-entry | 2 | [84](../../src/types.ts#L84) |
+| BackgroundJob | InterfaceDeclaration | core-entry | 2 | [99](../../src/types.ts#L99) |
 | ClaudeHubDashboardProvider | ClassDeclaration | ui-dashboard | 2 | [17](../../src/dashboardView.ts#L17) |
 | NativeTaskReader | ClassDeclaration | todo-tasks | 2 | [65](../../src/nativeTasks.ts#L65) |
 | PRICING_TABLE_VERSION | VariableDeclaration | usage-pricing | 2 | [8](../../src/modelPricing.ts#L8) |
 | StatusBarRenderOptions | InterfaceDeclaration | ui-dashboard | 2 | [5](../../src/statusBarFormatter.ts#L5) |
 | TokenUsage | InterfaceDeclaration | core-entry | 2 | [1](../../src/types.ts#L1) |
 | allowChecklistFill | FunctionDeclaration | todo-tasks | 2 | [232](../../src/projectTodoPolicy.ts#L232) |
-| backgroundJobsForLiveProcess | FunctionDeclaration | session-parser | 2 | [877](../../src/transcriptParser.ts#L877) |
+| backgroundJobsForLiveProcess | FunctionDeclaration | session-parser | 2 | [928](../../src/transcriptParser.ts#L928) |
 | buildTaskSyncPrompt | FunctionDeclaration | todo-tasks | 2 | [256](../../src/projectTodoPolicy.ts#L256) |
 | buildWorkspaceCostReport | FunctionDeclaration | usage-pricing | 2 | [58](../../src/workspaceCost.ts#L58) |
-| clearTranscriptCache | FunctionDeclaration | session-parser | 2 | [61](../../src/transcriptParser.ts#L61) |
+| clearTranscriptCache | FunctionDeclaration | session-parser | 2 | [62](../../src/transcriptParser.ts#L62) |
 | compareForkSessions | FunctionDeclaration | session-parser | 2 | [38](../../src/forkCompare.ts#L38) |
-| decodeProjectPath | FunctionDeclaration | config-features | 2 | [33](../../src/configDir.ts#L33) |
-| extractMarkdownTodos | FunctionDeclaration | session-parser | 2 | [556](../../src/transcriptParser.ts#L556) |
-| extractPlanTodos | FunctionDeclaration | session-parser | 2 | [246](../../src/transcriptParser.ts#L246) |
+| decodeProjectPath | FunctionDeclaration | config-features | 2 | [34](../../src/configDir.ts#L34) |
+| extractMarkdownTodos | FunctionDeclaration | session-parser | 2 | [585](../../src/transcriptParser.ts#L585) |
+| extractPlanTodos | FunctionDeclaration | session-parser | 2 | [275](../../src/transcriptParser.ts#L275) |
 | extractTimelineEvents | FunctionDeclaration | session-parser | 2 | [71](../../src/timelineEvents.ts#L71) |
 | formatDuration | FunctionDeclaration | ui-dashboard | 2 | [56](../../src/statusBarFormatter.ts#L56) |
 | formatForkCompareMarkdown | FunctionDeclaration | session-parser | 2 | [75](../../src/forkCompare.ts#L75) |

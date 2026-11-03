@@ -34,6 +34,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     context.subscriptions.push(sessionManager.onDidUpdateSessions(() => {
       this.sendSessionUpdate();
       this.sendConfigUpdate();
+      this.sendExtensionsUpdate();
     }));
     sessionManager.onDidUpdateSubscription(() => this.sendSessionUpdate());
     configManager.onDidChange(() => this.sendConfigUpdate());
@@ -81,17 +82,20 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
         case 'refresh':
           await Promise.all([this.sessionManager.scanSessions(), this.sessionManager.refreshSubscription()]);
           this.sendSessionUpdate();
+          this.sendExtensionsUpdate();
           break;
 
         case 'toggleFilter':
           this.sessionManager.toggleFilterMode();
           this.sendSessionUpdate();
+          this.sendExtensionsUpdate();
           break;
 
         case 'setFilterMode':
           if (msg.mode === 'currentWorkspace' || msg.mode === 'all') {
             this.sessionManager.setFilterMode(msg.mode);
             this.sendSessionUpdate();
+            this.sendExtensionsUpdate();
           }
           break;
 
@@ -207,6 +211,187 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
             this.sendExtensionsUpdate();
           }
           break;
+
+        case 'togglePlugin':
+          if (msg.id !== undefined && msg.enabled !== undefined) {
+            this.featuresManager.togglePlugin(String(msg.id), Boolean(msg.enabled));
+            this.sendExtensionsUpdate();
+          }
+          break;
+
+        case 'openMemoryIndex': {
+          const session = this.sessionManager.focusedSession;
+          const mem = this.featuresManager.getProjectMemories(session?.projectPath, session?.sessionFile);
+          try {
+            const indexPath = this.featuresManager.ensureMemoryIndexFile(mem.memoryDir);
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(indexPath));
+            await vscode.window.showTextDocument(doc);
+          } catch (err) {
+            vscode.window.showErrorMessage(`无法打开 MEMORY.md: ${err}`);
+          }
+          this.sendExtensionsUpdate();
+          break;
+        }
+
+        case 'createMemoryEntry': {
+          const session = this.sessionManager.focusedSession;
+          const mem = this.featuresManager.getProjectMemories(session?.projectPath, session?.sessionFile);
+          let chosenType: 'user' | 'feedback' | 'project' | 'reference' = 'project';
+          let slugInput = typeof msg.slug === 'string' ? msg.slug.trim() : (typeof msg.name === 'string' ? msg.name.trim() : '');
+          let descInput = typeof msg.description === 'string' ? msg.description.trim() : '';
+
+          if (slugInput) {
+            const rawType = typeof msg.memoryType === 'string' ? msg.memoryType.toLowerCase() : 'project';
+            if (rawType === 'user' || rawType === 'feedback' || rawType === 'project' || rawType === 'reference') {
+              chosenType = rawType;
+            }
+          } else {
+            const typePick = await vscode.window.showQuickPick(
+              [
+                { label: 'project', description: '项目架构约束、进行中目标或非显而易见的约定' },
+                { label: 'feedback', description: '开发协作纠偏、用户确认的工作方式（含 Why / How to apply）' },
+                { label: 'user', description: '用户角色、技术偏好与沟通习惯' },
+                { label: 'reference', description: '外部文档、看板、工单或服务地址索引' },
+              ],
+              { placeHolder: t('memory.typePrompt') }
+            );
+            if (!typePick) break;
+            chosenType = typePick.label as 'user' | 'feedback' | 'project' | 'reference';
+            const slug = await vscode.window.showInputBox({
+              prompt: t('memory.slugPrompt'),
+              placeHolder: 'project-convention',
+            });
+            if (!slug || !slug.trim()) break;
+            slugInput = slug.trim();
+            const description = await vscode.window.showInputBox({
+              prompt: t('memory.descPrompt'),
+              placeHolder: '简明扼要描述该条记忆的适用场景',
+            });
+            if (description === undefined) break;
+            descInput = description.trim();
+          }
+
+          try {
+            const filePath = this.featuresManager.createMemoryEntry(mem.memoryDir, {
+              name: slugInput,
+              description: descInput || slugInput,
+              type: chosenType,
+            });
+            this.sendExtensionsUpdate();
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+            await vscode.window.showTextDocument(doc);
+            vscode.window.showInformationMessage(t('memory.createdToast', { name: path.basename(filePath) }));
+          } catch (err) {
+            vscode.window.showErrorMessage(`创建记忆失败: ${err}`);
+          }
+          break;
+        }
+
+        case 'deleteMemoryEntry': {
+          const targetPath = typeof msg.filePath === 'string' ? msg.filePath : '';
+          if (!targetPath) break;
+          const displayName = typeof msg.name === 'string' && msg.name.trim()
+            ? msg.name.trim()
+            : path.basename(targetPath, '.md');
+          const confirmBtn = t('memory.deleteBtn');
+          const choice = await vscode.window.showWarningMessage(
+            t('memory.deleteConfirm', { name: displayName }),
+            { modal: true },
+            confirmBtn,
+          );
+          if (choice !== confirmBtn) break;
+          const session = this.sessionManager.focusedSession;
+          const mem = this.featuresManager.getProjectMemories(session?.projectPath, session?.sessionFile);
+          if (this.featuresManager.deleteMemoryEntry(targetPath, mem.memoryDir)) {
+            this.sendExtensionsUpdate();
+            vscode.window.showInformationMessage(t('memory.deletedToast', { name: displayName }));
+          } else {
+            vscode.window.showErrorMessage(`移除记忆失败: ${displayName}`);
+          }
+          break;
+        }
+
+        case 'editMemoryEntry': {
+          const targetPath = typeof msg.filePath === 'string' ? msg.filePath : '';
+          if (!targetPath) break;
+          const currentName = typeof msg.name === 'string' && msg.name.trim()
+            ? msg.name.trim()
+            : path.basename(targetPath, '.md');
+          const currentDesc = typeof msg.description === 'string' ? msg.description : '';
+          const currentType = typeof msg.memoryType === 'string' ? msg.memoryType : 'project';
+
+          let finalType: 'user' | 'feedback' | 'project' | 'reference' = 'project';
+          let finalDesc = currentDesc;
+
+          if (msg.directSave === true) {
+            const rawType = currentType.toLowerCase();
+            if (rawType === 'user' || rawType === 'feedback' || rawType === 'project' || rawType === 'reference') {
+              finalType = rawType;
+            }
+            finalDesc = currentDesc.trim() || currentName;
+          } else {
+            const typeOptions = [
+              { label: 'project', description: '项目架构约束、进行中目标或非显而易见的约定' },
+              { label: 'feedback', description: '开发协作纠偏、用户确认的工作方式（含 Why / How to apply）' },
+              { label: 'user', description: '用户角色、技术偏好与沟通习惯' },
+              { label: 'reference', description: '外部文档、看板、工单或服务地址索引' },
+            ].sort((a, b) => (a.label === currentType ? -1 : b.label === currentType ? 1 : 0));
+
+            const typePick = await vscode.window.showQuickPick(typeOptions, {
+              placeHolder: `${t('memory.typePrompt')} (当前: ${currentType})`,
+            });
+            if (!typePick) break;
+            finalType = typePick.label as 'user' | 'feedback' | 'project' | 'reference';
+
+            const nextDesc = await vscode.window.showInputBox({
+              prompt: t('memory.descPrompt'),
+              value: currentDesc,
+              placeHolder: '简明扼要描述该条记忆的适用场景',
+            });
+            if (nextDesc === undefined) break;
+            finalDesc = nextDesc.trim() || currentName;
+          }
+
+          const session = this.sessionManager.focusedSession;
+          const mem = this.featuresManager.getProjectMemories(session?.projectPath, session?.sessionFile);
+          if (
+            this.featuresManager.updateMemoryEntryMeta(
+              targetPath,
+              {
+                name: currentName,
+                description: finalDesc,
+                type: finalType,
+              },
+              mem.memoryDir,
+            )
+          ) {
+            this.sendExtensionsUpdate();
+            vscode.window.showInformationMessage(t('memory.updatedToast', { name: currentName }));
+          } else {
+            vscode.window.showErrorMessage(`更新记忆失败: ${currentName}`);
+          }
+          break;
+        }
+
+        case 'syncMemoryIndex': {
+          const session = this.sessionManager.focusedSession;
+          const mem = this.featuresManager.getProjectMemories(session?.projectPath, session?.sessionFile);
+          try {
+            const res = this.featuresManager.syncMemoryIndex(mem.memoryDir);
+            this.sendExtensionsUpdate();
+            vscode.window.showInformationMessage(
+              t('memory.syncedToast', { added: res.added, removed: res.removed }),
+            );
+          } catch (err) {
+            vscode.window.showErrorMessage(`同步 MEMORY.md 索引失败: ${err}`);
+          }
+          break;
+        }
+
+        case 'startWorktreeSession': {
+          await vscode.commands.executeCommand('claudeHub.startWorktreeSession', msg.worktreeName);
+          break;
+        }
 
         case 'openSkill':
           if (msg.filePath) {
@@ -383,6 +568,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       gitBranch: s.gitBranch,
       agentsCount: s.totalAgentsCount ?? (s.agents?.length || 0),
       subagentsTotalTokens: s.subagentsTotalTokens,
+      loopState: s.loopState,
       backgroundJobs: (s.backgroundJobs || [])
         .filter((job) => job.status === 'running')
         .map((job) => ({
@@ -423,6 +609,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
         tbSearch: t('tb.search'),
         tbCost: t('tb.cost'),
         tbTasks: t('tb.tasks'),
+        tbWorktree: t('tb.worktree'),
         tbFilter: t('tb.filter'),
         tbFilterWs: t('tb.filterWs'),
         tbFilterAll: t('tb.filterAll'),
@@ -510,6 +697,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
         tbSearch: t('tb.search'),
         tbCost: t('tb.cost'),
         tbTasks: t('tb.tasks'),
+        tbWorktree: t('tb.worktree'),
         tbFilter: t('tb.filter'),
         tbFilterWs: t('tb.filterWs'),
         tbFilterAll: t('tb.filterAll'),
@@ -568,10 +756,14 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
 
   public sendExtensionsUpdate(): void {
     if (!this._view) return;
+    const session = this.sessionManager.focusedSession;
     this._view.webview.postMessage({
       type: 'loadExtensions',
       mcpServers: this.featuresManager.getMcpServers(),
+      plugins: this.featuresManager.getPlugins(),
       skills: this.featuresManager.getSkills(),
+      customAgents: this.featuresManager.getCustomAgents(),
+      projectMemory: this.featuresManager.getProjectMemories(session?.projectPath, session?.sessionFile),
     });
   }
 

@@ -52,4 +52,19 @@ export class TerminalManager {
     terminal.show();
     return terminal;
   }
+
+  /** Launch a new isolated Git worktree session (`claude -w [name]`). */
+  public static startWorktreeSession(worktreeName?: string, cwd?: string): vscode.Terminal {
+    const cleanName = (worktreeName || '').trim().replace(/[^a-zA-Z0-9._/-]+/g, '-');
+    const folder = cwd || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const termTitle = cleanName ? `Claude WT (${cleanName})` : 'Claude Worktree';
+    const terminal = vscode.window.createTerminal({
+      name: termTitle,
+      cwd: folder,
+      iconPath: new vscode.ThemeIcon('git-branch'),
+    });
+    terminal.show();
+    terminal.sendText(cleanName ? `claude -w ${cleanName}` : 'claude -w');
+    return terminal;
+  }
 }

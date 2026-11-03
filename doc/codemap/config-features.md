@@ -9,5 +9,5 @@
 | File | Symbols | Symbol pages |
 | --- | ---: | --- |
 | [src/claudeConfigManager.ts](../../src/claudeConfigManager.ts) | 153 | [1](src_claudeConfigManager.ts-48e67799-1.md) [2](src_claudeConfigManager.ts-48e67799-2.md) |
-| [src/claudeFeatures.ts](../../src/claudeFeatures.ts) | 76 | [1](src_claudeFeatures.ts-576b94c6-1.md) |
-| [src/configDir.ts](../../src/configDir.ts) | 19 | [1](src_configDir.ts-a6836374-1.md) |
+| [src/claudeFeatures.ts](../../src/claudeFeatures.ts) | 300 | [1](src_claudeFeatures.ts-576b94c6-1.md) [2](src_claudeFeatures.ts-576b94c6-2.md) [3](src_claudeFeatures.ts-576b94c6-3.md) |
+| [src/configDir.ts](../../src/configDir.ts) | 33 | [1](src_configDir.ts-a6836374-1.md) |
