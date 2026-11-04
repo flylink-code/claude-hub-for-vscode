@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -362,6 +362,12 @@
           "type": "string",
           "default": "",
           "description": "%config.configDir.desc%"
+        },
+        "claudeHub.memory.useWorkspace": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "%config.memory.useWorkspace.desc%"
         },
         "claudeHub.todo.preferSource": {
           "type": "string",

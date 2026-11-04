@@ -5,6 +5,7 @@ import { ClaudeHubDashboardProvider } from './dashboardView.js';
 import { SessionManager } from './sessionManager.js';
 import { StatusBarController } from './statusBar.js';
 import { ClaudeConfigDirProvider, resolveClaudeConfigDir } from './configDir.js';
+import { syncWorkspaceMemoryDir } from './projectMemory.js';
 
 let sessionManager: SessionManager | null = null;
 let configManager: ClaudeConfigManager | null = null;
@@ -18,6 +19,31 @@ export function activate(context: vscode.ExtensionContext) {
     const custom = vscode.workspace.getConfiguration('claudeHub').get<string>('configDir', '');
     return resolveClaudeConfigDir(custom);
   };
+
+  const syncMemoryDirectories = () => {
+    if (!vscode.workspace.isTrusted) return;
+    for (const folder of vscode.workspace.workspaceFolders ?? []) {
+      try {
+        const enabled = vscode.workspace.getConfiguration('claudeHub', folder.uri)
+          .get<boolean>('memory.useWorkspace', true);
+        syncWorkspaceMemoryDir(configDirProvider(), folder.uri.fsPath, enabled);
+      } catch (error) {
+        vscode.window.showErrorMessage(`无法配置工作区记忆目录：${error}`);
+      }
+    }
+  };
+  syncMemoryDirectories();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(syncMemoryDirectories),
+    vscode.workspace.onDidGrantWorkspaceTrust(syncMemoryDirectories),
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration('claudeHub.memory.useWorkspace') ||
+          event.affectsConfiguration('claudeHub.configDir')) {
+        syncMemoryDirectories();
+        sessionManager?.scanSessions();
+      }
+    }),
+  );
 
   configManager = new ClaudeConfigManager(configDirProvider);
   sessionManager = new SessionManager(context, configManager, configDirProvider);

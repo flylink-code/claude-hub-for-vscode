@@ -13,7 +13,7 @@
 | [test/modelPricing.test.ts](../../test/modelPricing.test.ts) | 2 | [1](test_modelPricing.test.ts-d8313c87-1.md) |
 | [test/modelPricingOverrides.test.ts](../../test/modelPricingOverrides.test.ts) | 2 | [1](test_modelPricingOverrides.test.ts-68dc997e-1.md) |
 | [test/officialTasks.test.ts](../../test/officialTasks.test.ts) | 27 | [1](test_officialTasks.test.ts-dfd06203-1.md) |
-| [test/parser.test.ts](../../test/parser.test.ts) | 282 | [1](test_parser.test.ts-34fd732f-1.md) [2](test_parser.test.ts-34fd732f-2.md) [3](test_parser.test.ts-34fd732f-3.md) |
+| [test/parser.test.ts](../../test/parser.test.ts) | 295 | [1](test_parser.test.ts-34fd732f-1.md) [2](test_parser.test.ts-34fd732f-2.md) [3](test_parser.test.ts-34fd732f-3.md) |
 | [test/projectTodoPolicy.test.ts](../../test/projectTodoPolicy.test.ts) | 21 | [1](test_projectTodoPolicy.test.ts-caafebd9-1.md) |
 | [test/sessionCardMenu.test.ts](../../test/sessionCardMenu.test.ts) | 41 | [1](test_sessionCardMenu.test.ts-77528088-1.md) |
 | [test/timelineEvents.test.ts](../../test/timelineEvents.test.ts) | 4 | [1](test_timelineEvents.test.ts-88d66be2-1.md) |

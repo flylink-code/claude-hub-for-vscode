@@ -48,6 +48,7 @@
   "config.fetchSubscriptionUsage.desc": "Opt-in: fetch Claude subscription 5-hour and weekly rate limits using the end-user's local Claude Code OAuth credentials. Off by default.",
   "config.subscriptionRefreshInterval.desc": "Interval (in seconds) to refresh subscription rate limits.",
   "config.configDir.desc": "Custom Claude Code config folder (containing projects/ and .credentials.json). Defaults to ~/.claude.",
+  "config.memory.useWorkspace.desc": "Default auto memory to the workspace .claude/memory/ by merging autoMemoryDirectory into .claude/settings.local.json in trusted workspaces. Existing custom directories are preserved. Disable to remove this workspace override and use Claude Code settings/defaults. Existing memory files are not moved. Restart Claude Code sessions after changing this setting.",
   "config.language.desc": "Display language for Claude Hub interface and notifications.",
   "config.language.auto": "Auto-detect from VS Code interface language",
   "config.language.zhCN": "简体中文 (Simplified Chinese)",

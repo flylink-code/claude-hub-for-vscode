@@ -9,6 +9,7 @@
 | File | Symbols | Symbol pages |
 | --- | ---: | --- |
 | [src/commands.ts](../../src/commands.ts) | 105 | [1](src_commands.ts-ca92d1af-1.md) [2](src_commands.ts-ca92d1af-2.md) |
-| [src/extension.ts](../../src/extension.ts) | 8 | [1](src_extension.ts-04bba6a3-1.md) |
+| [src/extension.ts](../../src/extension.ts) | 12 | [1](src_extension.ts-04bba6a3-1.md) |
 | [src/i18n.ts](../../src/i18n.ts) | 19 | [1](src_i18n.ts-8159012c-1.md) |
+| [src/projectMemory.ts](../../src/projectMemory.ts) | 12 | [1](src_projectMemory.ts-8e608051-1.md) |
 | [src/types.ts](../../src/types.ts) | 148 | [1](src_types.ts-c54113cf-1.md) [2](src_types.ts-c54113cf-2.md) |

@@ -4,15 +4,19 @@
 
 [Module](core-entry.md) · [Source](../../src/extension.ts) · page 1/1
 
-Source SHA-256: 22d4ac88b9518ef90f269ddf50ce31f5179393235f706916638a70e6af3c9748
+Source SHA-256: 729f3a0d259fd62b2d4d9140a0952ea79c5d8563cd16865452cc8b297cc103a7
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| sessionManager | VariableDeclaration |  | [9](../../src/extension.ts#L9) |
-| configManager | VariableDeclaration |  | [10](../../src/extension.ts#L10) |
-| statusBarController | VariableDeclaration |  | [11](../../src/extension.ts#L11) |
-| dashboardProvider | VariableDeclaration |  | [12](../../src/extension.ts#L12) |
-| activate | FunctionDeclaration |  | [14](../../src/extension.ts#L14) |
-| configDirProvider | VariableDeclaration | activate | [17](../../src/extension.ts#L17) |
-| custom | VariableDeclaration | activate.configDirProvider | [18](../../src/extension.ts#L18) |
-| deactivate | FunctionDeclaration |  | [46](../../src/extension.ts#L46) |
+| sessionManager | VariableDeclaration |  | [10](../../src/extension.ts#L10) |
+| configManager | VariableDeclaration |  | [11](../../src/extension.ts#L11) |
+| statusBarController | VariableDeclaration |  | [12](../../src/extension.ts#L12) |
+| dashboardProvider | VariableDeclaration |  | [13](../../src/extension.ts#L13) |
+| activate | FunctionDeclaration |  | [15](../../src/extension.ts#L15) |
+| configDirProvider | VariableDeclaration | activate | [18](../../src/extension.ts#L18) |
+| custom | VariableDeclaration | activate.configDirProvider | [19](../../src/extension.ts#L19) |
+| syncMemoryDirectories | VariableDeclaration | activate | [23](../../src/extension.ts#L23) |
+| folder | VariableDeclaration | activate.syncMemoryDirectories | [25](../../src/extension.ts#L25) |
+| enabled | VariableDeclaration | activate.syncMemoryDirectories | [27](../../src/extension.ts#L27) |
+| error | VariableDeclaration | activate.syncMemoryDirectories | [30](../../src/extension.ts#L30) |
+| deactivate | FunctionDeclaration |  | [72](../../src/extension.ts#L72) |

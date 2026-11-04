@@ -2,6 +2,20 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.21] - 2026-11-04
+
+### 中文
+
+- **工作区原生记忆：** 可信工作区默认使用 `.claude/memory/`，通过合并 `.claude/settings.local.json` 中的原生 `autoMemoryDirectory` 配置与 Claude Code 保持一致；重新启动 Claude Code 会话后生效。
+- **记忆目录设置：** 新增 `claudeHub.memory.useWorkspace`，支持撤销工作区路径覆盖；保留已有自定义目录和其他配置，不迁移或删除历史记忆。
+- **记忆面板：** 按原生配置读取记忆目录，支持用户、项目及本地配置优先级和 `~/` 路径；工作区子目录会话使用对应工作区配置。
+
+### English
+
+- **Native workspace memory:** Trusted workspaces default to `.claude/memory/`, configured through the native `autoMemoryDirectory` in `.claude/settings.local.json`. Restart Claude Code sessions to apply.
+- **Memory directory setting:** Added `claudeHub.memory.useWorkspace` to remove the workspace override when disabled. Existing custom paths and unrelated settings are preserved; historical memory is not moved or deleted.
+- **Memory panel:** Reads native memory directory settings with user, project, and local precedence and home-directory expansion; sessions in workspace subdirectories use their workspace configuration.
+
 ## [0.2.20] - 2026-11-04
 
 ### 中文

@@ -26,7 +26,64 @@ import {
   resolveClaudeConfigDir,
   resolveProjectMemoryDir,
 } from '../src/configDir.js';
+import { getConfiguredMemoryDir, syncWorkspaceMemoryDir } from '../src/projectMemory.js';
 import { taskSnapshot, mergeDiskPlanTodos } from '../src/nativeTasks.js';
+
+test('工作区记忆配置使用原生目录、保留其他字段且不迁移旧记忆', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-memory-'));
+  try {
+    const config = path.join(root, 'config');
+    const workspace = path.join(root, 'workspace');
+    const localFile = path.join(workspace, '.claude', 'settings.local.json');
+    fs.mkdirSync(path.dirname(localFile), { recursive: true });
+    fs.writeFileSync(localFile, JSON.stringify({ env: { KEEP: '1' }, permissions: { allow: ['Read'] } }));
+    const oldMemory = resolveProjectMemoryDir(config, workspace);
+    fs.mkdirSync(oldMemory, { recursive: true });
+    fs.writeFileSync(path.join(oldMemory, 'MEMORY.md'), '原有记忆');
+    assert.strictEqual(syncWorkspaceMemoryDir(config, workspace, true), true);
+    const expected = path.join(workspace, '.claude', 'memory');
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), expected);
+    const settings = JSON.parse(fs.readFileSync(localFile, 'utf-8'));
+    assert.deepStrictEqual(settings.env, { KEEP: '1' });
+    assert.deepStrictEqual(settings.permissions, { allow: ['Read'] });
+    assert.strictEqual(syncWorkspaceMemoryDir(config, workspace, true), false);
+    assert.strictEqual(fs.readFileSync(path.join(oldMemory, 'MEMORY.md'), 'utf-8'), '原有记忆');
+    assert.strictEqual(syncWorkspaceMemoryDir(config, workspace, false), true);
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), undefined);
+    assert.deepStrictEqual(JSON.parse(fs.readFileSync(localFile, 'utf-8')).env, { KEEP: '1' });
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('记忆目录尊重已有配置及 local 优先级，忽略无效相对路径', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-memory-'));
+  try {
+    const config = path.join(root, 'config');
+    const workspace = path.join(root, 'workspace');
+    fs.mkdirSync(config, { recursive: true });
+    fs.mkdirSync(path.join(workspace, '.claude'), { recursive: true });
+    const globalDir = path.join(root, 'global-memory');
+    const customDir = path.join(root, 'custom-memory');
+    fs.writeFileSync(path.join(config, 'settings.json'), JSON.stringify({ autoMemoryDirectory: globalDir }));
+    assert.strictEqual(syncWorkspaceMemoryDir(config, workspace, true), false);
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), globalDir);
+    const localFile = path.join(workspace, '.claude', 'settings.local.json');
+    fs.writeFileSync(localFile, JSON.stringify({ autoMemoryDirectory: customDir }));
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), customDir);
+    assert.strictEqual(syncWorkspaceMemoryDir(config, workspace, false), false);
+    fs.writeFileSync(localFile, JSON.stringify({ autoMemoryDirectory: '~/memory-test' }));
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), path.join(os.homedir(), 'memory-test'));
+    fs.writeFileSync(localFile, JSON.stringify({ autoMemoryDirectory: 'relative/memory' }));
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), globalDir);
+    fs.writeFileSync(localFile, '{invalid');
+    assert.throws(() => syncWorkspaceMemoryDir(config, workspace, true));
+    assert.strictEqual(fs.readFileSync(localFile, 'utf-8'), '{invalid');
+    assert.strictEqual(getConfiguredMemoryDir(config, workspace), globalDir);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 import { formatModelDisplayName, formatSelectedModelName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
 import {

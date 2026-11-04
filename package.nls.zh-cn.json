@@ -48,6 +48,7 @@
   "config.fetchSubscriptionUsage.desc": "可选：使用用户本机 Claude Code OAuth 凭据拉取订阅 5 小时及周配额。默认关闭（需手动开启）。",
   "config.subscriptionRefreshInterval.desc": "订阅配额的刷新周期（秒）。",
   "config.configDir.desc": "自定义 Claude Code 配置文件夹路径（包含 projects/ 和 .credentials.json），留空则默认为 ~/.claude。",
+  "config.memory.useWorkspace.desc": "默认使用当前工作区的 .claude/memory/：在可信工作区的 .claude/settings.local.json 中合并原生 autoMemoryDirectory 配置。保留已有自定义目录。关闭后移除该工作区路径覆盖，使用 Claude Code 配置或默认目录。不迁移已有记忆文件；修改后需重新启动 Claude Code 会话。",
   "config.language.desc": "Claude Hub 界面与提示消息的显示语言。",
   "config.language.auto": "自动跟随 VS Code 界面语言 (默认)",
   "config.language.zhCN": "简体中文 (Simplified Chinese)",

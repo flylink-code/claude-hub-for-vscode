@@ -9,7 +9,8 @@ function getVsCode(): any {
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ClaudeConfigDirProvider, resolveClaudeConfigDir, resolveProjectMemoryDir } from './configDir.js';
+import { ClaudeConfigDirProvider, isPathInWorkspace, resolveClaudeConfigDir, resolveProjectMemoryDir } from './configDir.js';
+import { getConfiguredMemoryDir } from './projectMemory.js';
 import { TokenUsage } from './types.js';
 import { formatCostForDisplay } from './modelPricing.js';
 
@@ -518,15 +519,15 @@ export class ClaudeFeaturesManager {
 
   public getProjectMemories(projectPath?: string, sessionFile?: string): ProjectMemoryInfo {
     const configDir = this.getConfigDir();
-    let effectiveProjectPath = projectPath;
-    if (!effectiveProjectPath) {
-      const wsFolders = getVsCode()?.workspace?.workspaceFolders || [];
-      if (wsFolders.length > 0) {
-        effectiveProjectPath = wsFolders[0].uri.fsPath;
-      }
-    }
+    const wsFolders = getVsCode()?.workspace?.workspaceFolders || [];
+    const matchingFolder = projectPath
+      ? [...wsFolders].sort((a: any, b: any) => b.uri.fsPath.length - a.uri.fsPath.length)
+        .find((ws: any) => isPathInWorkspace(projectPath, [ws.uri.fsPath]))
+      : wsFolders[0];
+    const effectiveProjectPath = matchingFolder?.uri.fsPath || projectPath;
 
-    const memoryDir = resolveProjectMemoryDir(configDir, effectiveProjectPath, sessionFile);
+    const memoryDir = getConfiguredMemoryDir(configDir, effectiveProjectPath)
+      ?? resolveProjectMemoryDir(configDir, effectiveProjectPath, sessionFile);
     const indexFilePath = path.join(memoryDir, 'MEMORY.md');
     const hasIndexFile = fs.existsSync(indexFilePath);
     const entries: MemoryEntryInfo[] = [];
