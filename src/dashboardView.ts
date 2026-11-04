@@ -74,9 +74,16 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       switch (msg.type) {
         case 'ready':
+          webviewView.webview.postMessage({ type: 'restoreUiState', state: this.context.globalState.get('dashboardUiState') });
           this.sendSessionUpdate();
           this.sendConfigUpdate();
           this.sendExtensionsUpdate();
+          break;
+
+        case 'saveUiState':
+          if (msg.state && typeof msg.state === 'object' && !Array.isArray(msg.state)) {
+            await this.context.globalState.update('dashboardUiState', msg.state);
+          }
           break;
 
         case 'refresh':

@@ -4,8 +4,20 @@
 
 [Module](tests.md) · [Source](../../test/topBarToolbar.test.ts) · page 1/1
 
-Source SHA-256: c9e98cb5e9580a12520341850f22264130cca45fc8cc52326d1701dbfabd3446
+Source SHA-256: 7c6db7ba5ac5bed6a0c7a244265f5148bc9f4015872b48a55d76c9c42bba627f
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
 | html | VariableDeclaration |  | [6](../../test/topBarToolbar.test.ts#L6) |
+| html | VariableDeclaration |  | [27](../../test/topBarToolbar.test.ts#L27) |
+| html | VariableDeclaration |  | [37](../../test/topBarToolbar.test.ts#L37) |
+| start | VariableDeclaration |  | [43](../../test/topBarToolbar.test.ts#L43) |
+| end | VariableDeclaration |  | [44](../../test/topBarToolbar.test.ts#L44) |
+| toolbar | VariableDeclaration |  | [46](../../test/topBarToolbar.test.ts#L46) |
+| html | VariableDeclaration |  | [55](../../test/topBarToolbar.test.ts#L55) |
+| html | VariableDeclaration |  | [66](../../test/topBarToolbar.test.ts#L66) |
+| id | VariableDeclaration |  | [73](../../test/topBarToolbar.test.ts#L73) |
+| html | VariableDeclaration |  | [80](../../test/topBarToolbar.test.ts#L80) |
+| rule | VariableDeclaration |  | [81](../../test/topBarToolbar.test.ts#L81) |
+| html | VariableDeclaration |  | [92](../../test/topBarToolbar.test.ts#L92) |
+| tokenFillTag | VariableDeclaration |  | [93](../../test/topBarToolbar.test.ts#L93) |

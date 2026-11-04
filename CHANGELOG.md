@@ -2,6 +2,26 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.20] - 2026-11-04
+
+### 中文
+
+- **界面优化：** 整理实时监控、顶部工具栏和会话卡片的视觉层级，改善主题与窄侧栏适配。
+- **会话操作：** 常用操作保留在卡片上，其他操作收纳到支持键盘导航的更多菜单；删除仍需要确认。
+- **无障碍：** 主分区支持键盘展开、收起及焦点提示。
+- **会话检索与主题：** 筛选计数与搜索结果一致，搜索无结果可一键清空；会话卡片、状态标签及运行提示改用 VS Code 主题色，改善浅色与高对比主题适配。
+- **任务列表与搜索框：** 任务卡片、进行中状态、模式标签和会话搜索框跟随 VS Code 主题，避免浅色界面出现固定深色背景。
+- **界面状态恢复：** 重新打开 Dashboard 后恢复主分区折叠、会话筛选和搜索、扩展页签与搜索及滚动位置；避免首次数据刷新覆盖置顶／活跃筛选。
+
+### English
+
+- **Interface polish:** Refined the live monitor, toolbar, and session cards with improved theme and narrow sidebar support.
+- **Session actions:** Kept common actions on each card and moved the rest into a keyboard-accessible menu; deletion still requires confirmation.
+- **Accessibility:** Added keyboard toggles and focus indicators for the main sections.
+- **Session search and themes:** Search and filter counts now agree, empty searches can be cleared, and session cards, status pills, and activity banners use VS Code theme colors.
+- **Tasks and search:** Task cards, in-progress states, mode chips, and session search now follow the host theme rather than fixed dark fills.
+- **Dashboard state:** Reopening the dashboard restores section collapse, session filters and search, extension tabs and search, and scroll position; initial session updates no longer override restored pinned or active filters.
+
 ## [0.2.19] - 2026-11-03
 
 ### 中文

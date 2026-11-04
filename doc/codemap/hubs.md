@@ -4,14 +4,14 @@
 
 [Root index](../CODE_MAP_INDEX.md)
 
-44 files · 3135 symbols · import edges: 239 resolved, 0 ambiguous, 34 unresolved.
+46 files · 3218 symbols · import edges: 241 resolved, 0 ambiguous, 41 unresolved.
 
 Edges come from `use`/`import` statements: relative specifiers for TypeScript, `crate`/`self`/`super` module paths plus a unique-name fallback for Rust. Lexical evidence, not type-checked resolution: an ambiguous or unresolved import is counted, never guessed.
 
 | Symbol | Kind | Module | In-degree | Line |
 | --- | --- | --- | ---: | --- |
 | SessionInfo | InterfaceDeclaration | core-entry | 13 | [126](../../src/types.ts#L126) |
-| getWebviewContent | FunctionDeclaration | ui-dashboard | 7 | [1](../../src/webviewHtml.ts#L1) |
+| getWebviewContent | FunctionDeclaration | ui-dashboard | 9 | [1](../../src/webviewHtml.ts#L1) |
 | ClaudeConfigManager | ClassDeclaration | config-features | 6 | [86](../../src/claudeConfigManager.ts#L86) |
 | resolveClaudeConfigDir | FunctionDeclaration | config-features | 6 | [7](../../src/configDir.ts#L7) |
 | ClaudeConfigDirProvider | TypeAliasDeclaration | config-features | 5 | [5](../../src/configDir.ts#L5) |

@@ -7,17 +7,23 @@ export function getWebviewContent(): string {
   <title>Claude Hub</title>
   <style>
     :root {
-      --bg-color: var(--vscode-sideBar-background);
-      --card-bg: var(--vscode-editor-background, rgba(30, 30, 30, 0.5));
-      --card-border: rgba(255, 255, 255, 0.08);
-      --card-hover: rgba(255, 255, 255, 0.04);
-      --claude-accent: #e07a5f;
-      --claude-amber: #d97706;
-      --success-color: #4ec9b0;
-      --warning-color: #d7ba7d;
-      --danger-color: #f14c4c;
-      --text-main: var(--vscode-foreground);
-      --text-muted: var(--vscode-descriptionForeground, #8c8c8c);
+      --hub-background: var(--vscode-sideBar-background, #252526);
+      --hub-surface: var(--vscode-editor-background, var(--hub-background));
+      --hub-border: var(--vscode-widget-border, var(--vscode-panel-border, transparent));
+      --hub-hover: var(--vscode-list-hoverBackground, transparent);
+      --hub-focus: var(--vscode-focusBorder, #007fd4);
+      --hub-accent: var(--vscode-textLink-foreground, #3794ff);
+      --bg-color: var(--hub-background);
+      --card-bg: var(--hub-surface);
+      --card-border: var(--hub-border);
+      --card-hover: var(--hub-hover);
+      --claude-accent: var(--hub-accent);
+      --claude-amber: var(--vscode-editorWarning-foreground, #cca700);
+      --success-color: var(--vscode-testing-iconPassed, #73c991);
+      --warning-color: var(--vscode-editorWarning-foreground, #cca700);
+      --danger-color: var(--vscode-errorForeground, #f14c4c);
+      --text-main: var(--vscode-foreground, #cccccc);
+      --text-muted: var(--vscode-descriptionForeground, var(--text-main));
       --font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
     }
 
@@ -45,13 +51,18 @@ export function getWebviewContent(): string {
       container-name: hub;
     }
 
-    /* Top Bar */
+    /* Top Bar: one compact, theme-driven header with a single action rail. */
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 6px;
+      min-width: 0;
       margin-bottom: 8px;
-      padding: 0 2px;
+      padding: 5px 6px 5px 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
     }
 
     .top-title {
@@ -61,17 +72,39 @@ export function getWebviewContent(): string {
       display: flex;
       align-items: center;
       gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .top-brand-mark {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      border-radius: 2px;
+      background: var(--hub-accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--hub-accent) 16%, transparent);
+    }
+
+    .top-brand-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .top-title .status-pill {
+      flex-shrink: 0;
     }
 
     .top-actions {
       display: flex;
       align-items: center;
-      gap: 2px;
+      gap: 1px;
       flex-shrink: 0;
-      padding: 2px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 1px;
+      border-radius: 5px;
+      background: transparent;
+      border: 1px solid transparent;
     }
 
     .icon-btn {
@@ -114,8 +147,14 @@ export function getWebviewContent(): string {
     }
 
     .icon-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--card-hover);
       color: var(--text-main);
+    }
+
+    button:focus-visible, input:focus-visible, select:focus-visible,
+    [role="button"]:focus-visible {
+      outline: 1px solid var(--hub-focus);
+      outline-offset: 2px;
     }
 
     .icon-btn:hover .icon-btn-icon {
@@ -124,7 +163,7 @@ export function getWebviewContent(): string {
     }
 
     .icon-btn.active {
-      background: rgba(224, 122, 95, 0.14);
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-hover));
       border-color: transparent;
       color: var(--claude-accent);
       font-weight: 500;
@@ -138,23 +177,18 @@ export function getWebviewContent(): string {
       display: none !important;
     }
 
-    .icon-btn.active .icon-btn-icon {
-      filter: none;
-      opacity: 1;
-    }
-
     /* Accordion Section */
     .section-wrap {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 6px;
       margin-bottom: 8px;
-      overflow: hidden;
+      overflow: visible;
       transition: border-color 0.2s;
     }
 
     .section-wrap:hover {
-      border-color: rgba(255, 255, 255, 0.14);
+      border-color: var(--vscode-focusBorder, var(--card-border));
     }
 
     .section-header {
@@ -164,14 +198,14 @@ export function getWebviewContent(): string {
       align-items: center;
       cursor: pointer;
       font-weight: 600;
-      font-size: 11.5px;
-      background: rgba(255, 255, 255, 0.02);
+      font-size: 12px;
+      background: var(--card-bg);
       border-bottom: 1px solid transparent;
       user-select: none;
     }
 
     .section-header:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--card-hover);
     }
 
     .section-header-title {
@@ -229,30 +263,32 @@ export function getWebviewContent(): string {
       gap: 4px;
       white-space: nowrap;
       flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted);
+      background: var(--vscode-badge-background, var(--vscode-input-background, var(--card-bg)));
+      color: var(--vscode-badge-foreground, var(--text-main));
+      border: 1px solid var(--vscode-contrastBorder, var(--card-border));
     }
 
     .status-pill.active {
-      background: rgba(78, 201, 176, 0.15);
-      color: var(--success-color);
-      border: 1px solid rgba(78, 201, 176, 0.3);
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-bg));
+      color: var(--vscode-list-inactiveSelectionForeground, var(--text-main));
+      border-color: var(--vscode-contrastBorder, var(--card-border));
     }
 
     .status-pill.idle {
-      background: rgba(140, 140, 140, 0.15);
+      background: var(--vscode-input-background, var(--card-bg));
       color: var(--text-muted);
     }
 
     .status-pill.focused {
-      background: rgba(224, 122, 95, 0.15);
-      color: var(--claude-accent);
-      border: 1px solid rgba(224, 122, 95, 0.3);
+      background: var(--vscode-list-activeSelectionBackground, var(--card-bg));
+      color: var(--vscode-list-activeSelectionForeground, var(--text-main));
+      border-color: var(--vscode-contrastBorder, var(--hub-focus));
     }
 
     /* Progress Bar */
     .progress-bar-track {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--vscode-input-background, var(--card-hover));
+      border: 1px solid var(--card-border);
       height: 6px;
       border-radius: 3px;
       overflow: hidden;
@@ -262,60 +298,135 @@ export function getWebviewContent(): string {
     .progress-bar-fill {
       height: 100%;
       border-radius: 3px;
-      background: linear-gradient(90deg, #4ec9b0, #d97706);
+      /* Keep the fill on the VS Code theme accent; never write an inline
+         background from script, which would mask the user's theme color. */
+      background-color: var(--vscode-textLink-foreground, var(--vscode-progressBar-background, var(--hub-accent)));
+      background-image: none;
       transition: width 0.3s ease;
+    }
+
+    /* First-screen session overview */
+    .monitor-overview-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 0;
+      margin-bottom: 2px;
+    }
+
+    .monitor-project-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+      font-size: 12.5px;
+    }
+
+    .monitor-context {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .monitor-context-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+
+    .monitor-context-value {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--claude-accent);
+      font-variant-numeric: tabular-nums;
     }
 
     /* Metrics Bubbles */
     .metrics-row {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 4px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .metric-bubble {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--vscode-input-background, var(--card-bg));
+      border: 1px solid var(--card-border);
       border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 10.5px;
+      padding: 3px 6px;
+      font-size: 11px;
       display: flex;
       gap: 4px;
       align-items: center;
+      justify-content: space-between;
+      min-width: 0;
     }
 
     .metric-bubble-lbl {
       color: var(--text-muted);
+      white-space: nowrap;
     }
 
     .metric-bubble-val {
       font-weight: 600;
+      font-variant-numeric: tabular-nums;
       color: var(--text-main);
-    }
-
-    .hud-info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 3px;
-      gap: 4px;
-      min-width: 0;
-    }
-
-    .hud-info-row > span {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
+    /* Runtime facts: grid + wrapping values keeps model / branch / duration
+       readable without the old single-line ellipsis clipping. */
+    .hud-info-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 3px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      min-width: 0;
+    }
+
+    .hud-fact {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    /* 模型名称通常较长，独占一行避免在窄栏中逐字符换行。 */
+    .hud-fact-model {
+      grid-column: 1 / -1;
+    }
+
+    .hud-fact-label {
+      flex: 0 0 auto;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .hud-fact-value {
+      min-width: 0;
+      color: var(--text-main);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    #session-dur-label {
+      white-space: normal;
+      font-variant-numeric: tabular-nums;
+    }
+
     /* Running Tool Banner */
     .running-bar {
-      background: rgba(224, 122, 95, 0.12);
-      border: 1px solid rgba(224, 122, 95, 0.3);
+      background: var(--vscode-list-hoverBackground, var(--card-bg));
+      border: 1px solid var(--vscode-contrastBorder, var(--card-border));
       border-radius: 4px;
       padding: 6px 8px;
       margin-top: 6px;
@@ -348,7 +459,7 @@ export function getWebviewContent(): string {
     }
 
     .todo-badge-icon .todo-spinner {
-      color: #58a6ff;
+      color: var(--vscode-progressBar-background, var(--hub-accent));
     }
 
     /* Enhanced Todo Card in Hub Dashboard (T1–T4 display polish) */
@@ -360,19 +471,19 @@ export function getWebviewContent(): string {
       padding: 6px 8px;
       border-radius: 6px;
       margin-bottom: 4px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--vscode-editor-background, var(--card-bg));
+      border: 1px solid var(--vscode-contrastBorder, var(--card-border));
       transition: background 0.15s;
     }
     .todo-item-card:hover {
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--vscode-list-hoverBackground, var(--card-bg));
     }
     .todo-item-card.completed {
       opacity: 0.7;
     }
     .todo-item-card.in_progress {
-      background: rgba(56, 139, 253, 0.1);
-      border-color: rgba(56, 139, 253, 0.32);
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-bg));
+      border-color: var(--vscode-focusBorder, var(--card-border));
     }
     .todo-badge-icon {
       flex-shrink: 0;
@@ -419,19 +530,19 @@ export function getWebviewContent(): string {
       border: 1px solid transparent;
     }
     .todo-status-chip.pending {
-      color: var(--text-muted, #8b949e);
-      background: rgba(139, 148, 158, 0.12);
-      border-color: rgba(139, 148, 158, 0.28);
+      color: var(--text-muted);
+      background: var(--vscode-input-background, var(--card-bg));
+      border-color: var(--vscode-contrastBorder, var(--card-border));
     }
     .todo-status-chip.in_progress {
-      color: #58a6ff;
-      background: rgba(56, 139, 253, 0.16);
-      border-color: rgba(56, 139, 253, 0.4);
+      color: var(--vscode-list-inactiveSelectionForeground, var(--text-main));
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-bg));
+      border-color: var(--vscode-focusBorder, var(--card-border));
     }
     .todo-status-chip.completed {
-      color: var(--success-color, #2ea043);
-      background: rgba(46, 160, 67, 0.14);
-      border-color: rgba(46, 160, 67, 0.35);
+      color: var(--success-color);
+      background: var(--vscode-input-background, var(--card-bg));
+      border-color: var(--vscode-contrastBorder, var(--card-border));
     }
     .todo-body {
       color: var(--text-muted, #8b949e);
@@ -497,19 +608,19 @@ export function getWebviewContent(): string {
       border: 1px solid transparent;
     }
     .todos-mode-chip.task {
-      color: #58a6ff;
-      background: rgba(56, 139, 253, 0.16);
-      border-color: rgba(56, 139, 253, 0.4);
+      color: var(--vscode-button-foreground, #ffffff);
+      background: var(--vscode-button-background, #0e639c);
+      border-color: var(--vscode-contrastBorder, transparent);
     }
     .todos-mode-chip.checklist {
-      color: var(--claude-accent, #e07a5f);
-      background: rgba(224, 122, 95, 0.14);
-      border-color: rgba(224, 122, 95, 0.4);
+      color: var(--vscode-list-inactiveSelectionForeground, var(--text-main));
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-bg));
+      border-color: var(--vscode-contrastBorder, var(--card-border));
     }
     .todos-mode-chip.none {
-      color: var(--text-muted, #8b949e);
-      background: rgba(139, 148, 158, 0.12);
-      border-color: rgba(139, 148, 158, 0.28);
+      color: var(--text-muted);
+      background: var(--vscode-input-background, var(--card-bg));
+      border-color: var(--vscode-contrastBorder, var(--card-border));
     }
     .todos-checklist-chip {
       font-size: 9px;
@@ -581,8 +692,8 @@ export function getWebviewContent(): string {
     }
 
     .filter-chip {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--vscode-button-secondaryBackground, var(--card-bg));
+      border: 1px solid var(--vscode-contrastBorder, var(--card-border));
       color: var(--text-muted);
       border-radius: 12px;
       padding: 2px 8px;
@@ -593,14 +704,14 @@ export function getWebviewContent(): string {
     }
 
     .filter-chip:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--vscode-button-secondaryHoverBackground, var(--card-hover));
       color: var(--text-main);
     }
 
     .filter-chip.active {
-      background: var(--claude-accent);
-      color: #fff;
-      border-color: var(--claude-accent);
+      background: var(--vscode-button-background, #0e639c);
+      color: var(--vscode-button-foreground, #ffffff);
+      border-color: var(--vscode-contrastBorder, transparent);
       font-weight: 600;
     }
 
@@ -610,9 +721,9 @@ export function getWebviewContent(): string {
 
     .search-box {
       width: 100%;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
+      background: var(--vscode-input-background, var(--card-bg));
+      border: 1px solid var(--vscode-input-border, var(--card-border));
+      color: var(--vscode-input-foreground, var(--text-main));
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 11px;
@@ -620,59 +731,78 @@ export function getWebviewContent(): string {
       outline: none;
     }
 
+    .search-box::placeholder {
+      color: var(--vscode-input-placeholderForeground, var(--text-muted));
+    }
+
     .search-box:focus {
-      border-color: var(--claude-accent);
+      border-color: var(--vscode-focusBorder, var(--hub-accent));
     }
 
     /* Session Card */
     .session-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 5px;
+      position: relative;
+      min-width: 0;
+      overflow: visible;
+      background: var(--card-bg);
+      border: 1px solid var(--vscode-contrastBorder, var(--card-border));
+      border-radius: 6px;
       padding: 8px;
       margin-bottom: 6px;
       transition: all 0.15s ease;
     }
 
     .session-card:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(255, 255, 255, 0.12);
+      background: var(--vscode-list-hoverBackground, var(--card-bg));
+      border-color: var(--vscode-focusBorder, var(--card-border));
     }
 
     .session-card.focused {
-      border-color: rgba(224, 122, 95, 0.5);
-      background: rgba(224, 122, 95, 0.06);
+      border-color: var(--vscode-focusBorder, var(--card-border));
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-bg));
+      color: var(--vscode-list-inactiveSelectionForeground, var(--text-main));
     }
 
+    /* 标题优先占宽；badge 放不下时整体换行，避免长标签/多 badge 挤压标题。 */
     .session-header-row {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 3px;
-      gap: 6px;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      gap: 4px 6px;
       min-width: 0;
     }
 
-    .session-project-name {
-      font-weight: 600;
-      font-size: 11.5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1 1 auto;
+    .session-title-text {
+      flex: 1 1 12em;
       min-width: 0;
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .session-header-badges {
       display: flex;
+      flex: 0 0 auto;
+      flex-wrap: wrap;
       align-items: center;
+      justify-content: flex-end;
       gap: 3px;
-      flex-shrink: 0;
+      min-width: 0;
+      max-width: 100%;
     }
 
     .session-header-badges .status-pill {
       font-size: 9px;
       padding: 1.5px 5px;
+      max-width: 100%;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
@@ -686,13 +816,83 @@ export function getWebviewContent(): string {
       font-weight: 600;
     }
 
-    .session-title-text {
+    .session-header-badges .status-pill.fork {
+      background: rgba(78, 201, 176, 0.15);
+      color: var(--success-color);
+      font-weight: 600;
+    }
+
+    .session-tag-badge {
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 9px;
+      line-height: 1.35;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(86, 156, 214, 0.15);
+      color: var(--vscode-textLink-foreground, #9cdcfe);
+    }
+
+    .session-pin-badge {
+      flex: 0 0 auto;
+      font-size: 9px;
+      line-height: 1.35;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(204, 167, 0, 0.2);
+      color: var(--warning-color, #cca700);
+    }
+
+    .session-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-width: 0;
+      margin-bottom: 2px;
       color: var(--text-muted);
+    }
+
+    .session-project-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-weight: 500;
       font-size: 10.5px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 5px;
+    }
+
+    .session-model-text {
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 45%;
+      font-size: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-muted);
+    }
+
+    .session-branch-row {
+      display: flex;
+      min-width: 0;
+      margin-bottom: 2px;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--text-muted);
+    }
+
+    .session-branch-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .session-meta-row {
@@ -708,7 +908,7 @@ export function getWebviewContent(): string {
     }
 
     .session-meta-main {
-      flex: 1 1 12em;
+      flex: 1 1 10em;
       min-width: 0;
       max-width: 100%;
       line-height: 1.35;
@@ -717,8 +917,10 @@ export function getWebviewContent(): string {
 
     .session-meta-side {
       flex: 0 1 auto;
+      min-width: 0;
       max-width: 100%;
       line-height: 1.35;
+      text-align: right;
       overflow-wrap: anywhere;
     }
 
@@ -727,19 +929,19 @@ export function getWebviewContent(): string {
       flex-wrap: wrap;
       align-items: center;
       gap: 4px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      border-top: 1px solid var(--card-border);
       padding-top: 6px;
     }
 
     .session-act-btn {
       flex: 0 0 auto;
       max-width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      border-radius: 3px;
-      padding: 2.5px 4px;
-      font-size: 10px;
+      background: var(--vscode-button-secondaryBackground, var(--card-bg));
+      border: 1px solid var(--card-border);
+      color: var(--vscode-button-secondaryForeground, var(--text-main));
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 11px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -761,8 +963,8 @@ export function getWebviewContent(): string {
     }
 
     .session-act-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
+      background: var(--card-hover);
+      color: var(--text-main);
     }
 
     .session-act-btn.fork:hover {
@@ -772,9 +974,9 @@ export function getWebviewContent(): string {
     }
 
     .session-act-btn.focus:hover {
-      background: rgba(224, 122, 95, 0.2);
-      border-color: var(--claude-accent);
-      color: var(--claude-accent);
+      background: var(--vscode-button-secondaryHoverBackground, var(--card-hover));
+      border-color: var(--hub-focus);
+      color: var(--text-main);
     }
 
     .session-act-btn.delete:hover {
@@ -784,15 +986,131 @@ export function getWebviewContent(): string {
     }
 
     .session-act-btn.resume:hover {
-      background: rgba(86, 156, 214, 0.2);
-      border-color: #569cd6;
-      color: #569cd6;
+      background: var(--vscode-button-secondaryHoverBackground, var(--card-hover));
+      border-color: var(--hub-focus);
+      color: var(--text-main);
     }
 
     .session-act-btn.rename:hover {
       background: rgba(204, 167, 0, 0.2);
       border-color: #cca700;
       color: #cca700;
+    }
+
+    .session-act-btn:focus-visible {
+      outline: 1px solid var(--vscode-focusBorder, var(--claude-accent));
+      outline-offset: 1px;
+    }
+
+    .session-more-wrap {
+      position: relative;
+      flex: 0 0 auto;
+      display: inline-flex;
+    }
+
+    .session-act-btn.more[aria-expanded="true"] {
+      background: var(--vscode-list-inactiveSelectionBackground, var(--card-hover));
+      border-color: var(--vscode-focusBorder, var(--claude-accent));
+      color: var(--text-main);
+    }
+
+    .session-more-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      min-width: 132px;
+      max-width: min(220px, calc(100vw - 24px));
+      box-sizing: border-box;
+      padding: 4px;
+      background: var(--vscode-menu-background, #252526);
+      color: var(--vscode-menu-foreground, var(--text-main));
+      border: 1px solid var(--vscode-menu-border, var(--card-border, rgba(255, 255, 255, 0.12)));
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .session-more-menu.open {
+      display: flex;
+    }
+
+    .session-more-menu.drop-up {
+      top: auto;
+      bottom: calc(100% + 4px);
+    }
+
+    .session-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      min-width: 0;
+      padding: 4px 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      color: inherit;
+      font: inherit;
+      font-size: 11px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .session-menu-item:hover,
+    .session-menu-item:focus-visible {
+      background: var(--vscode-menu-selectionBackground, rgba(255, 255, 255, 0.12));
+      color: var(--vscode-menu-selectionForeground, #fff);
+      outline: 1px solid var(--vscode-focusBorder, var(--claude-accent));
+      outline-offset: -1px;
+    }
+
+    .session-menu-item.danger {
+      color: var(--danger-color);
+    }
+
+    .session-menu-item.danger:hover,
+    .session-menu-item.danger:focus-visible {
+      background: var(--vscode-menu-selectionBackground, var(--card-hover));
+      color: var(--vscode-menu-selectionForeground, var(--danger-color));
+    }
+
+    .session-menu-icon {
+      flex-shrink: 0;
+      width: 14px;
+      text-align: center;
+    }
+
+    .session-menu-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .session-menu-sep {
+      height: 1px;
+      margin: 3px 2px;
+      background: var(--card-border, rgba(255, 255, 255, 0.1));
+    }
+
+    @container hub (max-width: 290px) {
+      .session-more-menu {
+        right: 0;
+        min-width: 116px;
+        max-width: calc(100vw - 16px);
+      }
+    }
+
+    @supports not (container-type: inline-size) {
+      @media (max-width: 306px) {
+        .session-more-menu {
+          right: 0;
+          min-width: 116px;
+          max-width: calc(100vw - 16px);
+        }
+      }
     }
 
     .agent-wt-actions {
@@ -921,7 +1239,8 @@ export function getWebviewContent(): string {
         display: none;
       }
       .top-actions .icon-btn {
-        min-width: 26px;
+        min-width: 24px;
+        height: 24px;
         padding: 0;
       }
       .header-sub, .chip-label-long, .todos-clear-text, .todos-sync-text, .todo-counter-detail {
@@ -940,6 +1259,12 @@ export function getWebviewContent(): string {
       .session-header-badges .status-pill {
         padding: 1px 4px;
       }
+      .session-title-text {
+        font-size: 11.5px;
+      }
+      .session-model-text {
+        max-width: 55%;
+      }
       .metrics-row {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -953,13 +1278,8 @@ export function getWebviewContent(): string {
     }
     @container hub (max-width: 260px) {
       .hud-info-row {
-        flex-direction: column;
-        gap: 1px;
-        align-items: flex-start;
-      }
-      .hud-info-row > span {
-        text-align: left !important;
-        max-width: 100%;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2px;
       }
       .doc-btn-group {
         flex-direction: column;
@@ -977,6 +1297,15 @@ export function getWebviewContent(): string {
       .session-act-btn .btn-text {
         display: none;
       }
+      .session-title-text {
+        font-size: 11px;
+      }
+      .session-model-text {
+        max-width: 50%;
+      }
+      .session-header-badges {
+        gap: 2px;
+      }
       .top-bar {
         flex-wrap: wrap;
         gap: 4px;
@@ -984,6 +1313,7 @@ export function getWebviewContent(): string {
       .top-actions {
         width: 100%;
         justify-content: flex-end;
+        flex-wrap: wrap;
       }
       .top-actions .icon-btn {
         min-width: 24px;
@@ -1014,6 +1344,12 @@ export function getWebviewContent(): string {
         .session-header-badges .status-pill {
           padding: 1px 4px;
         }
+        .session-title-text {
+          font-size: 11.5px;
+        }
+        .session-model-text {
+          max-width: 55%;
+        }
         .metrics-row {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1027,13 +1363,8 @@ export function getWebviewContent(): string {
       }
       @media (max-width: 276px) {
         .hud-info-row {
-          flex-direction: column;
-          gap: 1px;
-          align-items: flex-start;
-        }
-        .hud-info-row > span {
-          text-align: left !important;
-          max-width: 100%;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 2px;
         }
         .doc-btn-group {
           flex-direction: column;
@@ -1050,6 +1381,15 @@ export function getWebviewContent(): string {
         }
         .session-act-btn .btn-text {
           display: none;
+        }
+        .session-title-text {
+          font-size: 11px;
+        }
+        .session-model-text {
+          max-width: 50%;
+        }
+        .session-header-badges {
+          gap: 2px;
         }
         .top-bar {
           flex-wrap: wrap;
@@ -1905,12 +2245,13 @@ export function getWebviewContent(): string {
 
   <!-- Top Action Bar -->
   <div class="top-bar">
-    <div class="top-title">
-      <span>Claude</span>
+    <div class="top-title" title="Claude Hub">
+      <span class="top-brand-mark" aria-hidden="true"></span>
+      <span class="top-brand-name">Claude</span>
       <span class="status-pill" id="global-status-pill">检测中</span>
     </div>
-        <div class="top-actions" role="toolbar" aria-label="Hub actions">
-      <button class="icon-btn" type="button" data-i18n-title="tbRefresh" title="" aria-label="" onclick="sendMessage(\'refresh\')"><span class="icon-btn-icon" aria-hidden="true">🔄</span><span class="icon-btn-text" data-role="label">刷新</span></button>
+    <div class="top-actions" role="toolbar" aria-label="Hub actions">
+      <button class="icon-btn" type="button" data-i18n-title="tbRefresh" title="" aria-label="" onclick="sendMessage(\'refresh\')"><span class="icon-btn-icon" aria-hidden="true">🔄</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbSlash" title="" aria-label="" onclick="sendMessage(\'slashCommand\')"><span class="icon-btn-icon" aria-hidden="true">/</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbSearch" title="" aria-label="" onclick="sendMessage(\'searchTranscript\')"><span class="icon-btn-icon" aria-hidden="true">🔍</span><span class="icon-btn-text" data-role="label"></span></button>
       <button class="icon-btn" type="button" data-i18n-title="tbCost" title="" aria-label="" onclick="sendMessage(\'workspaceCostReport\')"><span class="icon-btn-icon" aria-hidden="true">💵</span><span class="icon-btn-text" data-role="label"></span></button>
@@ -1922,7 +2263,7 @@ export function getWebviewContent(): string {
 
   <!-- SECTION 1: 实时运行监控 (常驻展开) -->
   <div class="section-wrap" id="sec-monitor">
-    <div class="section-header" onclick="toggleSection('sec-monitor')">
+    <div class="section-header" role="button" tabindex="0" onkeydown="sectionHeaderKeydown(event, this)" onclick="toggleSection('sec-monitor')">
       <span class="section-header-title">
         <span class="caret">▼</span>
         <span>📊 实时运行监控</span>
@@ -1931,33 +2272,36 @@ export function getWebviewContent(): string {
     </div>
     <div class="section-body">
 
-      <!-- Project Name & Token % -->
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-        <span id="proj-name" style="font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">未检测到会话</span>
-        <span id="token-pct" style="font-weight: 700; color: var(--claude-accent);">0%</span>
-      </div>
+      <!-- Session overview: project + context usage are the primary tier. -->
+      <div class="monitor-overview">
+        <div class="monitor-overview-head">
+          <span id="proj-name" class="monitor-project-name" title="">未检测到会话</span>
+          <span class="monitor-context">
+            <span class="monitor-context-label">上下文</span>
+            <span id="token-pct" class="monitor-context-value">0%</span>
+          </span>
+        </div>
 
-      <!-- Token Limit Bar -->
-      <div class="progress-bar-track">
-        <div id="token-fill" class="progress-bar-fill" style="width: 0%;"></div>
-      </div>
+        <!-- Token Limit Bar: fill color comes from the VS Code theme only. -->
+        <div class="progress-bar-track" id="token-progress" role="progressbar" aria-label="上下文使用率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="token-fill" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
 
-      <!-- Detail Bubbles -->
-      <div class="metrics-row">
-        <div class="metric-bubble"><span class="metric-bubble-lbl">输入</span><span id="m-in" class="metric-bubble-val">0</span></div>
-        <div class="metric-bubble"><span class="metric-bubble-lbl">缓存</span><span id="m-cache" class="metric-bubble-val">0</span></div>
-        <div class="metric-bubble"><span class="metric-bubble-lbl">写入</span><span id="m-write" class="metric-bubble-val">0</span></div>
-        <div class="metric-bubble"><span class="metric-bubble-lbl">输出</span><span id="m-out" class="metric-bubble-val">0</span></div>
-      </div>
+        <!-- Detail Bubbles -->
+        <div class="metrics-row">
+          <div class="metric-bubble"><span class="metric-bubble-lbl">输入</span><span id="m-in" class="metric-bubble-val">0</span></div>
+          <div class="metric-bubble"><span class="metric-bubble-lbl">缓存</span><span id="m-cache" class="metric-bubble-val">0</span></div>
+          <div class="metric-bubble"><span class="metric-bubble-lbl">写入</span><span id="m-write" class="metric-bubble-val">0</span></div>
+          <div class="metric-bubble"><span class="metric-bubble-lbl">输出</span><span id="m-out" class="metric-bubble-val">0</span></div>
+        </div>
 
-      <div class="hud-info-row">
-        <span id="model-tag">模型: --</span>
-        <span id="branch-tag">🌿 --</span>
-      </div>
-
-      <div class="hud-info-row" style="margin-top: 2px;">
-        <span id="cost-label">预估消耗: &lt; $0.001</span>
-        <span id="session-dur-label" style="text-align: right;">⏱️ 对话时长: --</span>
+        <!-- Runtime facts: values wrap instead of being clipped. -->
+        <div class="hud-info-row" role="list" aria-label="运行摘要">
+          <span class="hud-fact hud-fact-model" role="listitem"><span class="hud-fact-label">模型</span><span id="model-tag" class="hud-fact-value">--</span></span>
+          <span class="hud-fact" role="listitem"><span class="hud-fact-label">分支</span><span id="branch-tag" class="hud-fact-value">--</span></span>
+          <span class="hud-fact" role="listitem"><span class="hud-fact-label">消耗</span><span id="cost-label" class="hud-fact-value">--</span></span>
+          <span class="hud-fact" role="listitem"><span class="hud-fact-label">时长</span><span id="session-dur-label" class="hud-fact-value">--</span></span>
+        </div>
       </div>
 
       <!-- Live Running Tool Banner (Auto hidden when idle) -->
@@ -2018,7 +2362,7 @@ export function getWebviewContent(): string {
         <div class="agents-heading" onclick="toggleAgentsList()">
           <div class="agents-heading-title">
             <span id="agents-caret" class="caret" style="display: inline-block; font-size: 9px; transition: transform 0.2s;">▼</span>
-            <span class="agents-heading-label">🤖 协作代理拓扑<span class="header-sub"> (Agent Map)</span></span>
+            <span class="agents-heading-label">🤖 协作代理拓扑</span>
           </div>
           <span id="agents-counter" class="status-pill">0</span>
         </div>
@@ -2052,10 +2396,10 @@ export function getWebviewContent(): string {
 
   <!-- SECTION 2: 会话管理中心 (Session Manager - 默认展开) -->
   <div class="section-wrap" id="sec-sessions">
-    <div class="section-header" onclick="toggleSection('sec-sessions')">
+    <div class="section-header" role="button" tabindex="0" onkeydown="sectionHeaderKeydown(event, this)" onclick="toggleSection('sec-sessions')">
       <span class="section-header-title">
         <span class="caret">▼</span>
-        <span>🕒 会话历史<span class="header-sub"> (Session Manager)</span></span>
+        <span>🕒 会话历史</span>
       </span>
       <span id="sessions-total-badge" class="status-pill">0 个会话</span>
     </div>
@@ -2070,7 +2414,7 @@ export function getWebviewContent(): string {
       </div>
 
       <!-- Search Input -->
-      <input type="text" class="search-box" id="session-search" placeholder="🔍 搜索项目名称、会话标题..." oninput="onSearchInput(this.value)">
+      <input type="text" class="search-box" id="session-search" placeholder="🔍 搜索标题、项目、分支、模型或标签..." oninput="onSearchInput(this.value)">
 
       <!-- Session Cards List -->
       <div id="session-cards-list">
@@ -2089,10 +2433,10 @@ export function getWebviewContent(): string {
 
   <!-- SECTION 3: 扩展能力 MCP, Plugins, Skills & Memory (默认收起) -->
   <div class="section-wrap collapsed" id="sec-extensions">
-    <div class="section-header" onclick="toggleSection('sec-extensions')">
+    <div class="section-header" role="button" tabindex="0" onkeydown="sectionHeaderKeydown(event, this)" onclick="toggleSection('sec-extensions')">
       <span class="section-header-title">
         <span class="caret">▼</span>
-        <span>🧩 扩展与记忆<span class="header-sub"> (Memory · Plugins · MCP · Skills)</span></span>
+        <span>🧩 扩展与记忆</span>
       </span>
       <span id="ext-count-badge" class="status-pill">0 项</span>
     </div>
@@ -2119,7 +2463,7 @@ export function getWebviewContent(): string {
         <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="memory">
           <span class="ext-group-title">
             <span class="caret">▼</span>
-            <span class="ext-group-title-text">🧠 项目记忆<span class="header-sub"> (Memory)</span></span>
+            <span class="ext-group-title-text">🧠 项目记忆</span>
             <span class="ext-group-badge" id="ext-badge-memory">0</span>
           </span>
           <div style="display: flex; gap: 3px; flex-shrink: 0;">
@@ -2172,7 +2516,7 @@ export function getWebviewContent(): string {
         <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="plugins">
           <span class="ext-group-title">
             <span class="caret">▼</span>
-            <span class="ext-group-title-text">🧩 已安装插件<span class="header-sub"> (Plugins)</span></span>
+            <span class="ext-group-title-text">🧩 已安装插件</span>
             <span class="ext-group-badge" id="ext-badge-plugins">0</span>
           </span>
         </div>
@@ -2204,7 +2548,7 @@ export function getWebviewContent(): string {
         <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="agents">
           <span class="ext-group-title">
             <span class="caret">▼</span>
-            <span class="ext-group-title-text">🤖 自定义代理<span class="header-sub"> (Agents)</span></span>
+            <span class="ext-group-title-text">🤖 自定义代理</span>
             <span class="ext-group-badge" id="ext-badge-agents">0</span>
           </span>
         </div>
@@ -2220,7 +2564,7 @@ export function getWebviewContent(): string {
         <div class="ext-group-header" data-action="toggleExtGroup" data-ext-group="skills">
           <span class="ext-group-title">
             <span class="caret">▼</span>
-            <span class="ext-group-title-text">⚡ 已安装技能<span class="header-sub"> (Skills)</span></span>
+            <span class="ext-group-title-text">⚡ 已安装技能</span>
             <span class="ext-group-badge" id="ext-badge-skills">0</span>
           </span>
           <div class="ext-scope-pills" id="skill-scope-bar">
@@ -2241,7 +2585,7 @@ export function getWebviewContent(): string {
 
   <!-- SECTION 4: 网络代理与高级环境 (默认收起) -->
   <div class="section-wrap collapsed" id="sec-advanced">
-    <div class="section-header" onclick="toggleSection('sec-advanced')">
+    <div class="section-header" role="button" tabindex="0" onkeydown="sectionHeaderKeydown(event, this)" onclick="toggleSection('sec-advanced')">
       <span class="section-header-title">
         <span class="caret">▼</span>
         <span>⚙️ 高级 / 环境配置</span>
@@ -2332,22 +2676,108 @@ export function getWebviewContent(): string {
 }
 
 
-    // Accordion State Memory
+    // 同步保存至 Webview 与扩展全局状态，重建视图及重启后均可恢复。
+    const savedUiState = vscode.getState() || {};
+    const sectionIds = ['sec-monitor', 'sec-sessions', 'sec-extensions', 'sec-advanced'];
+    let uiStateRestored = false;
+    let pendingScrollY = null;
+    let uiStateSaveTimer = null;
+    function saveUiState() {
+      const sections = {};
+      sectionIds.forEach(id => { sections[id] = document.getElementById(id).classList.contains('collapsed'); });
+      const state = {
+        sections,
+        sessionFilter: currentFilter,
+        searchKeyword,
+        extActiveTab,
+        extSkillScope,
+        extSearchQuery,
+        extGroupManualState: { ...extGroupManualState },
+        extShowAllPlugins,
+        extShowAllLocalSkills,
+        scrollY: window.scrollY,
+      };
+      vscode.setState(state);
+      if (uiStateSaveTimer) clearTimeout(uiStateSaveTimer);
+      uiStateSaveTimer = setTimeout(() => sendMessage('saveUiState', { state }), 200);
+    }
+    function restoreDashboardScroll() {
+      if (pendingScrollY === null) return;
+      window.scrollTo(0, pendingScrollY);
+      pendingScrollY = null;
+    }
+    function restoreUiState(state) {
+      if (uiStateRestored) return;
+      uiStateRestored = true;
+      state = state && typeof state === 'object' ? state : savedUiState;
+      if (!state || typeof state !== 'object') return;
+      sectionIds.forEach(id => {
+        let collapsed = state.sections && state.sections[id];
+        if (typeof collapsed !== 'boolean') {
+          try {
+            const legacy = localStorage.getItem('ch_sec_' + id);
+            if (legacy === '0' || legacy === '1') collapsed = legacy === '0';
+          } catch (e) {}
+        }
+        if (typeof collapsed === 'boolean') {
+          document.getElementById(id).classList.toggle('collapsed', collapsed);
+          syncSectionState(document.getElementById(id));
+        }
+      });
+      if (['all', 'workspace', 'pinned', 'active'].includes(state.sessionFilter)) {
+        currentFilter = state.sessionFilter;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        const chip = document.getElementById({ all: 'chip-all', workspace: 'chip-ws', pinned: 'chip-pinned', active: 'chip-active' }[currentFilter]);
+        if (chip) chip.classList.add('active');
+      }
+      if (typeof state.searchKeyword === 'string') {
+        searchKeyword = state.searchKeyword.slice(0, 200).toLowerCase().trim();
+        document.getElementById('session-search').value = searchKeyword;
+      }
+      if (['all', 'skills', 'plugins', 'mcp', 'memory', 'agents'].includes(state.extActiveTab)) extActiveTab = state.extActiveTab;
+      if (['all', 'local', 'plugin'].includes(state.extSkillScope)) extSkillScope = state.extSkillScope;
+      if (typeof state.extSearchQuery === 'string') {
+        extSearchQuery = state.extSearchQuery.slice(0, 200);
+        document.getElementById('ext-search-input').value = extSearchQuery;
+        document.getElementById('ext-search-clear').style.display = extSearchQuery.trim() ? 'block' : 'none';
+      }
+      if (state.extGroupManualState && typeof state.extGroupManualState === 'object') {
+        ['memory', 'plugins', 'mcp', 'agents', 'skills'].forEach(key => {
+          if (typeof state.extGroupManualState[key] === 'boolean') extGroupManualState[key] = state.extGroupManualState[key];
+        });
+      }
+      extShowAllPlugins = state.extShowAllPlugins === true;
+      extShowAllLocalSkills = state.extShowAllLocalSkills === true;
+      if (Number.isFinite(state.scrollY) && state.scrollY >= 0) pendingScrollY = state.scrollY;
+      renderExtensionsPanel();
+      renderSessionsList();
+    }
+
+    // 保存折叠状态，同时让键盘和辅助技术获取当前状态。
+    function syncSectionState(el) {
+      const header = el.querySelector('.section-header');
+      if (header) {
+        header.setAttribute('aria-expanded', String(!el.classList.contains('collapsed')));
+        header.setAttribute('aria-controls', el.id + '-body');
+        const body = el.querySelector('.section-body');
+        if (body) body.id = el.id + '-body';
+      }
+    }
+    function sectionHeaderKeydown(event, header) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        header.click();
+      }
+    }
     function toggleSection(id) {
       const el = document.getElementById(id);
       el.classList.toggle('collapsed');
-      try {
-        localStorage.setItem('ch_sec_' + id, el.classList.contains('collapsed') ? '0' : '1');
-      } catch (e) {}
+      syncSectionState(el);
+      try { localStorage.setItem('ch_sec_' + id, el.classList.contains('collapsed') ? '0' : '1'); } catch (e) {}
+      saveUiState();
     }
 
-    ['sec-monitor', 'sec-sessions', 'sec-extensions', 'sec-advanced'].forEach(id => {
-      try {
-        const val = localStorage.getItem('ch_sec_' + id);
-        if (val === '0') document.getElementById(id).classList.add('collapsed');
-        if (val === '1') document.getElementById(id).classList.remove('collapsed');
-      } catch (e) {}
-    });
+    sectionIds.forEach(id => syncSectionState(document.getElementById(id)));
 
     let userToggledAgents = false;
     let userManuallyOpened = false;
@@ -2766,13 +3196,19 @@ export function getWebviewContent(): string {
 
     document.addEventListener('click', event => {
       const source = event.target instanceof Element ? event.target : null;
+      if (openSessionMenuId && !(source && source.closest('.session-more-wrap'))) {
+        closeSessionMenu(false);
+      }
       const actionElement = source ? source.closest('[data-action]') : null;
       if (!actionElement) return;
 
       const action = actionElement.getAttribute('data-action');
       if (!action) return;
 
-      if (action === 'focusSession' || action === 'forkSession' || action === 'deleteSession' || action === 'resumeSession' || action === 'renameSession' || action === 'togglePinSession' || action === 'exportSession' || action === 'compareFork' || action === 'editSessionTags' || action === 'showTimeline') {
+      if (action === 'toggleSessionMenu') {
+        toggleSessionMenu(actionElement, false);
+      } else if (action === 'focusSession' || action === 'forkSession' || action === 'deleteSession' || action === 'resumeSession' || action === 'renameSession' || action === 'togglePinSession' || action === 'exportSession' || action === 'compareFork' || action === 'editSessionTags' || action === 'showTimeline') {
+        closeSessionMenu(false);
         sendMessage(action, { sessionId: actionElement.getAttribute('data-session-id') || '' });
       } else if (action === 'openWorktree') {
         sendMessage(action, { worktreePath: actionElement.getAttribute('data-worktree-path') || '' });
@@ -2804,6 +3240,7 @@ export function getWebviewContent(): string {
       } else if (action === 'toggleExtGroup') {
         toggleExtGroup(actionElement.getAttribute('data-ext-group') || '');
       } else if (action === 'openSessionFile') {
+        closeSessionMenu(false);
         sendMessage(action, { filePath: actionElement.getAttribute('data-file-path') || '' });
       } else if (action === 'toggleMcp') {
         sendMessage(action, {
@@ -2824,9 +3261,11 @@ export function getWebviewContent(): string {
       } else if (action === 'toggleMorePlugins') {
         extShowAllPlugins = !extShowAllPlugins;
         renderExtensionsPanel();
+        saveUiState();
       } else if (action === 'toggleMoreLocalSkills') {
         extShowAllLocalSkills = !extShowAllLocalSkills;
         renderExtensionsPanel();
+        saveUiState();
       } else if (action === 'toggleSkillPluginGroup') {
         const grp = actionElement.getAttribute('data-plugin-group') || '';
         if (grp) {
@@ -2849,6 +3288,7 @@ export function getWebviewContent(): string {
           }
           expandedPluginSkillGroups.add(pluginName);
           renderExtensionsPanel();
+          saveUiState();
           const grpEl = document.getElementById('skill-plugin-grp-' + pluginName.replace(/[^a-zA-Z0-9_-]/g, '_'));
           if (grpEl && grpEl.scrollIntoView) {
             grpEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2876,11 +3316,13 @@ export function getWebviewContent(): string {
     function setExtTab(tab) {
       extActiveTab = tab || 'all';
       renderExtensionsPanel();
+      saveUiState();
     }
 
     function setSkillScope(scope) {
       extSkillScope = scope || 'all';
       renderExtensionsPanel();
+      saveUiState();
     }
 
     function onExtSearchInput(val) {
@@ -2890,6 +3332,7 @@ export function getWebviewContent(): string {
         clearBtn.style.display = extSearchQuery.trim() ? 'block' : 'none';
       }
       renderExtensionsPanel();
+      saveUiState();
     }
 
     function clearExtSearch() {
@@ -2899,6 +3342,7 @@ export function getWebviewContent(): string {
       const clearBtn = document.getElementById('ext-search-clear');
       if (clearBtn) clearBtn.style.display = 'none';
       renderExtensionsPanel();
+      saveUiState();
     }
 
     let memFormMode = 'create';
@@ -3021,6 +3465,7 @@ export function getWebviewContent(): string {
       const nextCollapsed = !el.classList.contains('collapsed');
       extGroupManualState[groupKey] = nextCollapsed;
       renderExtensionsPanel();
+      saveUiState();
     }
 
     function renderSkillItemHtml(sk, inPluginGroup) {
@@ -3383,6 +3828,7 @@ export function getWebviewContent(): string {
     let currentSession = null;
     let currentFilter = 'all';
     let backendFilterMode = null;
+    let initialFilterModeReceived = false;
     let searchKeyword = '';
     let currentPage = 1;
     let pageSize = 8;
@@ -3426,8 +3872,6 @@ export function getWebviewContent(): string {
         btn.title = tip;
         btn.setAttribute('aria-label', tip);
       });
-      const refreshText = document.querySelector('.top-actions .icon-btn[data-i18n-title="tbRefresh"] .icon-btn-text');
-      if (refreshText && hubUiStrings.tbRefreshShort) refreshText.textContent = hubUiStrings.tbRefreshShort;
     }
 
     function updateTopFilterButton(mode) {
@@ -3452,6 +3896,7 @@ export function getWebviewContent(): string {
     function setSessionFilter(filter, notifyBackend = true) {
       currentFilter = filter;
       currentPage = 1;
+      saveUiState();
       document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
       if (filter === 'all') {
         const chip = document.getElementById('chip-all');
@@ -3480,11 +3925,22 @@ export function getWebviewContent(): string {
     }
 
     let searchDebounceTimer = null;
+    function clearSessionSearch() {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchKeyword = '';
+      currentPage = 1;
+      saveUiState();
+      const input = document.getElementById('session-search');
+      if (input) input.value = '';
+      renderSessionsList();
+      if (input) input.focus();
+    }
     function onSearchInput(val) {
       if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
       searchDebounceTimer = setTimeout(() => {
         searchKeyword = (val || '').toLowerCase().trim();
         currentPage = 1;
+        saveUiState();
         renderSessionsList();
       }, 150);
     }
@@ -3541,7 +3997,7 @@ export function getWebviewContent(): string {
       const durEl = document.getElementById('session-dur-label');
       if (durEl) {
         if (!currentSession) {
-          durEl.innerText = '⏱️ 对话时长: --';
+          durEl.innerText = '--';
           durEl.title = '';
         } else {
           const isIdle = !!currentSession.isIdle;
@@ -3551,7 +4007,7 @@ export function getWebviewContent(): string {
 
           if (isIdle) {
             const durText = formatDuration(baseDurMs, false);
-            durEl.innerText = '⏱️ 对话时长: ' + durText;
+            durEl.innerText = durText;
             let tip = '累计有效对话时长: ' + durText;
             if (createdTime > 0) {
               tip += ' · 会话创建于 ' + formatRelativeTime(createdTime);
@@ -3571,14 +4027,14 @@ export function getWebviewContent(): string {
             const totalText = formatDuration(totalActiveMs, false);
 
             if (turnText) {
-              durEl.innerText = '⏱️ 运行时长: ' + turnText + ' (总计 ' + totalText + ')';
+              durEl.innerText = turnText + ' / 总 ' + totalText;
               let tip = '当前任务运行时长: ' + turnText + ' · 累计有效对话: ' + totalText;
               if (createdTime > 0) {
                 tip += ' · 会话创建于 ' + formatRelativeTime(createdTime);
               }
               durEl.title = tip;
             } else {
-              durEl.innerText = '⏱️ 运行时长: ' + formatDuration(totalActiveMs, true);
+              durEl.innerText = formatDuration(totalActiveMs, true);
               durEl.title = '累计有效运行时长: ' + formatDuration(totalActiveMs, true);
             }
           }
@@ -3791,22 +4247,19 @@ export function getWebviewContent(): string {
       status.style.color = primary && primary.conflict ? '#f44747' : 'var(--text-muted)';
     }
 
+    let openSessionMenuId = null;
+
     function renderSessionsList() {
       const container = document.getElementById('session-cards-list');
       const totalBadge = document.getElementById('sessions-total-badge');
-      const wsCount = allSessions.filter(s => s.isCurrentWorkspace).length;
-      const totalCount = allSessions.length;
+      const scopeCount = allSessions.filter(s => {
+        if (currentFilter === 'workspace') return s.isCurrentWorkspace;
+        if (currentFilter === 'active') return !s.isIdle;
+        if (currentFilter === 'pinned') return s.pinned;
+        return true;
+      }).length;
 
-      if (currentFilter === 'workspace') {
-        totalBadge.innerText = wsCount + ' / ' + totalCount + ' 个会话';
-      } else if (currentFilter === 'active') {
-        const activeCount = allSessions.filter(s => !s.isIdle).length;
-        totalBadge.innerText = activeCount + ' / ' + totalCount + ' 个会话';
-      } else {
-        totalBadge.innerText = totalCount + ' 个会话';
-      }
-
-      let filtered = allSessions.filter(s => {
+      const filtered = allSessions.filter(s => {
         if (currentFilter === 'workspace' && !s.isCurrentWorkspace) return false;
         if (currentFilter === 'active' && s.isIdle) return false;
         if (currentFilter === 'pinned' && !s.pinned) return false;
@@ -3822,6 +4275,11 @@ export function getWebviewContent(): string {
         return true;
       });
 
+      totalBadge.innerText = searchKeyword
+        ? filtered.length + ' / ' + scopeCount + ' 个会话'
+        : scopeCount + ' 个会话';
+      totalBadge.title = searchKeyword ? '搜索结果数 / 当前筛选总数' : '当前筛选会话数';
+
       const totalPages = Math.ceil(filtered.length / pageSize) || 1;
       if (currentPage > totalPages) currentPage = totalPages;
       if (currentPage < 1) currentPage = 1;
@@ -3831,7 +4289,10 @@ export function getWebviewContent(): string {
       document.getElementById('btn-next-page').disabled = currentPage >= totalPages;
 
       if (filtered.length === 0) {
-        if (currentFilter === 'workspace') {
+        if (openSessionMenuId) closeSessionMenu(false);
+        if (searchKeyword) {
+          container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px 0;"><div>当前筛选中没有匹配的会话</div><div style="margin-top: 8px;"><button type="button" class="filter-chip" onclick="clearSessionSearch()">清除搜索</button></div></div>';
+        } else if (currentFilter === 'workspace') {
           container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px 0;"><div>当前工作区暂无会话</div><div style="margin-top: 8px;"><button class="filter-chip active" style="display: inline-block; padding: 3px 10px;" onclick="setSessionFilter(\\'all\\')">🌐 查看全部项目会话</button></div></div>';
         } else {
           container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 16px 0;">未找到符合条件的会话</div>';
@@ -3841,11 +4302,16 @@ export function getWebviewContent(): string {
 
       const startIndex = (currentPage - 1) * pageSize;
       const pageSessions = filtered.slice(startIndex, startIndex + pageSize);
+      // 刷新列表前记录会话操作焦点，避免实时更新打断键盘操作。
+      const activeControl = container.contains(document.activeElement) ? document.activeElement : null;
+      const focusedAction = activeControl && activeControl.getAttribute('data-action');
+      const focusedId = activeControl && activeControl.getAttribute('data-session-id');
+      const focusedPath = activeControl && activeControl.getAttribute('data-file-path');
 
       container.innerHTML = pageSessions.map(s => {
         const isFocused = s.sessionId === focusedSessionId;
-        const tagsBadge = (s.tags && s.tags.length) ? (' <span title="' + escapeAttribute(s.tags.join(', ')) + '" style="background: rgba(86,156,214,0.15); color:#9cdcfe; font-size:9px; padding:1px 4px; border-radius:3px;">' + escapeHtml(s.tags.slice(0,3).join(' · ')) + (s.tags.length > 3 ? '…' : '') + '</span>') : '';
-        const pinnedTag = s.pinned ? ' <span title="Pinned" style="background: rgba(204,167,0,0.2); color:#cca700; font-size:9px; padding:1px 4px; border-radius:3px;">PIN</span>' : '';
+        const tagsBadge = (s.tags && s.tags.length) ? ('<span class="session-tag-badge" title="' + escapeAttribute(s.tags.join(', ')) + '">' + escapeHtml(s.tags.slice(0,3).join(' · ')) + (s.tags.length > 3 ? '…' : '') + '</span>') : '';
+        const pinnedTag = s.pinned ? '<span class="session-pin-badge" title="已置顶 (Pinned)">PIN</span>' : '';
         const focusedTag = isFocused ? '<span class="status-pill focused" style="font-size: 9px;"><span class="badge-icon">📍</span><span class="badge-text">当前聚焦</span></span>' : '';
         const bgRunning = (s.backgroundJobs || []).filter(function (job) { return job && job.status === 'running'; });
         const bgBadge = bgRunning.length
@@ -3860,16 +4326,20 @@ export function getWebviewContent(): string {
         const tokens = s.tokenUsage ? formatTokenCount(s.tokenUsage.totalTokens) : '0';
         const pct = s.tokenUsage && s.tokenUsage.percentage ? s.tokenUsage.percentage + '%' : '0%';
         const branchStr = s.gitBranch ? '🌿 ' + escapeHtml(s.gitBranch) : '';
+        const branchAttr = escapeAttribute(s.gitBranch || '');
         const titleStr = s.sessionTitle ? s.sessionTitle : '未命名对话';
-        const projectNameStr = escapeHtml(s.projectName || '未知项目');
+        const projectLabel = (s.projectName || '未知项目') + (s.workspaceFolderName ? ' · ' + s.workspaceFolderName : '');
+        const projectNameStr = escapeHtml(projectLabel);
+        const projectNameAttr = escapeAttribute(projectLabel);
         const titleDisplay = escapeHtml(titleStr);
         const titleAttr = escapeAttribute(titleStr);
         const modelDisplay = escapeHtml(s.model || 'Claude');
+        const modelAttr = escapeAttribute(s.model || 'Claude');
         const sessionIdAttr = escapeAttribute(s.sessionId || '');
         const sessionFileAttr = escapeAttribute(s.sessionFile || '');
 
         const isFork = titleStr.includes('(Fork');
-        const forkBadge = isFork ? ' <span style="background: rgba(78, 201, 176, 0.15); color: var(--success-color); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Fork</span>' : '';
+        const forkBadge = isFork ? '<span class="status-pill fork" title="Fork 会话">Fork</span>' : '';
         const agentsBadge = (s.agentsCount && s.agentsCount > 0) ? ' <span title="包含 ' + s.agentsCount + ' 个协作代理" style="background: rgba(224, 122, 95, 0.15); color: var(--claude-accent); font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;"><span class="badge-icon">🤖</span><span class="badge-text"> ' + s.agentsCount + '</span></span>' : '';
 
         const durationMs = s.durationMs !== undefined ? s.durationMs : 0;
@@ -3882,41 +4352,200 @@ export function getWebviewContent(): string {
 
         const rightMetaParts = [];
         if (durationBadge) rightMetaParts.push(durationBadge);
-        if (branchStr) rightMetaParts.push(branchStr);
         if (timeStr) rightMetaParts.push(timeStr);
         const rightMetaHtml = rightMetaParts.join(' · ');
 
-        let tokenText = pct + ' (' + tokens + ' Tokens) · ' + modelDisplay;
+        let tokenText = pct + ' (' + tokens + ' Tokens)';
         if (s.subagentsTotalTokens && s.subagentsTotalTokens > 0) {
           tokenText += ' <span style="opacity: 0.75;" title="含子代理独立消耗: +' + s.subagentsTotalTokens + '">(含代理 +' + formatTokenCount(s.subagentsTotalTokens) + ')</span>';
         }
 
+        const compareMenuItem = s.parentSessionId
+          ? '<button type="button" class="session-menu-item" role="menuitem" data-action="compareFork" data-session-id="' + sessionIdAttr + '" title="对比父会话"><span class="session-menu-icon">🔀</span><span class="session-menu-text">对比父会话</span></button>'
+          : '';
+        const moreMenuHtml =
+          '<div class="session-more-wrap">' +
+            '<button type="button" class="session-act-btn more" data-action="toggleSessionMenu" data-session-id="' + sessionIdAttr + '" title="更多会话操作" aria-haspopup="menu" aria-expanded="false"><span class="btn-icon">⋯</span><span class="btn-text">更多</span></button>' +
+            '<div class="session-more-menu" role="menu" aria-label="会话更多操作" data-session-id="' + sessionIdAttr + '">' +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="renameSession" data-session-id="' + sessionIdAttr + '" title="重命名会话"><span class="session-menu-icon">✏️</span><span class="session-menu-text">重命名</span></button>' +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="togglePinSession" data-session-id="' + sessionIdAttr + '" title="置顶/取消置顶"><span class="session-menu-icon">' + (s.pinned ? '📌' : '📍') + '</span><span class="session-menu-text">' + (s.pinned ? '取消置顶' : '置顶') + '</span></button>' +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="exportSession" data-session-id="' + sessionIdAttr + '" title="导出 Markdown"><span class="session-menu-icon">📄</span><span class="session-menu-text">导出 Markdown</span></button>' +
+              compareMenuItem +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="editSessionTags" data-session-id="' + sessionIdAttr + '" title="编辑标签"><span class="session-menu-icon">🏷️</span><span class="session-menu-text">编辑标签</span></button>' +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="showTimeline" data-session-id="' + sessionIdAttr + '" title="权限/Hook 时间线"><span class="session-menu-icon">🛡️</span><span class="session-menu-text">时间线</span></button>' +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="forkSession" data-session-id="' + sessionIdAttr + '" title="分叉此会话 (Fork)"><span class="session-menu-icon">🌿</span><span class="session-menu-text">分叉</span></button>' +
+              '<button type="button" class="session-menu-item" role="menuitem" data-action="openSessionFile" data-file-path="' + sessionFileAttr + '" title="查看原始 JSONL 日志"><span class="session-menu-icon">📄</span><span class="session-menu-text">查看日志</span></button>' +
+              '<div class="session-menu-sep" role="separator"></div>' +
+              '<button type="button" class="session-menu-item danger" role="menuitem" data-action="deleteSession" data-session-id="' + sessionIdAttr + '" title="删除此会话"><span class="session-menu-icon">🗑️</span><span class="session-menu-text">删除会话</span></button>' +
+            '</div>' +
+          '</div>';
+
+        const branchRow = branchStr ? '<div class="session-branch-row"><span class="session-branch-text" title="' + branchAttr + '">' + branchStr + '</span></div>' : '';
+
         return '<div class="' + cardClass + '">' +
           '<div class="session-header-row">' +
-            '<span class="session-project-name" title="' + projectNameStr + '">' + projectNameStr + (s.workspaceFolderName ? ' · ' + escapeHtml(s.workspaceFolderName) : '') + '</span>' +
-            '<div class="session-header-badges">' + focusedTag + pinnedTag + tagsBadge + loopBadge + bgBadge + activeTag + agentsBadge + '</div>' +
+            '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + '</div>' +
+            '<div class="session-header-badges">' + focusedTag + activeTag + pinnedTag + loopBadge + bgBadge + agentsBadge + forkBadge + tagsBadge + '</div>' +
           '</div>' +
-          '<div class="session-title-text" title="' + titleAttr + '">' + titleDisplay + forkBadge + '</div>' +
+          '<div class="session-sub-row">' +
+            '<span class="session-project-name" title="' + projectNameAttr + '">' + projectNameStr + '</span>' +
+            '<span class="session-model-text" title="' + modelAttr + '">' + modelDisplay + '</span>' +
+          '</div>' +
+          branchRow +
           '<div class="session-meta-row">' +
             '<span class="session-meta-main">' + tokenText + '</span>' +
             '<span class="session-meta-side">' + rightMetaHtml + '</span>' +
           '</div>' +
           '<div class="session-actions-row">' +
-            '<button class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '" title="聚焦此会话"><span class="btn-icon">👀</span><span class="btn-text">聚焦</span></button>' +
-            '<button class="session-act-btn resume" data-action="resumeSession" data-session-id="' + sessionIdAttr + '" title="在终端恢复 (claude --resume)"><span class="btn-icon">▶️</span><span class="btn-text">恢复</span></button>' +
-            '<button class="session-act-btn rename" data-action="renameSession" data-session-id="' + sessionIdAttr + '" title="重命名会话"><span class="btn-icon">✏️</span><span class="btn-text">改名</span></button>' +
-            '<button class="session-act-btn" data-action="togglePinSession" data-session-id="' + sessionIdAttr + '" title="置顶/取消置顶"><span class="btn-icon">' + (s.pinned ? '📌' : '📍') + '</span><span class="btn-text">' + (s.pinned ? '已置顶' : '置顶') + '</span></button>' +
-            '<button class="session-act-btn" data-action="exportSession" data-session-id="' + sessionIdAttr + '" title="导出 Markdown"><span class="btn-icon">📄</span><span class="btn-text">导出</span></button>' +
-            (s.parentSessionId ? '<button class="session-act-btn" data-action="compareFork" data-session-id="' + sessionIdAttr + '" title="对比父会话"><span class="btn-icon">🔀</span><span class="btn-text">对比</span></button>' : '') +
-            '<button class="session-act-btn" data-action="editSessionTags" data-session-id="' + sessionIdAttr + '" title="编辑标签"><span class="btn-icon">🏷️</span><span class="btn-text">标签</span></button>' +
-            '<button class="session-act-btn" data-action="showTimeline" data-session-id="' + sessionIdAttr + '" title="权限/Hook 时间线"><span class="btn-icon">🛡️</span><span class="btn-text">时间线</span></button>' +
-            '<button class="session-act-btn fork" data-action="forkSession" data-session-id="' + sessionIdAttr + '" title="分叉此会话 (Fork)"><span class="btn-icon">🌿</span><span class="btn-text">分叉</span></button>' +
-            '<button class="session-act-btn" data-action="openSessionFile" data-file-path="' + sessionFileAttr + '" title="查看原始 JSONL 日志"><span class="btn-icon">📄</span><span class="btn-text">日志</span></button>' +
-            '<button class="session-act-btn delete" data-action="deleteSession" data-session-id="' + sessionIdAttr + '" title="删除此会话"><span class="btn-icon">🗑️</span><span class="btn-text">删除</span></button>' +
+            '<button type="button" class="session-act-btn focus" data-action="focusSession" data-session-id="' + sessionIdAttr + '" title="查看此会话"><span class="btn-icon">👀</span><span class="btn-text">查看</span></button>' +
+            '<button type="button" class="session-act-btn resume" data-action="resumeSession" data-session-id="' + sessionIdAttr + '" title="在终端恢复 (claude --resume)"><span class="btn-icon">▶️</span><span class="btn-text">恢复</span></button>' +
+            moreMenuHtml +
           '</div>' +
         '</div>';
       }).join('');
+
+      if (openSessionMenuId) {
+        const reopened = getSessionMenuBySessionId(openSessionMenuId);
+        if (reopened) {
+          setSessionMenuOpen(reopened, getSessionMenuTrigger(reopened), true, false);
+        } else {
+          openSessionMenuId = null;
+        }
+      }
+      if (focusedAction) {
+        const controls = container.querySelectorAll('[data-action]');
+        for (let i = 0; i < controls.length; i++) {
+          const control = controls[i];
+          if (control.getAttribute('data-action') === focusedAction &&
+              control.getAttribute('data-session-id') === focusedId &&
+              control.getAttribute('data-file-path') === focusedPath) {
+            control.focus({ preventScroll: true });
+            break;
+          }
+        }
+      }
     }
+
+    function getSessionMenuBySessionId(sessionId) {
+      const menus = document.querySelectorAll('.session-more-menu');
+      for (let i = 0; i < menus.length; i++) {
+        if (menus[i].getAttribute('data-session-id') === sessionId) return menus[i];
+      }
+      return null;
+    }
+
+    function getSessionMenuTrigger(menu) {
+      if (!menu) return null;
+      const wrap = menu.closest('.session-more-wrap');
+      return wrap ? wrap.querySelector('[data-action="toggleSessionMenu"]') : null;
+    }
+
+    function getSessionMenuItems(menu) {
+      if (!menu) return [];
+      return Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
+    }
+
+    function setSessionMenuOpen(menu, trigger, open, focusFirst) {
+      if (!menu) return;
+      const sessionId = menu.getAttribute('data-session-id') || '';
+      if (open) {
+        const otherMenus = document.querySelectorAll('.session-more-menu.open');
+        for (let i = 0; i < otherMenus.length; i++) {
+          if (otherMenus[i] !== menu) {
+            setSessionMenuOpen(otherMenus[i], getSessionMenuTrigger(otherMenus[i]), false, false);
+          }
+        }
+        menu.classList.add('open');
+        if (trigger) trigger.setAttribute('aria-expanded', 'true');
+        openSessionMenuId = sessionId;
+        menu.classList.remove('drop-up');
+        const rect = menu.getBoundingClientRect();
+        if (window.innerHeight - rect.bottom < 8 && rect.top > rect.height) {
+          menu.classList.add('drop-up');
+        }
+        if (focusFirst) {
+          const items = getSessionMenuItems(menu);
+          if (items.length) items[0].focus();
+        }
+      } else {
+        menu.classList.remove('open');
+        menu.classList.remove('drop-up');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        if (openSessionMenuId === sessionId) openSessionMenuId = null;
+      }
+    }
+
+    function toggleSessionMenu(triggerElement, focusFirst) {
+      if (!triggerElement) return;
+      const wrap = triggerElement.closest('.session-more-wrap');
+      const menu = wrap ? wrap.querySelector('.session-more-menu') : null;
+      if (!menu) return;
+      const willOpen = !menu.classList.contains('open');
+      setSessionMenuOpen(menu, triggerElement, willOpen, willOpen && focusFirst === true);
+    }
+
+    function closeSessionMenu(returnFocus) {
+      const openMenus = document.querySelectorAll('.session-more-menu.open');
+      let triggerToFocus = null;
+      for (let i = 0; i < openMenus.length; i++) {
+        const trigger = getSessionMenuTrigger(openMenus[i]);
+        if (returnFocus && !triggerToFocus) triggerToFocus = trigger;
+        setSessionMenuOpen(openMenus[i], trigger, false, false);
+      }
+      openSessionMenuId = null;
+      if (returnFocus && triggerToFocus) triggerToFocus.focus();
+    }
+
+    document.addEventListener('keydown', event => {
+      const target = event.target instanceof Element ? event.target : null;
+      const trigger = target ? target.closest('[data-action="toggleSessionMenu"]') : null;
+      if (trigger && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+        event.preventDefault();
+        const wrap = trigger.closest('.session-more-wrap');
+        const menu = wrap ? wrap.querySelector('.session-more-menu') : null;
+        if (!menu) return;
+        if (!menu.classList.contains('open')) {
+          setSessionMenuOpen(menu, trigger, true, false);
+        }
+        const items = getSessionMenuItems(menu);
+        if (items.length) {
+          items[event.key === 'ArrowUp' ? items.length - 1 : 0].focus();
+        }
+        return;
+      }
+
+      const openMenu = document.querySelector('.session-more-menu.open');
+      if (!openMenu) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        closeSessionMenu(true);
+        return;
+      }
+      if (event.key === 'Tab') {
+        closeSessionMenu(false);
+        return;
+      }
+
+      const items = getSessionMenuItems(openMenu);
+      if (!items.length) return;
+      const currentIndex = items.indexOf(document.activeElement);
+      let nextIndex = -1;
+      if (event.key === 'ArrowDown') {
+        nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+      } else if (event.key === 'ArrowUp') {
+        nextIndex = currentIndex < 0 ? items.length - 1 : (currentIndex - 1 + items.length) % items.length;
+      } else if (event.key === 'Home') {
+        nextIndex = 0;
+      } else if (event.key === 'End') {
+        nextIndex = items.length - 1;
+      }
+      if (nextIndex >= 0) {
+        event.preventDefault();
+        items[nextIndex].focus();
+      }
+    });
 
 
     // Message Receiver
@@ -3924,7 +4553,13 @@ export function getWebviewContent(): string {
       const msg = event.data;
       if (!msg) return;
 
+      if (msg.type === 'restoreUiState') {
+        restoreUiState(msg.state);
+        return;
+      }
+
       if (msg.type === 'updateSession') {
+        if (!uiStateRestored) restoreUiState();
         applyHubUiStrings(msg.ui);
         applyToolbarI18n();
         if (msg.sessionListPageSize && msg.sessionListPageSize >= 4) {
@@ -3944,22 +4579,29 @@ export function getWebviewContent(): string {
           backendFilterMode = msg.filterMode;
           updateTopFilterButton(msg.filterMode);
 
-          if (modeChanged) {
+          if (modeChanged && (initialFilterModeReceived || currentFilter === 'all' || currentFilter === 'workspace')) {
             currentFilter = msg.filterMode === 'currentWorkspace' ? 'workspace' : 'all';
             currentPage = 1;
             document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
             const activeChip = document.getElementById(msg.filterMode === 'currentWorkspace' ? 'chip-ws' : 'chip-all');
             if (activeChip) activeChip.classList.add('active');
           }
+          initialFilterModeReceived = true;
         }
 
         renderSessionsList();
 
         if (s) {
-          document.getElementById('proj-name').innerText = s.projectName || '未知项目';
+          const projName = s.projectName || '未知项目';
+          const projEl = document.getElementById('proj-name');
+          projEl.innerText = projName;
+          projEl.title = projName;
           const pct = (s.tokenUsage && s.tokenUsage.percentage) || 0;
           document.getElementById('token-pct').innerText = pct + '%';
+          // Width only: the fill color stays on the theme-driven CSS rule.
           document.getElementById('token-fill').style.width = Math.min(pct, 100) + '%';
+          const tokenBar = document.getElementById('token-progress');
+          if (tokenBar) tokenBar.setAttribute('aria-valuenow', String(Math.round(pct)));
 
           if (s.tokenUsage) {
             document.getElementById('m-in').innerText = formatTokenCount(s.tokenUsage.inputTokens);
@@ -3972,13 +4614,19 @@ export function getWebviewContent(): string {
           const respExtra = (s.lastResponseModelDisplay && s.lastResponseModelDisplay !== dispModel)
             ? ' (响应: ' + s.lastResponseModelDisplay + ')'
             : '';
-          document.getElementById('model-tag').innerText = '模型: ' + dispModel + respExtra;
-          document.getElementById('branch-tag').innerText = s.gitBranch ? '🌿 ' + s.gitBranch : '';
+          const modelEl = document.getElementById('model-tag');
+          modelEl.innerText = dispModel + respExtra;
+          modelEl.title = '模型: ' + dispModel + (respExtra ? ' · 最近响应: ' + s.lastResponseModelDisplay : '');
+          const branchEl = document.getElementById('branch-tag');
+          branchEl.innerText = s.gitBranch || '未关联';
+          branchEl.title = s.gitBranch ? 'Git 分支: ' + s.gitBranch : '当前会话未关联 Git 分支';
           const baseCostText = '预估消耗: ' + (msg.cost || '< $0.001');
           const subagentCostExtra = (s.subagentsTotalTokens && s.subagentsTotalTokens > 0)
             ? ' (含子代理: +' + formatTokenCount(s.subagentsTotalTokens) + ' tok)'
             : '';
-          document.getElementById('cost-label').innerText = baseCostText + subagentCostExtra;
+          const costEl = document.getElementById('cost-label');
+          costEl.innerText = (msg.cost || '< $0.001') + subagentCostExtra;
+          costEl.title = baseCostText + subagentCostExtra;
 
           const statusBadge = document.getElementById('session-status-badge');
           const globalBadge = document.getElementById('global-status-pill');
@@ -4278,8 +4926,18 @@ export function getWebviewContent(): string {
           skills: Array.isArray(msg.skills) ? msg.skills : []
         };
         renderExtensionsPanel();
+        if (pendingScrollY !== null) requestAnimationFrame(restoreDashboardScroll);
       }
     });
+
+    let scrollSaveTimer = null;
+    window.addEventListener('scroll', () => {
+      if (scrollSaveTimer) clearTimeout(scrollSaveTimer);
+      scrollSaveTimer = setTimeout(() => {
+        pendingScrollY = null;
+        saveUiState();
+      }, 250);
+    }, { passive: true });
 
     // 1-second live ticker for session duration, running tools, loop countdown, and background jobs
     setInterval(() => {
