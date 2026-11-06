@@ -4,7 +4,7 @@
 
 [Module](tests.md) · [Source](../../test/topBarToolbar.test.ts) · page 1/1
 
-Source SHA-256: 7c6db7ba5ac5bed6a0c7a244265f5148bc9f4015872b48a55d76c9c42bba627f
+Source SHA-256: bd21a57ca2b11e6dead2f4ead3209571d1e047a7d5678a8b2c5cd9fa7e18b95c
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -20,4 +20,7 @@ Source SHA-256: 7c6db7ba5ac5bed6a0c7a244265f5148bc9f4015872b48a55d76c9c42bba627f
 | html | VariableDeclaration |  | [80](../../test/topBarToolbar.test.ts#L80) |
 | rule | VariableDeclaration |  | [81](../../test/topBarToolbar.test.ts#L81) |
 | html | VariableDeclaration |  | [92](../../test/topBarToolbar.test.ts#L92) |
-| tokenFillTag | VariableDeclaration |  | [93](../../test/topBarToolbar.test.ts#L93) |
+| rule | VariableDeclaration |  | [93](../../test/topBarToolbar.test.ts#L93) |
+| selector | VariableDeclaration |  | [98](../../test/topBarToolbar.test.ts#L98) |
+| html | VariableDeclaration |  | [105](../../test/topBarToolbar.test.ts#L105) |
+| tokenFillTag | VariableDeclaration |  | [106](../../test/topBarToolbar.test.ts#L106) |

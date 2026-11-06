@@ -11,12 +11,12 @@ Read AGENTS.md → [hubs](codemap/hubs.md) → module → file/symbol page → s
 | scripts | 2 | 0 | [open](codemap/scripts.md) |
 | session-ops | 4 | 60 | [open](codemap/session-ops.md) |
 | session-parser | 5 | 767 | [open](codemap/session-parser.md) |
-| tests | 14 | 497 | [open](codemap/tests.md) |
+| tests | 14 | 500 | [open](codemap/tests.md) |
 | todo-tasks | 4 | 299 | [open](codemap/todo-tasks.md) |
 | tooling | 1 | 322 | [open](codemap/tooling.md) |
 | ui-dashboard | 5 | 321 | [open](codemap/ui-dashboard.md) |
 | usage-pricing | 4 | 213 | [open](codemap/usage-pricing.md) |
 
-Total: 47 source files, 3262 extracted symbols, 0 parser diagnostics; import edges 248 resolved / 0 ambiguous / 41 unresolved.
+Total: 47 source files, 3265 extracted symbols, 0 parser diagnostics; import edges 248 resolved / 0 ambiguous / 41 unresolved.
 
 Scope includes Rust/TS/JS declarations; excludes imports, parameters, runtime/macro-generated symbols. Shell/PowerShell/BAT use lexical navigation.

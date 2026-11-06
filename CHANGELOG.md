@@ -2,6 +2,18 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.23] - 2026-11-06
+
+### 中文
+
+- **卡片圆角：** 分区标题背景改为跟随外层圆角（折叠时四角贴合），hover / 聚焦时顶部左右两角的蓝色边框不再出现断口。
+- **四角渲染：** 分区卡片、会话卡片、指标气泡与运行条的背景限制在内边距内绘制，消除圆角外侧的 1px 抗锯齿残边。
+
+### English
+
+- **Card corners:** Section headers now follow the outer radius (all four corners when collapsed), so the hover/focus border no longer breaks at the top-left and top-right corners.
+- **Corner rendering:** Section cards, session cards, metric bubbles, and the running bar clip their backgrounds to the padding box, removing the 1px anti-aliasing fringe outside rounded corners.
+
 ## [0.2.22] - 2026-11-06
 
 ### 中文

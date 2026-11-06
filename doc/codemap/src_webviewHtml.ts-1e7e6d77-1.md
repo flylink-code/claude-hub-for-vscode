@@ -4,7 +4,7 @@
 
 [Module](ui-dashboard.md) · [Source](../../src/webviewHtml.ts) · page 1/1
 
-Source SHA-256: 58f9b7206ddf3a62e39ee9c179e613296bf28dfdd2eb950a0f5742b79909cc45
+Source SHA-256: a24ffbd3b467167ff49dfbab64c730d11b3093b7b81cd5cabbd9d15429de7751
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |

@@ -88,6 +88,19 @@ test('search input and task cards use the host theme instead of dark-only fills'
   assert.match(rule('todos-mode-chip.task'), /background:\s*var\(--vscode-button-background/);
 });
 
+test('section headers inherit the outer corner radius so focus rings stay closed', () => {
+  const html = getWebviewContent();
+  const rule = (selector: string) =>
+    html.match(new RegExp('\\.' + selector.replaceAll('.', '\\.') + '\\s*\\{([^}]*)\\}'))?.[1] || '';
+  // 5px = 6px 外圆角 - 1px 边框，避免方角背景盖住外层边框圆角
+  assert.match(rule('section-header'), /border-radius:\s*5px 5px 0 0/);
+  assert.match(rule('section-wrap.collapsed .section-header'), /border-radius:\s*5px/);
+  for (const selector of ['section-wrap', 'session-card', 'metric-bubble', 'running-bar']) {
+    assert.match(rule(selector), /background-clip:\s*padding-box/, selector + ' should clip its background to the padding box');
+  }
+  assert.match(rule('session-card'), /transition:\s*background-color[^;]*border-color/);
+});
+
 test('token progress fill keeps the theme color and has no inline background override', () => {
   const html = getWebviewContent();
   const tokenFillTag = html.match(/<div id="token-fill"[^>]*>/)?.[0] || '';

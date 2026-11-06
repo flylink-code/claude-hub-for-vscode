@@ -19,6 +19,6 @@
 | [test/timelineEvents.test.ts](../../test/timelineEvents.test.ts) | 4 | [1](test_timelineEvents.test.ts-88d66be2-1.md) |
 | [test/todoDisplay.test.ts](../../test/todoDisplay.test.ts) | 8 | [1](test_todoDisplay.test.ts-3d403e3f-1.md) |
 | [test/todoToolsEnv.test.ts](../../test/todoToolsEnv.test.ts) | 34 | [1](test_todoToolsEnv.test.ts-422432a4-1.md) |
-| [test/topBarToolbar.test.ts](../../test/topBarToolbar.test.ts) | 13 | [1](test_topBarToolbar.test.ts-78205882-1.md) |
+| [test/topBarToolbar.test.ts](../../test/topBarToolbar.test.ts) | 16 | [1](test_topBarToolbar.test.ts-78205882-1.md) |
 | [test/transcriptSearch.test.ts](../../test/transcriptSearch.test.ts) | 4 | [1](test_transcriptSearch.test.ts-947161b1-1.md) |
 | [test/workspaceCost.test.ts](../../test/workspaceCost.test.ts) | 4 | [1](test_workspaceCost.test.ts-c5d37b61-1.md) |

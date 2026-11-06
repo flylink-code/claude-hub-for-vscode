@@ -180,6 +180,8 @@ export function getWebviewContent(): string {
     /* Accordion Section */
     .section-wrap {
       background: var(--card-bg);
+      /* 背景止于内边距，避免边框圆角外侧出现 1px 抗锯齿残边 */
+      background-clip: padding-box;
       border: 1px solid var(--card-border);
       border-radius: 6px;
       margin-bottom: 8px;
@@ -200,6 +202,9 @@ export function getWebviewContent(): string {
       font-weight: 600;
       font-size: 12px;
       background: var(--card-bg);
+      /* 与 .section-wrap 的 6px 外圆角对齐（减去 1px 边框），
+         否则方角背景会盖住外层圆角，聚焦/hover 时顶部两角出现断口 */
+      border-radius: 5px 5px 0 0;
       border-bottom: 1px solid transparent;
       user-select: none;
     }
@@ -237,6 +242,8 @@ export function getWebviewContent(): string {
 
     .section-wrap.collapsed .section-header {
       border-bottom-color: transparent;
+      /* 折叠时头部铺满整个卡片，四角都要贴合外圆角 */
+      border-radius: 5px;
     }
 
     .section-wrap:not(.collapsed) .section-header {
@@ -354,6 +361,7 @@ export function getWebviewContent(): string {
 
     .metric-bubble {
       background: var(--vscode-input-background, var(--card-bg));
+      background-clip: padding-box;
       border: 1px solid var(--card-border);
       border-radius: 4px;
       padding: 3px 6px;
@@ -426,6 +434,7 @@ export function getWebviewContent(): string {
     /* Running Tool Banner */
     .running-bar {
       background: var(--vscode-list-hoverBackground, var(--card-bg));
+      background-clip: padding-box;
       border: 1px solid var(--vscode-contrastBorder, var(--card-border));
       border-radius: 4px;
       padding: 6px 8px;
@@ -745,11 +754,13 @@ export function getWebviewContent(): string {
       min-width: 0;
       overflow: visible;
       background: var(--card-bg);
+      /* 背景止于内边距，避免边框圆角外侧出现 1px 抗锯齿残边 */
+      background-clip: padding-box;
       border: 1px solid var(--vscode-contrastBorder, var(--card-border));
       border-radius: 6px;
       padding: 8px;
       margin-bottom: 6px;
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
     .session-card:hover {
