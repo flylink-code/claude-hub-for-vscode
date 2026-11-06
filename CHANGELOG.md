@@ -2,6 +2,22 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.22] - 2026-11-06
+
+### 中文
+
+- **中转站上下文窗口：** 识别 `provider/model` 形式的中转站模型 id（如 `antigravity/claude-sonnet-5-5`、`kiro/claude-sonnet-5.5`），按模型家族正确计算上下文上限，不再一律回退为 200k。
+- **模型上限覆盖：** `claudeHub.modelContextLimits` 现在同时匹配带或不带 provider 前缀的模型 id。
+- **对话内切换模型：** 以最新的显式模型选择（`/model`）为准；中转站固定回报的默认响应模型不再覆盖当前选择，状态栏与 Dashboard 同步更新。
+- **费用统计：** 会话费用按切换后的实际模型估算。
+
+### English
+
+- **Relay context windows:** Recognizes `provider/model` relay ids such as `antigravity/claude-sonnet-5-5` and `kiro/claude-sonnet-5.5`, resolving the context limit by model family instead of falling back to 200k.
+- **Model limit overrides:** `claudeHub.modelContextLimits` now matches ids with or without the provider prefix.
+- **Mid-session model switch:** The latest explicit picker choice (`/model`) wins; the default model that relays pin to assistant responses no longer masks the switch, and the status bar and dashboard stay in sync.
+- **Cost estimates:** Session cost is estimated from the model actually in use after a switch.
+
 ## [0.2.21] - 2026-11-04
 
 ### 中文
