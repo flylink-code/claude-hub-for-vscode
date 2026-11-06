@@ -8,7 +8,7 @@
 
 | File | Symbols | Symbol pages |
 | --- | ---: | --- |
-| [src/contextLimit.ts](../../src/contextLimit.ts) | 28 | [1](src_contextLimit.ts-970a4537-1.md) |
+| [src/contextLimit.ts](../../src/contextLimit.ts) | 35 | [1](src_contextLimit.ts-970a4537-1.md) |
 | [src/modelPricing.ts](../../src/modelPricing.ts) | 78 | [1](src_modelPricing.ts-dc9561f6-1.md) |
 | [src/subscriptionUsage.ts](../../src/subscriptionUsage.ts) | 55 | [1](src_subscriptionUsage.ts-19c75b2a-1.md) |
 | [src/workspaceCost.ts](../../src/workspaceCost.ts) | 45 | [1](src_workspaceCost.ts-b792f6f4-1.md) |

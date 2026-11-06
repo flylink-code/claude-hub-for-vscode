@@ -4,7 +4,7 @@
 
 [Module](usage-pricing.md) · [Source](../../src/contextLimit.ts) · page 1/1
 
-Source SHA-256: 14b4bf7b35f7608306114ce52b26bbe4c72a1664d7c89ac51156393d955d1c28
+Source SHA-256: d7859938ac6c1c5bf3c814f8d4deed6e9db815748f43a8cc1b17cee5aad7b9af
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -18,21 +18,28 @@ Source SHA-256: 14b4bf7b35f7608306114ce52b26bbe4c72a1664d7c89ac51156393d955d1c28
 | [key, value] | VariableDeclaration | lookupModelLimit | [26](../../src/contextLimit.ts#L26) |
 | key | BindingElement | lookupModelLimit.[key, value] | [26](../../src/contextLimit.ts#L26) |
 | value | BindingElement | lookupModelLimit.[key, value] | [26](../../src/contextLimit.ts#L26) |
-| getContextLimitForModel | FunctionDeclaration |  | [39](../../src/contextLimit.ts#L39) |
-| override | VariableDeclaration | getContextLimitForModel | [44](../../src/contextLimit.ts#L44) |
-| id | VariableDeclaration | getContextLimitForModel | [47](../../src/contextLimit.ts#L47) |
-| published | VariableDeclaration | getContextLimitForModel | [50](../../src/contextLimit.ts#L50) |
-| publishedContextWindow | FunctionDeclaration |  | [60](../../src/contextLimit.ts#L60) |
-| formatModelDisplayName | FunctionDeclaration |  | [70](../../src/contextLimit.ts#L70) |
-| match | VariableDeclaration | formatModelDisplayName | [78](../../src/contextLimit.ts#L78) |
-| match | VariableDeclaration | formatModelDisplayName | [81](../../src/contextLimit.ts#L81) |
-| m | VariableDeclaration | formatModelDisplayName | [86](../../src/contextLimit.ts#L86) |
-| gatewayRest | VariableDeclaration | formatModelDisplayName | [103](../../src/contextLimit.ts#L103) |
-| gatewayModelRemainder | FunctionDeclaration |  | [114](../../src/contextLimit.ts#L114) |
-| match | VariableDeclaration | gatewayModelRemainder | [115](../../src/contextLimit.ts#L115) |
-| rest | VariableDeclaration | gatewayModelRemainder | [117](../../src/contextLimit.ts#L117) |
-| formatEffortLabel | FunctionDeclaration |  | [123](../../src/contextLimit.ts#L123) |
-| level | VariableDeclaration | formatEffortLabel | [124](../../src/contextLimit.ts#L124) |
-| formatSelectedModelName | FunctionDeclaration |  | [134](../../src/contextLimit.ts#L134) |
-| name | VariableDeclaration | formatSelectedModelName | [139](../../src/contextLimit.ts#L139) |
-| suffix | VariableDeclaration | formatSelectedModelName | [140](../../src/contextLimit.ts#L140) |
+| stripGatewayProviderPrefix | FunctionDeclaration |  | [37](../../src/contextLimit.ts#L37) |
+| slash | VariableDeclaration | stripGatewayProviderPrefix | [38](../../src/contextLimit.ts#L38) |
+| rest | VariableDeclaration | stripGatewayProviderPrefix | [40](../../src/contextLimit.ts#L40) |
+| looksLikeModel | VariableDeclaration | stripGatewayProviderPrefix | [42](../../src/contextLimit.ts#L42) |
+| isClaudeFamily | FunctionDeclaration |  | [50](../../src/contextLimit.ts#L50) |
+| getContextLimitForModel | FunctionDeclaration |  | [64](../../src/contextLimit.ts#L64) |
+| override | VariableDeclaration | getContextLimitForModel | [69](../../src/contextLimit.ts#L69) |
+| raw | VariableDeclaration | getContextLimitForModel | [72](../../src/contextLimit.ts#L72) |
+| id | VariableDeclaration | getContextLimitForModel | [75](../../src/contextLimit.ts#L75) |
+| strippedOverride | VariableDeclaration | getContextLimitForModel | [79](../../src/contextLimit.ts#L79) |
+| published | VariableDeclaration | getContextLimitForModel | [83](../../src/contextLimit.ts#L83) |
+| publishedContextWindow | FunctionDeclaration |  | [93](../../src/contextLimit.ts#L93) |
+| formatModelDisplayName | FunctionDeclaration |  | [103](../../src/contextLimit.ts#L103) |
+| match | VariableDeclaration | formatModelDisplayName | [111](../../src/contextLimit.ts#L111) |
+| match | VariableDeclaration | formatModelDisplayName | [114](../../src/contextLimit.ts#L114) |
+| m | VariableDeclaration | formatModelDisplayName | [119](../../src/contextLimit.ts#L119) |
+| gatewayRest | VariableDeclaration | formatModelDisplayName | [136](../../src/contextLimit.ts#L136) |
+| gatewayModelRemainder | FunctionDeclaration |  | [147](../../src/contextLimit.ts#L147) |
+| match | VariableDeclaration | gatewayModelRemainder | [148](../../src/contextLimit.ts#L148) |
+| rest | VariableDeclaration | gatewayModelRemainder | [150](../../src/contextLimit.ts#L150) |
+| formatEffortLabel | FunctionDeclaration |  | [156](../../src/contextLimit.ts#L156) |
+| level | VariableDeclaration | formatEffortLabel | [157](../../src/contextLimit.ts#L157) |
+| formatSelectedModelName | FunctionDeclaration |  | [167](../../src/contextLimit.ts#L167) |
+| name | VariableDeclaration | formatSelectedModelName | [172](../../src/contextLimit.ts#L172) |
+| suffix | VariableDeclaration | formatSelectedModelName | [173](../../src/contextLimit.ts#L173) |

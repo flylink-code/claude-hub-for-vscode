@@ -18,6 +18,7 @@ import {
   extractBlockTextContent,
   parseClaudeSessionRecord,
   backgroundJobsForLiveProcess,
+  resolveEffectiveModel,
 } from '../src/transcriptParser.js';
 import {
   decodeProjectPath,
@@ -140,6 +141,25 @@ test('getContextLimitForModel returns correct limits', () => {
   assert.strictEqual(getContextLimitForModel('claude-haiku-4.5'), 200000);
   assert.strictEqual(getContextLimitForModel('claude-haiku-5-5'), 1000000);
   assert.strictEqual(getContextLimitForModel('claude-opus-5-5'), 1000000);
+  // 中转站 provider/model 写法：剥离前缀后按 Claude 家族规则判断
+  assert.strictEqual(getContextLimitForModel('antigravity/claude-sonnet-5-5'), 1000000);
+  assert.strictEqual(getContextLimitForModel('kiro/claude-sonnet-5.5'), 1000000);
+  assert.strictEqual(getContextLimitForModel('opencode-go/claude-haiku-5-5'), 1000000);
+  assert.strictEqual(getContextLimitForModel('auto/claude-opus-5-5'), 1000000);
+  assert.strictEqual(getContextLimitForModel('anthropic/claude-3-5-sonnet-20241022'), 200000);
+  assert.strictEqual(getContextLimitForModel('opencode-go/deepseek-v4.1-flash[1m]'), 1000000);
+  assert.strictEqual(getContextLimitForModel('sub2api/gpt-6-sol'), 1050000);
+  // 无法识别的中转站别名仍回退用户默认值
+  assert.strictEqual(getContextLimitForModel('mythos-magpie-1855947975', 200000), 200000);
+  // 覆盖 key 可带前缀，也可只写模型名
+  assert.strictEqual(
+    getContextLimitForModel('antigravity/claude-sonnet-5-5', 200000, { 'antigravity/claude-sonnet-5-5': 500000 }),
+    500000,
+  );
+  assert.strictEqual(
+    getContextLimitForModel('antigravity/claude-sonnet-5-5', 200000, { 'claude-sonnet-5-5': 500000 }),
+    500000,
+  );
   assert.strictEqual(
     getContextLimitForModel('claude.gemini-4-argon-medium', 200000, { 'claude.gemini-4-argon-medium': 128000 }),
     128000,
@@ -182,6 +202,54 @@ test('parseTranscriptFile parses basic transcript fixture', async () => {
   assert.strictEqual(typeof parsed.tokenUsage.totalTokens, 'number');
   assert.ok(Array.isArray(parsed.tools));
   assert.ok(Array.isArray(parsed.todos));
+});
+
+test('resolveEffectiveModel prefers the latest explicit picker choice', () => {
+  assert.strictEqual(resolveEffectiveModel('kiro/claude-sonnet-5-5', 'opencode-go/deepseek-v4.1-flash'), 'kiro/claude-sonnet-5-5');
+  assert.strictEqual(resolveEffectiveModel('', 'claude-opus-5-5'), 'claude-opus-5-5');
+  // auto / default 声明让 assistant 给出的具体模型胜出
+  assert.strictEqual(resolveEffectiveModel('auto', 'claude-opus-5-5'), 'claude-opus-5-5');
+  assert.strictEqual(resolveEffectiveModel('claude.auto', 'claude-opus-5-5'), 'claude-opus-5-5');
+  assert.strictEqual(resolveEffectiveModel('inherit', 'claude-opus-5-5'), 'claude-opus-5-5');
+});
+
+test('parseTranscriptFile keeps the model switched mid-session', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-test-model-'));
+  const testFile = path.join(tempDir, 'model-switch.jsonl');
+
+  try {
+    const lines = [
+      JSON.stringify({
+        type: 'attachment',
+        timestamp: '2026-11-06T10:12:40.068Z',
+        attachment: { type: 'model', identity: { modelId: 'opencode-go/deepseek-v4.1-flash[1m]' } },
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-11-06T10:12:44.259Z',
+        message: { id: 'm1', model: 'opencode-go/deepseek-v4.1-flash', usage: { input_tokens: 10 } },
+      }),
+      // 对话中 /model kiro/claude-sonnet-5-5
+      JSON.stringify({
+        type: 'attachment',
+        timestamp: '2026-11-06T10:26:08.954Z',
+        attachment: { type: 'model', identity: { modelId: 'kiro/claude-sonnet-5-5' } },
+      }),
+      // 中转站仍固定回报默认模型
+      JSON.stringify({
+        type: 'assistant',
+        timestamp: '2026-11-06T10:26:53.371Z',
+        message: { id: 'm2', model: 'opencode-go/deepseek-v4.1-flash', usage: { input_tokens: 20 } },
+      }),
+    ];
+    fs.writeFileSync(testFile, lines.join('\n') + '\n', 'utf8');
+
+    const parsed = await parseTranscriptFile(testFile);
+    assert.strictEqual(parsed.model, 'kiro/claude-sonnet-5-5');
+    assert.strictEqual(parsed.lastResponseModel, 'opencode-go/deepseek-v4.1-flash');
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test('rewriteTranscriptSessionIds updates metadata without changing message text', () => {

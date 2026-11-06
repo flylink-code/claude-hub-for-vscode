@@ -10,13 +10,13 @@ Read AGENTS.md → [hubs](codemap/hubs.md) → module → file/symbol page → s
 | core-entry | 5 | 296 | [open](codemap/core-entry.md) |
 | scripts | 2 | 0 | [open](codemap/scripts.md) |
 | session-ops | 4 | 60 | [open](codemap/session-ops.md) |
-| session-parser | 5 | 764 | [open](codemap/session-parser.md) |
-| tests | 14 | 493 | [open](codemap/tests.md) |
+| session-parser | 5 | 767 | [open](codemap/session-parser.md) |
+| tests | 14 | 497 | [open](codemap/tests.md) |
 | todo-tasks | 4 | 299 | [open](codemap/todo-tasks.md) |
 | tooling | 1 | 322 | [open](codemap/tooling.md) |
 | ui-dashboard | 5 | 321 | [open](codemap/ui-dashboard.md) |
-| usage-pricing | 4 | 206 | [open](codemap/usage-pricing.md) |
+| usage-pricing | 4 | 213 | [open](codemap/usage-pricing.md) |
 
-Total: 47 source files, 3248 extracted symbols, 0 parser diagnostics; import edges 247 resolved / 0 ambiguous / 41 unresolved.
+Total: 47 source files, 3262 extracted symbols, 0 parser diagnostics; import edges 248 resolved / 0 ambiguous / 41 unresolved.
 
 Scope includes Rust/TS/JS declarations; excludes imports, parameters, runtime/macro-generated symbols. Shell/PowerShell/BAT use lexical navigation.

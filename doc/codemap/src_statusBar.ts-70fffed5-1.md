@@ -4,7 +4,7 @@
 
 [Module](ui-dashboard.md) · [Source](../../src/statusBar.ts) · page 1/2
 
-Source SHA-256: 6a0498fa33fd87b8a5e72697a2348aad31a348ebdad18d8902eddfcaf0d797af
+Source SHA-256: 15b5e21fbf3a742ed52376de7a74df3f7976656165d02ee6746316427c578c04
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |

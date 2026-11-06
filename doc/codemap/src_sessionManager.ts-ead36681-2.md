@@ -4,7 +4,7 @@
 
 [Module](session-parser.md) · [Source](../../src/sessionManager.ts) · page 2/3
 
-Source SHA-256: 575831e41586a9b084d7d4089699e0eb3aad306ef327975fe2ef52041e675627
+Source SHA-256: 3ded5d7e678788c0f98a9aa5b9c225a23c0e489a4ea314defa8b9c4fab2408dd
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -105,6 +105,6 @@ Source SHA-256: 575831e41586a9b084d7d4089699e0eb3aad306ef327975fe2ef52041e675627
 | dismissKey | VariableDeclaration | SessionManager.scanSessions | [729](../../src/sessionManager.ts#L729) |
 | current | VariableDeclaration | SessionManager.scanSessions | [731](../../src/sessionManager.ts#L731) |
 | isCurrentWorkspace | VariableDeclaration | SessionManager.scanSessions | [739](../../src/sessionManager.ts#L739) |
-| sessionModel | VariableDeclaration | SessionManager.scanSessions | [743](../../src/sessionManager.ts#L743) |
-| effectiveModel | VariableDeclaration | SessionManager.scanSessions | [744](../../src/sessionManager.ts#L744) |
-| lastResponseModel | VariableDeclaration | SessionManager.scanSessions | [747](../../src/sessionManager.ts#L747) |
+| sessionModel | VariableDeclaration | SessionManager.scanSessions | [744](../../src/sessionManager.ts#L744) |
+| effectiveModel | VariableDeclaration | SessionManager.scanSessions | [745](../../src/sessionManager.ts#L745) |
+| lastResponseModel | VariableDeclaration | SessionManager.scanSessions | [748](../../src/sessionManager.ts#L748) |

@@ -30,11 +30,36 @@ function lookupModelLimit(model: string, modelContextLimits: Record<string, numb
 }
 
 /**
+ * 中转站 / 网关常见 `provider/model` 写法（antigravity/claude-sonnet-5-5、
+ * kiro/claude-sonnet-5.5、opencode-go/deepseek-v4.1-flash[1m]）。
+ * 只有末段本身就是可识别的模型名时才剥离，避免误伤普通 id。
+ */
+export function stripGatewayProviderPrefix(id: string): string {
+  const slash = id.lastIndexOf('/');
+  if (slash <= 0 || slash === id.length - 1) return id;
+  const rest = id.slice(slash + 1).trim();
+  if (!rest) return id;
+  const looksLikeModel =
+    rest.startsWith('claude') ||
+    /^(opus|sonnet|haiku|fable)[-.]\d/.test(rest) ||
+    /^(gpt|gemini|deepseek)[-.]/.test(rest);
+  return looksLikeModel ? rest : id;
+}
+
+/** 归一化后的 id 是否属于 Claude 家族（允许 provider 前缀已被剥离）。 */
+function isClaudeFamily(id: string): boolean {
+  if (id.startsWith('claude')) return true;
+  return /(?:^|[^a-z0-9])(opus|sonnet|haiku|fable)(?:[^a-z0-9]|$)/.test(id);
+}
+
+/**
  * Published context window for the usage percentage, matched on the model name.
  * Gemini 4 Argon and Gemini 3.8 Flash are both 1,048,576.
  * GPT-5.6 and GPT-6 are 1,050,000. DeepSeek V4 and current Claude models are 1M.
  * Haiku 4.5 and older Claude models stay at 200k.
  * An explicit `[1m]` / `[200k]` marker on the id wins over the family default.
+ * Relay ids such as `antigravity/claude-sonnet-5-5` are judged after stripping
+ * their `provider/` prefix, otherwise every relay model fell back to 200k.
  */
 export function getContextLimitForModel(
   model: string,
@@ -44,13 +69,21 @@ export function getContextLimitForModel(
   const override = lookupModelLimit(model, modelContextLimits);
   if (override !== undefined) return override;
 
-  const id = model.toLowerCase().trim();
-  if (!id || id === 'auto' || id === 'claude.auto') return userLimit;
+  const raw = model.toLowerCase().trim();
+  if (!raw || raw === 'auto' || raw === 'claude.auto') return userLimit;
+
+  const id = stripGatewayProviderPrefix(raw);
+
+  // 用户只写了不带前缀的 key 时，也应覆盖带前缀的中转站 id。
+  if (id !== raw) {
+    const strippedOverride = lookupModelLimit(id, modelContextLimits);
+    if (strippedOverride !== undefined) return strippedOverride;
+  }
 
   const published = publishedContextWindow(id);
   if (published !== undefined) return published;
 
-  if (!id.startsWith('claude')) return userLimit;
+  if (!isClaudeFamily(id)) return userLimit;
 
   if (CONTEXT_200K_MODELS.some((m) => id.includes(m))) return CONTEXT_200K;
 

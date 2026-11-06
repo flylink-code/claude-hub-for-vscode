@@ -4,7 +4,7 @@
 
 [Root index](../CODE_MAP_INDEX.md)
 
-47 files · 3248 symbols · import edges: 247 resolved, 0 ambiguous, 41 unresolved.
+47 files · 3262 symbols · import edges: 248 resolved, 0 ambiguous, 41 unresolved.
 
 Edges come from `use`/`import` statements: relative specifiers for TypeScript, `crate`/`self`/`super` module paths plus a unique-name fallback for Rust. Lexical evidence, not type-checked resolution: an ambiguous or unresolved import is counted, never guessed.
 
@@ -19,7 +19,7 @@ Edges come from `use`/`import` statements: relative specifiers for TypeScript, `
 | t | FunctionDeclaration | core-entry | 5 | [499](../../src/i18n.ts#L499) |
 | ClaudeFeaturesManager | ClassDeclaration | config-features | 4 | [143](../../src/claudeFeatures.ts#L143) |
 | SessionManager | ClassDeclaration | session-parser | 4 | [56](../../src/sessionManager.ts#L56) |
-| formatModelDisplayName | FunctionDeclaration | usage-pricing | 4 | [70](../../src/contextLimit.ts#L70) |
+| formatModelDisplayName | FunctionDeclaration | usage-pricing | 4 | [103](../../src/contextLimit.ts#L103) |
 | isPathInWorkspace | FunctionDeclaration | config-features | 4 | [66](../../src/configDir.ts#L66) |
 | SessionPlan | InterfaceDeclaration | core-entry | 3 | [54](../../src/types.ts#L54) |
 | SubscriptionUsageData | InterfaceDeclaration | core-entry | 3 | [120](../../src/types.ts#L120) |
@@ -28,7 +28,7 @@ Edges come from `use`/`import` statements: relative specifiers for TypeScript, `
 | TodoItem | InterfaceDeclaration | core-entry | 3 | [42](../../src/types.ts#L42) |
 | formatCostForDisplay | FunctionDeclaration | usage-pricing | 3 | [470](../../src/modelPricing.ts#L470) |
 | formatCostUsd | FunctionDeclaration | usage-pricing | 3 | [462](../../src/modelPricing.ts#L462) |
-| formatSelectedModelName | FunctionDeclaration | usage-pricing | 3 | [134](../../src/contextLimit.ts#L134) |
+| formatSelectedModelName | FunctionDeclaration | usage-pricing | 3 | [167](../../src/contextLimit.ts#L167) |
 | parseTranscriptFile | FunctionDeclaration | session-parser | 3 | [610](../../src/transcriptParser.ts#L610) |
 | AgentEntry | InterfaceDeclaration | core-entry | 2 | [21](../../src/types.ts#L21) |
 | BackgroundJob | InterfaceDeclaration | core-entry | 2 | [99](../../src/types.ts#L99) |

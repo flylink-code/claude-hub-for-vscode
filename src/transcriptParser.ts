@@ -930,6 +930,23 @@ export function backgroundJobsForLiveProcess(jobs: BackgroundJob[], processLive:
   return jobs.filter((job) => job.status !== 'running');
 }
 
+/**
+ * 会话当前实际使用的模型。
+ * 显式选择（启动参数或对话中的 `/model`，记录为 model attachment）是权威：
+ * 中转站/网关常把每条 assistant 的 `message.model` 固定成默认模型，
+ * 因此不能无条件用 assistant 值覆盖用户刚切换的模型。
+ * 只有声明为 auto/default/inherit 时，才回落到 assistant 给出的具体模型。
+ */
+export function resolveEffectiveModel(declared: string, assistant: string): string {
+  const d = (declared || '').trim();
+  if (!d) return assistant || '';
+  const lower = d.toLowerCase();
+  if (lower === 'auto' || lower === 'claude.auto' || lower === 'default' || lower === 'inherit') {
+    return assistant || d;
+  }
+  return d;
+}
+
 async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript> {
   const fileStream = fs.createReadStream(filePath, { encoding: 'utf-8' });
   const rl = readline.createInterface({
@@ -1629,7 +1646,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     timestamp: (lastTool.endTime || lastTool.startTime).getTime(),
   } : undefined;
 
-  const effectiveModel = lastDeclaredModel || lastAssistantModel || '';
+  const effectiveModel = resolveEffectiveModel(lastDeclaredModel, lastAssistantModel);
 
   return {
     sessionId,

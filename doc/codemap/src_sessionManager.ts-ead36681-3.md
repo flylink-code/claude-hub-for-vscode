@@ -4,37 +4,37 @@
 
 [Module](session-parser.md) · [Source](../../src/sessionManager.ts) · page 3/3
 
-Source SHA-256: 575831e41586a9b084d7d4089699e0eb3aad306ef327975fe2ef52041e675627
+Source SHA-256: 3ded5d7e678788c0f98a9aa5b9c225a23c0e489a4ea314defa8b9c4fab2408dd
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| contextLimit | VariableDeclaration | SessionManager.scanSessions | [750](../../src/sessionManager.ts#L750) |
-| totalTokens | VariableDeclaration | SessionManager.scanSessions | [752](../../src/sessionManager.ts#L752) |
-| percentage | VariableDeclaration | SessionManager.scanSessions | [753](../../src/sessionManager.ts#L753) |
-| matchingWsFolder | VariableDeclaration | SessionManager.scanSessions | [756](../../src/sessionManager.ts#L756) |
-| workspaceFolderName | VariableDeclaration | SessionManager.scanSessions | [759](../../src/sessionManager.ts#L759) |
-| rawProjectName | VariableDeclaration | SessionManager.scanSessions | [760](../../src/sessionManager.ts#L760) |
-| realProjectName | VariableDeclaration | SessionManager.scanSessions | [765](../../src/sessionManager.ts#L765) |
-| activeTools | VariableDeclaration | SessionManager.scanSessions | [770](../../src/sessionManager.ts#L770) |
-| tools | VariableDeclaration | SessionManager.scanSessions | [771](../../src/sessionManager.ts#L771) |
-| rawSessionId | VariableDeclaration | SessionManager.scanSessions | [786](../../src/sessionManager.ts#L786) |
-| subagentsDir | VariableDeclaration | SessionManager.scanSessions | [787](../../src/sessionManager.ts#L787) |
-| subagents | VariableDeclaration | SessionManager.scanSessions | [788](../../src/sessionManager.ts#L788) |
-| err | VariableDeclaration | SessionManager.scanSessions | [792](../../src/sessionManager.ts#L792) |
-| mergedAgents | VariableDeclaration | SessionManager.scanSessions | [798](../../src/sessionManager.ts#L798) |
-| mainAgent | VariableDeclaration | SessionManager.scanSessions | [799](../../src/sessionManager.ts#L799) |
-| alreadyExists | VariableDeclaration | SessionManager.scanSessions | [800](../../src/sessionManager.ts#L800) |
-| descMatch | VariableDeclaration | SessionManager.scanSessions.alreadyExists | [814](../../src/sessionManager.ts#L814) |
-| allAgents | VariableDeclaration | SessionManager.scanSessions | [833](../../src/sessionManager.ts#L833) |
-| totalAgentsCount | VariableDeclaration | SessionManager.scanSessions | [841](../../src/sessionManager.ts#L841) |
-| subagentsTotalTokens | VariableDeclaration | SessionManager.scanSessions | [842](../../src/sessionManager.ts#L842) |
-| activeAgents | VariableDeclaration | SessionManager.scanSessions | [845](../../src/sessionManager.ts#L845) |
-| turnStartMs | VariableDeclaration | SessionManager.scanSessions | [849](../../src/sessionManager.ts#L849) |
-| agentEndMs | VariableDeclaration | SessionManager.scanSessions | [854](../../src/sessionManager.ts#L854) |
-| sessionCreated | VariableDeclaration | SessionManager.scanSessions | [864](../../src/sessionManager.ts#L864) |
-| activeDurationMs | VariableDeclaration | SessionManager.scanSessions | [872](../../src/sessionManager.ts#L872) |
-| recentDiff | VariableDeclaration | SessionManager.scanSessions | [874](../../src/sessionManager.ts#L874) |
-| totalSpanMs | VariableDeclaration | SessionManager.scanSessions | [880](../../src/sessionManager.ts#L880) |
-| discoveredWatchMd | VariableDeclaration | SessionManager.scanSessions | [950](../../src/sessionManager.ts#L950) |
-| err | VariableDeclaration | SessionManager.scanSessions | [957](../../src/sessionManager.ts#L957) |
-| dispose | MethodDeclaration | SessionManager | [965](../../src/sessionManager.ts#L965) |
+| contextLimit | VariableDeclaration | SessionManager.scanSessions | [751](../../src/sessionManager.ts#L751) |
+| totalTokens | VariableDeclaration | SessionManager.scanSessions | [753](../../src/sessionManager.ts#L753) |
+| percentage | VariableDeclaration | SessionManager.scanSessions | [754](../../src/sessionManager.ts#L754) |
+| matchingWsFolder | VariableDeclaration | SessionManager.scanSessions | [757](../../src/sessionManager.ts#L757) |
+| workspaceFolderName | VariableDeclaration | SessionManager.scanSessions | [760](../../src/sessionManager.ts#L760) |
+| rawProjectName | VariableDeclaration | SessionManager.scanSessions | [761](../../src/sessionManager.ts#L761) |
+| realProjectName | VariableDeclaration | SessionManager.scanSessions | [766](../../src/sessionManager.ts#L766) |
+| activeTools | VariableDeclaration | SessionManager.scanSessions | [771](../../src/sessionManager.ts#L771) |
+| tools | VariableDeclaration | SessionManager.scanSessions | [772](../../src/sessionManager.ts#L772) |
+| rawSessionId | VariableDeclaration | SessionManager.scanSessions | [787](../../src/sessionManager.ts#L787) |
+| subagentsDir | VariableDeclaration | SessionManager.scanSessions | [788](../../src/sessionManager.ts#L788) |
+| subagents | VariableDeclaration | SessionManager.scanSessions | [789](../../src/sessionManager.ts#L789) |
+| err | VariableDeclaration | SessionManager.scanSessions | [793](../../src/sessionManager.ts#L793) |
+| mergedAgents | VariableDeclaration | SessionManager.scanSessions | [799](../../src/sessionManager.ts#L799) |
+| mainAgent | VariableDeclaration | SessionManager.scanSessions | [800](../../src/sessionManager.ts#L800) |
+| alreadyExists | VariableDeclaration | SessionManager.scanSessions | [801](../../src/sessionManager.ts#L801) |
+| descMatch | VariableDeclaration | SessionManager.scanSessions.alreadyExists | [815](../../src/sessionManager.ts#L815) |
+| allAgents | VariableDeclaration | SessionManager.scanSessions | [834](../../src/sessionManager.ts#L834) |
+| totalAgentsCount | VariableDeclaration | SessionManager.scanSessions | [842](../../src/sessionManager.ts#L842) |
+| subagentsTotalTokens | VariableDeclaration | SessionManager.scanSessions | [843](../../src/sessionManager.ts#L843) |
+| activeAgents | VariableDeclaration | SessionManager.scanSessions | [846](../../src/sessionManager.ts#L846) |
+| turnStartMs | VariableDeclaration | SessionManager.scanSessions | [850](../../src/sessionManager.ts#L850) |
+| agentEndMs | VariableDeclaration | SessionManager.scanSessions | [855](../../src/sessionManager.ts#L855) |
+| sessionCreated | VariableDeclaration | SessionManager.scanSessions | [865](../../src/sessionManager.ts#L865) |
+| activeDurationMs | VariableDeclaration | SessionManager.scanSessions | [873](../../src/sessionManager.ts#L873) |
+| recentDiff | VariableDeclaration | SessionManager.scanSessions | [875](../../src/sessionManager.ts#L875) |
+| totalSpanMs | VariableDeclaration | SessionManager.scanSessions | [881](../../src/sessionManager.ts#L881) |
+| discoveredWatchMd | VariableDeclaration | SessionManager.scanSessions | [951](../../src/sessionManager.ts#L951) |
+| err | VariableDeclaration | SessionManager.scanSessions | [958](../../src/sessionManager.ts#L958) |
+| dispose | MethodDeclaration | SessionManager | [966](../../src/sessionManager.ts#L966) |

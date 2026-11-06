@@ -4,7 +4,7 @@
 
 [Module](session-parser.md) · [Source](../../src/transcriptParser.ts) · page 3/5
 
-Source SHA-256: b10dc57783e5704d0f5abad8586cb1dfaa0cd44a68b8aa69bce1c5cdf5d3130e
+Source SHA-256: 403886321ff3b4dc0b0b477a1e63c0711724c71a2c4febefb5370da020c5658a
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -46,65 +46,65 @@ Source SHA-256: b10dc57783e5704d0f5abad8586cb1dfaa0cd44a68b8aa69bce1c5cdf5d3130e
 | sessionId | VariableDeclaration | parseClaudeSessionRecord | [921](../../src/transcriptParser.ts#L921) |
 | pid | VariableDeclaration | parseClaudeSessionRecord | [922](../../src/transcriptParser.ts#L922) |
 | backgroundJobsForLiveProcess | FunctionDeclaration |  | [928](../../src/transcriptParser.ts#L928) |
-| parseTranscriptStream | FunctionDeclaration |  | [933](../../src/transcriptParser.ts#L933) |
-| fileStream | VariableDeclaration | parseTranscriptStream | [934](../../src/transcriptParser.ts#L934) |
-| rl | VariableDeclaration | parseTranscriptStream | [935](../../src/transcriptParser.ts#L935) |
-| toolMap | VariableDeclaration | parseTranscriptStream | [940](../../src/transcriptParser.ts#L940) |
-| toolInputMap | VariableDeclaration | parseTranscriptStream | [941](../../src/transcriptParser.ts#L941) |
-| agentMap | VariableDeclaration | parseTranscriptStream | [942](../../src/transcriptParser.ts#L942) |
-| backgroundJobs | VariableDeclaration | parseTranscriptStream | [943](../../src/transcriptParser.ts#L943) |
-| pendingToolResults | VariableDeclaration | parseTranscriptStream | [944](../../src/transcriptParser.ts#L944) |
-| isError | PropertySignature | parseTranscriptStream.pendingToolResults | [944](../../src/transcriptParser.ts#L944) |
-| endTime | PropertySignature | parseTranscriptStream.pendingToolResults | [944](../../src/transcriptParser.ts#L944) |
-| response | PropertySignature | parseTranscriptStream.pendingToolResults | [944](../../src/transcriptParser.ts#L944) |
-| text | PropertySignature | parseTranscriptStream.pendingToolResults | [944](../../src/transcriptParser.ts#L944) |
-| activeToolIds | VariableDeclaration | parseTranscriptStream | [945](../../src/transcriptParser.ts#L945) |
-| skillsSet | VariableDeclaration | parseTranscriptStream | [946](../../src/transcriptParser.ts#L946) |
-| mcpSet | VariableDeclaration | parseTranscriptStream | [947](../../src/transcriptParser.ts#L947) |
-| todos | VariableDeclaration | parseTranscriptStream | [948](../../src/transcriptParser.ts#L948) |
-| tasksMap | VariableDeclaration | parseTranscriptStream | [949](../../src/transcriptParser.ts#L949) |
-| planTodos | VariableDeclaration | parseTranscriptStream | [950](../../src/transcriptParser.ts#L950) |
-| planContents | VariableDeclaration | parseTranscriptStream | [951](../../src/transcriptParser.ts#L951) |
-| activePlanPath | VariableDeclaration | parseTranscriptStream | [952](../../src/transcriptParser.ts#L952) |
-| activePlanText | VariableDeclaration | parseTranscriptStream | [953](../../src/transcriptParser.ts#L953) |
-| taskToolsObserved | VariableDeclaration | parseTranscriptStream | [954](../../src/transcriptParser.ts#L954) |
-| explicitState | VariableDeclaration | parseTranscriptStream | [955](../../src/transcriptParser.ts#L955) |
-| source | PropertySignature | parseTranscriptStream.explicitState | [955](../../src/transcriptParser.ts#L955) |
-| queuedTaskUpdates | VariableDeclaration | parseTranscriptStream | [956](../../src/transcriptParser.ts#L956) |
-| pendingCreates | VariableDeclaration | parseTranscriptStream | [958](../../src/transcriptParser.ts#L958) |
-| observedTaskListId | VariableDeclaration | parseTranscriptStream | [959](../../src/transcriptParser.ts#L959) |
-| latestMarkdownTodos | VariableDeclaration | parseTranscriptStream | [960](../../src/transcriptParser.ts#L960) |
-| updateTask | VariableDeclaration | parseTranscriptStream | [962](../../src/transcriptParser.ts#L962) |
-| item | VariableDeclaration | parseTranscriptStream.updateTask | [963](../../src/transcriptParser.ts#L963) |
-| active | VariableDeclaration | parseTranscriptStream.updateTask | [972](../../src/transcriptParser.ts#L972) |
-| [field, addition] | VariableDeclaration | parseTranscriptStream.updateTask | [974](../../src/transcriptParser.ts#L974) |
-| field | BindingElement | parseTranscriptStream.updateTask.[field, addition] | [974](../../src/transcriptParser.ts#L974) |
-| addition | BindingElement | parseTranscriptStream.updateTask.[field, addition] | [974](../../src/transcriptParser.ts#L974) |
-| notePendingTaskCreate | VariableDeclaration | parseTranscriptStream | [978](../../src/transcriptParser.ts#L978) |
-| subject | VariableDeclaration | parseTranscriptStream.notePendingTaskCreate | [980](../../src/transcriptParser.ts#L980) |
-| description | VariableDeclaration | parseTranscriptStream.notePendingTaskCreate | [981](../../src/transcriptParser.ts#L981) |
-| applyTaskResult | VariableDeclaration | parseTranscriptStream | [985](../../src/transcriptParser.ts#L985) |
-| item | VariableDeclaration | parseTranscriptStream.applyTaskResult | [995](../../src/transcriptParser.ts#L995) |
-| items | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1004](../../src/transcriptParser.ts#L1004) |
-| raw | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1008](../../src/transcriptParser.ts#L1008) |
-| item | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1009](../../src/transcriptParser.ts#L1009) |
-| listHint | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1012](../../src/transcriptParser.ts#L1012) |
+| resolveEffectiveModel | FunctionDeclaration |  | [940](../../src/transcriptParser.ts#L940) |
+| d | VariableDeclaration | resolveEffectiveModel | [941](../../src/transcriptParser.ts#L941) |
+| lower | VariableDeclaration | resolveEffectiveModel | [943](../../src/transcriptParser.ts#L943) |
+| parseTranscriptStream | FunctionDeclaration |  | [950](../../src/transcriptParser.ts#L950) |
+| fileStream | VariableDeclaration | parseTranscriptStream | [951](../../src/transcriptParser.ts#L951) |
+| rl | VariableDeclaration | parseTranscriptStream | [952](../../src/transcriptParser.ts#L952) |
+| toolMap | VariableDeclaration | parseTranscriptStream | [957](../../src/transcriptParser.ts#L957) |
+| toolInputMap | VariableDeclaration | parseTranscriptStream | [958](../../src/transcriptParser.ts#L958) |
+| agentMap | VariableDeclaration | parseTranscriptStream | [959](../../src/transcriptParser.ts#L959) |
+| backgroundJobs | VariableDeclaration | parseTranscriptStream | [960](../../src/transcriptParser.ts#L960) |
+| pendingToolResults | VariableDeclaration | parseTranscriptStream | [961](../../src/transcriptParser.ts#L961) |
+| isError | PropertySignature | parseTranscriptStream.pendingToolResults | [961](../../src/transcriptParser.ts#L961) |
+| endTime | PropertySignature | parseTranscriptStream.pendingToolResults | [961](../../src/transcriptParser.ts#L961) |
+| response | PropertySignature | parseTranscriptStream.pendingToolResults | [961](../../src/transcriptParser.ts#L961) |
+| text | PropertySignature | parseTranscriptStream.pendingToolResults | [961](../../src/transcriptParser.ts#L961) |
+| activeToolIds | VariableDeclaration | parseTranscriptStream | [962](../../src/transcriptParser.ts#L962) |
+| skillsSet | VariableDeclaration | parseTranscriptStream | [963](../../src/transcriptParser.ts#L963) |
+| mcpSet | VariableDeclaration | parseTranscriptStream | [964](../../src/transcriptParser.ts#L964) |
+| todos | VariableDeclaration | parseTranscriptStream | [965](../../src/transcriptParser.ts#L965) |
+| tasksMap | VariableDeclaration | parseTranscriptStream | [966](../../src/transcriptParser.ts#L966) |
+| planTodos | VariableDeclaration | parseTranscriptStream | [967](../../src/transcriptParser.ts#L967) |
+| planContents | VariableDeclaration | parseTranscriptStream | [968](../../src/transcriptParser.ts#L968) |
+| activePlanPath | VariableDeclaration | parseTranscriptStream | [969](../../src/transcriptParser.ts#L969) |
+| activePlanText | VariableDeclaration | parseTranscriptStream | [970](../../src/transcriptParser.ts#L970) |
+| taskToolsObserved | VariableDeclaration | parseTranscriptStream | [971](../../src/transcriptParser.ts#L971) |
+| explicitState | VariableDeclaration | parseTranscriptStream | [972](../../src/transcriptParser.ts#L972) |
+| source | PropertySignature | parseTranscriptStream.explicitState | [972](../../src/transcriptParser.ts#L972) |
+| queuedTaskUpdates | VariableDeclaration | parseTranscriptStream | [973](../../src/transcriptParser.ts#L973) |
+| pendingCreates | VariableDeclaration | parseTranscriptStream | [975](../../src/transcriptParser.ts#L975) |
+| observedTaskListId | VariableDeclaration | parseTranscriptStream | [976](../../src/transcriptParser.ts#L976) |
+| latestMarkdownTodos | VariableDeclaration | parseTranscriptStream | [977](../../src/transcriptParser.ts#L977) |
+| updateTask | VariableDeclaration | parseTranscriptStream | [979](../../src/transcriptParser.ts#L979) |
+| item | VariableDeclaration | parseTranscriptStream.updateTask | [980](../../src/transcriptParser.ts#L980) |
+| active | VariableDeclaration | parseTranscriptStream.updateTask | [989](../../src/transcriptParser.ts#L989) |
+| [field, addition] | VariableDeclaration | parseTranscriptStream.updateTask | [991](../../src/transcriptParser.ts#L991) |
+| field | BindingElement | parseTranscriptStream.updateTask.[field, addition] | [991](../../src/transcriptParser.ts#L991) |
+| addition | BindingElement | parseTranscriptStream.updateTask.[field, addition] | [991](../../src/transcriptParser.ts#L991) |
+| notePendingTaskCreate | VariableDeclaration | parseTranscriptStream | [995](../../src/transcriptParser.ts#L995) |
+| subject | VariableDeclaration | parseTranscriptStream.notePendingTaskCreate | [997](../../src/transcriptParser.ts#L997) |
+| description | VariableDeclaration | parseTranscriptStream.notePendingTaskCreate | [998](../../src/transcriptParser.ts#L998) |
+| applyTaskResult | VariableDeclaration | parseTranscriptStream | [1002](../../src/transcriptParser.ts#L1002) |
+| item | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1012](../../src/transcriptParser.ts#L1012) |
+| items | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1021](../../src/transcriptParser.ts#L1021) |
 | raw | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1025](../../src/transcriptParser.ts#L1025) |
 | item | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1026](../../src/transcriptParser.ts#L1026) |
-| prev | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1029](../../src/transcriptParser.ts#L1029) |
-| match | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1045](../../src/transcriptParser.ts#L1045) |
-| rawId | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1046](../../src/transcriptParser.ts#L1046) |
-| id | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1049](../../src/transcriptParser.ts#L1049) |
-| active | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1051](../../src/transcriptParser.ts#L1051) |
-| blockedBy | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1052](../../src/transcriptParser.ts#L1052) |
-| blocks | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1055](../../src/transcriptParser.ts#L1055) |
-| updates | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1067](../../src/transcriptParser.ts#L1067) |
-| update | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1069](../../src/transcriptParser.ts#L1069) |
-| taskId | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1074](../../src/transcriptParser.ts#L1074) |
-| syncPlanFile | VariableDeclaration | parseTranscriptStream | [1083](../../src/transcriptParser.ts#L1083) |
-| planPath | VariableDeclaration | parseTranscriptStream.syncPlanFile | [1085](../../src/transcriptParser.ts#L1085) |
-| previous | VariableDeclaration | parseTranscriptStream.syncPlanFile | [1097](../../src/transcriptParser.ts#L1097) |
-| updated | VariableDeclaration | parseTranscriptStream.syncPlanFile | [1100](../../src/transcriptParser.ts#L1100) |
-| sessionId | VariableDeclaration | parseTranscriptStream | [1110](../../src/transcriptParser.ts#L1110) |
-| parentSessionId | VariableDeclaration | parseTranscriptStream | [1111](../../src/transcriptParser.ts#L1111) |
-| cwd | VariableDeclaration | parseTranscriptStream | [1112](../../src/transcriptParser.ts#L1112) |
+| listHint | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1029](../../src/transcriptParser.ts#L1029) |
+| raw | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1042](../../src/transcriptParser.ts#L1042) |
+| item | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1043](../../src/transcriptParser.ts#L1043) |
+| prev | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1046](../../src/transcriptParser.ts#L1046) |
+| match | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1062](../../src/transcriptParser.ts#L1062) |
+| rawId | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1063](../../src/transcriptParser.ts#L1063) |
+| id | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1066](../../src/transcriptParser.ts#L1066) |
+| active | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1068](../../src/transcriptParser.ts#L1068) |
+| blockedBy | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1069](../../src/transcriptParser.ts#L1069) |
+| blocks | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1072](../../src/transcriptParser.ts#L1072) |
+| updates | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1084](../../src/transcriptParser.ts#L1084) |
+| update | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1086](../../src/transcriptParser.ts#L1086) |
+| taskId | VariableDeclaration | parseTranscriptStream.applyTaskResult | [1091](../../src/transcriptParser.ts#L1091) |
+| syncPlanFile | VariableDeclaration | parseTranscriptStream | [1100](../../src/transcriptParser.ts#L1100) |
+| planPath | VariableDeclaration | parseTranscriptStream.syncPlanFile | [1102](../../src/transcriptParser.ts#L1102) |
+| previous | VariableDeclaration | parseTranscriptStream.syncPlanFile | [1114](../../src/transcriptParser.ts#L1114) |
+| updated | VariableDeclaration | parseTranscriptStream.syncPlanFile | [1117](../../src/transcriptParser.ts#L1117) |

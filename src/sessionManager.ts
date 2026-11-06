@@ -740,7 +740,8 @@ export class SessionManager implements vscode.Disposable {
 
           // Current workspace uses the model this session actually ran.
           // The global picker replaces only the relay default, before this session has its own model.
-          const sessionModel = parsed.lastResponseModel || parsed.model || '';
+          // `parsed.model` 已按「最新显式选择优先」解析，中转站固定响应模型不会盖掉它。
+          const sessionModel = parsed.model || parsed.lastResponseModel || '';
           const effectiveModel = isCurrentWorkspace
             ? (this.configManager?.getActiveModel(sessionModel) || sessionModel || configuredModel || '')
             : (parsed.model || configuredModel || '');

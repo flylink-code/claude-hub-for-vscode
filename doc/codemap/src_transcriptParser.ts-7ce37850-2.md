@@ -4,7 +4,7 @@
 
 [Module](session-parser.md) · [Source](../../src/transcriptParser.ts) · page 2/5
 
-Source SHA-256: b10dc57783e5704d0f5abad8586cb1dfaa0cd44a68b8aa69bce1c5cdf5d3130e
+Source SHA-256: 403886321ff3b4dc0b0b477a1e63c0711724c71a2c4febefb5370da020c5658a
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
