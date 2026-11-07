@@ -91,6 +91,7 @@ import {
   formatProgressBar,
   formatK,
   formatDuration,
+  formatOutputSpeed,
   resolveRenderOptions,
   formatStatusBarText,
   StatusBarRenderOptions,
@@ -320,6 +321,17 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('chip-label-short'));
   assert.ok(html.includes('header-sub'));
   assert.ok(html.includes('hud-info-row'));
+  assert.ok(html.includes('id="output-speed-row"'));
+  assert.ok(html.includes('data-action="enableOutputSpeed"'));
+  assert.ok(html.includes('function formatOutputSpeed'));
+  assert.ok(html.includes('function renderOutputSpeed'));
+  assert.ok(html.includes('renderOutputSpeed(s)'));
+  assert.ok(html.includes('renderOutputSpeed(null)'));
+  assert.ok(html.includes('speedSourceTranscript'));
+  assert.ok(html.includes('speedSourceStatusLine'));
+  assert.ok(html.includes('outputSpeedIntegrationEnabled'));
+  assert.match(html, /\.output-speed-row\s*\{[^}]*font-size:\s*10\.5px/);
+  assert.match(html, /id="output-speed-enable"[^>]*data-action="enableOutputSpeed"/);
   const extBadgeMatches = html.match(/id="ext-count-badge"/g);
   assert.strictEqual(extBadgeMatches ? extBadgeMatches.length : 0, 1);
 });
@@ -360,23 +372,28 @@ test('generateForkTitle increments fork counts properly', () => {
 });
 
 test('ClaudeConfigManager reads settings and discovers models safely', () => {
-  const mgr = new ClaudeConfigManager();
-  const settings = mgr.getClaudeSettings();
-  assert.ok(typeof settings === 'object');
-  const configured = mgr.getConfiguredModel();
-  assert.ok(typeof configured === 'string' || configured === undefined);
+  // Do not let the developer's real gateway display names affect this fixture.
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-model-discovery-'));
+  const mgr = new ClaudeConfigManager(() => tempDir);
+  try {
+    const settings = mgr.getClaudeSettings();
+    assert.ok(typeof settings === 'object');
+    const configured = mgr.getConfiguredModel();
+    assert.ok(typeof configured === 'string' || configured === undefined);
 
-  const models = mgr.getDiscoveredModels('gpt-5.6-sol');
-  assert.ok(Array.isArray(models));
-  assert.ok(models.length > 0);
-  assert.ok(models.some((m) => m.title.includes('Default') || m.id.length > 0));
+    const models = mgr.getDiscoveredModels('gpt-5.6-sol');
+    assert.ok(Array.isArray(models));
+    assert.ok(models.length > 0);
+    assert.ok(models.some((m) => m.title.includes('Default') || m.id.length > 0));
 
-  // Verify matchModel matches by alias or title
-  const matched = matchModel('gpt-5.6-sol', models);
-  assert.ok(matched);
-  assert.strictEqual(matched?.title, 'gpt-5.6-sol');
-
-  mgr.dispose();
+    // Verify matchModel matches by alias or title
+    const matched = matchModel('gpt-5.6-sol', models);
+    assert.ok(matched);
+    assert.strictEqual(matched?.title, 'gpt-5.6-sol');
+  } finally {
+    mgr.dispose();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test('config directory provider is shared by Claude configuration and features', () => {
@@ -495,6 +512,16 @@ test('ClaudeConfigManager manages AGENTS.md and CLAUDE.md status and generation'
     mgr.dispose();
     fs.rmSync(wsDir, { recursive: true, force: true });
   }
+});
+
+test('formatOutputSpeed renders positive finite readings and dashes otherwise', () => {
+  assert.strictEqual(formatOutputSpeed(12.34), '12.3 tok/s');
+  assert.strictEqual(formatOutputSpeed(0.1), '0.1 tok/s');
+  assert.strictEqual(formatOutputSpeed(undefined), '—');
+  assert.strictEqual(formatOutputSpeed(0), '—');
+  assert.strictEqual(formatOutputSpeed(NaN), '—');
+  assert.strictEqual(formatOutputSpeed(Infinity), '—');
+  assert.strictEqual(formatOutputSpeed(-3), '—');
 });
 
 test('statusBar formatters format numbers and progress bar properly', () => {
@@ -666,6 +693,52 @@ test('statusBar formatStatusBarText renders compact, minimal, detailed, hud and 
     },
   });
   assert.strictEqual(customTokens, '$(sparkle) 14.0k/200.0k · Sonnet 3.7');
+});
+
+test('statusBar output speed appends to non-minimal presets only', () => {
+  const baseInput = {
+    percentage: 7,
+    totalTokens: 14000,
+    contextLimit: 200000,
+    modelDisplay: 'Sonnet 3.7',
+    hasRunningTool: false,
+    options: {
+      preset: 'compact' as const,
+      contextFormat: 'percent' as const,
+      showProgressBar: false,
+      showModel: true,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+    },
+  };
+
+  assert.strictEqual(
+    formatStatusBarText({ ...baseInput, outputTokensPerSecond: 12.34 }),
+    '$(sparkle) 7% · Sonnet 3.7 · 12.3 tok/s',
+  );
+
+  // Invalid readings must not alter the existing status text.
+  assert.strictEqual(
+    formatStatusBarText({ ...baseInput, outputTokensPerSecond: NaN }),
+    '$(sparkle) 7% · Sonnet 3.7',
+  );
+
+  const minimalOptions = {
+    preset: 'minimal' as const,
+    contextFormat: 'percent' as const,
+    showProgressBar: false,
+    showModel: false,
+    showCost: false,
+    showGitBranch: false,
+    showTodos: false,
+    showTools: false,
+  };
+  assert.strictEqual(
+    formatStatusBarText({ ...baseInput, options: minimalOptions, outputTokensPerSecond: 12.34 }),
+    '$(sparkle) 7%',
+  );
 });
 
 test('parseTranscriptFile handles out-of-order tool_result before tool_use', async () => {
@@ -2208,6 +2281,160 @@ test('getWebviewContent keeps narrow layout rules scoped and consistent', () => 
   const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
   assert.ok(script);
   assert.doesNotThrow(() => new Script(script));
+});
+
+test('output speed DOM renders safe text and clears stale values on session changes', () => {
+  const html = getWebviewContent();
+  const start = html.indexOf('    function isValidOutputSpeed(');
+  const end = html.indexOf("    document.addEventListener('click'", start);
+  assert.ok(start >= 0 && end > start);
+  const elements: Record<string, any> = {};
+  for (const id of ['output-speed-row', 'output-speed-label', 'output-speed-value', 'output-speed-model', 'output-speed-enable']) {
+    elements[id] = { textContent: '', title: '', style: {}, hidden: false };
+  }
+  const context = {
+    document: { getElementById: (id: string) => elements[id] },
+    hubUiStrings: {
+      speedLabel: 'Average', speedHint: 'Includes TTFT', speedEnable: 'Enable terminal',
+      speedWaiting: 'Waiting', speedLast: 'Last', speedSampling: 'Sampling…',
+      speedUnsupported: 'No fields', speedTerminalEnabled: 'Terminal enabled',
+      speedSourceTranscript: 'record estimate', speedSourceStatusLine: 'status line',
+    },
+  };
+  const source = html.slice(start, end);
+  new Script(source + '\nrenderOutputSpeed({ outputSpeedState: "available", outputSpeed: { tokensPerSecond: 42.36, model: "<img src=x onerror=alert(1)>", source: "transcript" } });').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '42.4 tok/s');
+  assert.strictEqual(elements['output-speed-model'].textContent, '<img src=x onerror=alert(1)>');
+  assert.strictEqual(elements['output-speed-enable'].hidden, true);
+  assert.ok(elements['output-speed-row'].title.includes('TTFT'));
+  assert.ok(elements['output-speed-row'].title.includes('record estimate'));
+  new Script(source + '\nrenderOutputSpeed(null);').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '—');
+  assert.strictEqual(elements['output-speed-model'].textContent, '');
+  assert.strictEqual(elements['output-speed-enable'].hidden, false);
+  assert.strictEqual(elements['output-speed-row'].title, 'Waiting');
+});
+
+test('output speed DOM keeps its label stable and marks last/sampling in the tooltip', () => {
+  const html = getWebviewContent();
+  const start = html.indexOf('    function isValidOutputSpeed(');
+  const end = html.indexOf("    document.addEventListener('click'", start);
+  assert.ok(start >= 0 && end > start);
+  const elements: Record<string, any> = {};
+  for (const id of ['output-speed-row', 'output-speed-label', 'output-speed-value', 'output-speed-model', 'output-speed-enable']) {
+    elements[id] = { textContent: '', title: '', style: {}, hidden: false };
+  }
+  const context = {
+    document: { getElementById: (id: string) => elements[id] },
+    hubUiStrings: {
+      speedLabel: 'Average', speedHint: 'Includes TTFT', speedEnable: 'Enable terminal',
+      speedWaiting: 'Waiting', speedLast: 'Last', speedSampling: 'Sampling…',
+      speedUnsupported: 'No fields', speedTerminalEnabled: 'Terminal enabled',
+      speedSourceTranscript: 'record estimate', speedSourceStatusLine: 'status line',
+    },
+  };
+  const source = html.slice(start, end);
+  new Script(source + '\nrenderOutputSpeed({ outputSpeedState: "sampling", outputSpeed: { tokensPerSecond: 30, model: "M", source: "statusLine" } });').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '30.0 tok/s');
+  assert.strictEqual(elements['output-speed-label'].textContent, 'Average');
+  assert.ok(elements['output-speed-row'].title.includes('Last'));
+  assert.ok(elements['output-speed-row'].title.includes('Sampling…'));
+  assert.ok(elements['output-speed-row'].title.includes('status line'));
+  assert.strictEqual(elements['output-speed-enable'].hidden, true);
+});
+
+test('output speed refreshes only changed properties, including session/config interleaving', () => {
+  const html = getWebviewContent();
+  const start = html.indexOf('    function isValidOutputSpeed(');
+  const end = html.indexOf("    document.addEventListener('click'", start);
+  const uiStart = html.indexOf('    function applyHubUiStrings(');
+  const uiEnd = html.indexOf('    // 同步保存至 Webview', uiStart);
+  assert.ok(start >= 0 && end > start && uiStart >= 0 && uiEnd > uiStart);
+  const writes: string[] = [];
+  const track = (target: Record<string, any>, prefix: string): any => new Proxy(target, {
+    set(object, key, value) {
+      writes.push(prefix + '.' + String(key));
+      object[String(key)] = value;
+      return true;
+    },
+  });
+  const elements: Record<string, any> = {};
+  for (const id of ['output-speed-row', 'output-speed-label', 'output-speed-value', 'output-speed-model', 'output-speed-enable']) {
+    elements[id] = track({ textContent: '', title: '', hidden: false, style: track({ display: '' }, id + '.style') }, id);
+  }
+  const ui = { speedLabel: 'Average', speedEnable: 'Enable', speedLast: 'Last', speedSampling: 'Sampling' };
+  const context = {
+    document: { getElementById: (id: string) => elements[id] },
+    hubUiStrings: { ...ui },
+    sample: { sessionId: 'one', outputSpeedState: 'sampling', outputSpeed: { tokensPerSecond: 13.8, model: 'M' } },
+    ui,
+  };
+  const code = html.slice(uiStart, uiEnd) + html.slice(start, end);
+  new Script(code + '\napplyHubUiStrings(ui); renderOutputSpeed(sample);').runInNewContext(context);
+  writes.length = 0;
+  new Script(code + '\nfor (let i = 0; i < 10; i++) { applyHubUiStrings(ui); renderOutputSpeed(sample); }').runInNewContext(context);
+  assert.strictEqual(writes.length, 0, 'unchanged session/config refreshes must not mutate speed DOM');
+
+  context.sample.outputSpeedState = 'available';
+  new Script(code + '\napplyHubUiStrings(ui); renderOutputSpeed(sample);').runInNewContext(context);
+  assert.deepStrictEqual(writes, ['output-speed-row.title'], 'sampling changes only the tooltip, never visible label/value/model');
+
+  writes.length = 0;
+  context.sample.outputSpeed.tokensPerSecond = 13.81;
+  new Script(code + '\nrenderOutputSpeed(sample);').runInNewContext(context);
+  assert.strictEqual(writes.length, 0, 'same formatted speed must not be rewritten');
+  context.sample.outputSpeed.tokensPerSecond = 14.2;
+  new Script(code + '\nrenderOutputSpeed(sample);').runInNewContext(context);
+  assert.deepStrictEqual(writes, ['output-speed-value.textContent']);
+
+  writes.length = 0;
+  context.ui.speedLabel = '平均速率';
+  new Script(code + '\napplyHubUiStrings(ui); renderOutputSpeed(sample);').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-label'].textContent, '平均速率');
+  assert.ok(writes.includes('output-speed-label.textContent'), 'language changes must remain visible');
+  new Script(code + '\nrenderOutputSpeed(null);').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '—');
+  assert.strictEqual(elements['output-speed-model'].textContent, '');
+});
+
+test('output speed DOM explains waiting, unsupported and terminal-enabled states without showing zero', () => {
+  const html = getWebviewContent();
+  const start = html.indexOf('    function isValidOutputSpeed(');
+  const end = html.indexOf("    document.addEventListener('click'", start);
+  assert.ok(start >= 0 && end > start);
+  const elements: Record<string, any> = {};
+  for (const id of ['output-speed-row', 'output-speed-label', 'output-speed-value', 'output-speed-model', 'output-speed-enable']) {
+    elements[id] = { textContent: '', title: '', style: {}, hidden: false };
+  }
+  const context = {
+    document: { getElementById: (id: string) => elements[id] },
+    hubUiStrings: {
+      speedLabel: 'Average', speedHint: 'Includes TTFT', speedEnable: 'Enable terminal',
+      speedWaiting: 'Waiting', speedLast: 'Last', speedSampling: 'Sampling…',
+      speedUnsupported: 'No fields', speedTerminalEnabled: 'Terminal enabled',
+      speedSourceTranscript: 'record estimate', speedSourceStatusLine: 'status line',
+    },
+  };
+  const source = html.slice(start, end);
+
+  // Sampling with no completed sample: show an explicit state, not a fake 0 tok/s.
+  new Script(source + '\nrenderOutputSpeed({ outputSpeedState: "sampling" });').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '—');
+  assert.strictEqual(elements['output-speed-model'].textContent, 'Sampling…');
+
+  // Missing transcript timing fields degrade gracefully.
+  new Script(source + '\nrenderOutputSpeed({ outputSpeedState: "unsupported" });').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '—');
+  assert.strictEqual(elements['output-speed-model'].textContent, 'No fields');
+  assert.strictEqual(elements['output-speed-enable'].hidden, false);
+  assert.strictEqual(elements['output-speed-enable'].textContent, 'Enable terminal');
+
+  // Terminal collection already enabled: wait for a sample instead of re-offering setup.
+  new Script(source + '\nrenderOutputSpeed({ outputSpeedState: "waiting", outputSpeedIntegrationEnabled: true });').runInNewContext(context);
+  assert.strictEqual(elements['output-speed-value'].textContent, '—');
+  assert.strictEqual(elements['output-speed-model'].textContent, 'Terminal enabled');
+  assert.strictEqual(elements['output-speed-enable'].hidden, true);
+  assert.strictEqual(elements['output-speed-row'].title, 'Terminal enabled');
 });
 
 test('getWebviewContent renders compact todo counters with full tooltips', () => {

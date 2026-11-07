@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+import { TranscriptSpeedCollector } from './transcriptSpeed.js';
+import type { OutputSpeedSample, OutputSpeedState } from './types.js';
 import { AgentEntry, BackgroundJob, BackgroundJobKind, BackgroundJobStatus, TodoItem, TokenUsage, ToolEntry, SessionPlan, SessionLoopState, TaskSource, LastActivity } from './types.js';
 
 export interface ParsedTranscript {
@@ -12,6 +14,9 @@ export interface ParsedTranscript {
   sessionTitle?: string;
   model: string;
   lastResponseModel?: string;
+  outputSpeed?: OutputSpeedSample;
+  outputSpeedState?: OutputSpeedState;
+  outputSpeedResetAt?: number;
   tokenUsage: TokenUsage;
   tools: ToolEntry[];
   activeTools: ToolEntry[];
@@ -1216,6 +1221,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     }
   };
 
+  const speedCollector = new TranscriptSpeedCollector();
   const usageByMessageId = new Map<string, {
     inputTokens: number;
     outputTokens: number;
@@ -1236,6 +1242,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
 
     try {
       const entry = JSON.parse(line);
+      speedCollector.consume(entry);
       const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
       if (line.includes('<task-id>') && line.includes('<status>')) {
         const chunks: string[] = [];
@@ -1315,6 +1322,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
             ));
 
         if (isClearCommand) {
+          speedCollector.reset();
           lastClearIndex = lineIndex;
           userMessagesAfterClear = 0;
           todos.length = 0;
@@ -1647,6 +1655,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   } : undefined;
 
   const effectiveModel = resolveEffectiveModel(lastDeclaredModel, lastAssistantModel);
+  const speed = speedCollector.finish();
 
   return {
     sessionId,
@@ -1657,6 +1666,9 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     sessionTitle: customTitle || slugTitle || '',
     model: effectiveModel,
     lastResponseModel: lastAssistantModel || undefined,
+    outputSpeed: wasCleared ? undefined : speed.sample,
+    outputSpeedState: wasCleared ? 'waiting' : speed.state,
+    outputSpeedResetAt: speed.resetAt,
     tokenUsage: {
       inputTokens: wasCleared ? 0 : latestUsage.inputTokens,
       outputTokens: wasCleared ? 0 : latestUsage.outputTokens,

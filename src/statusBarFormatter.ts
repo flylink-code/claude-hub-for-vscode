@@ -22,6 +22,7 @@ export interface StatusBarFormatInput {
   activeToolName?: string;
   elapsedSec?: number;
   cost?: string;
+  outputTokensPerSecond?: number;
   gitBranch?: string;
   todos?: Array<{ status?: string }>;
   options: StatusBarRenderOptions;
@@ -72,6 +73,17 @@ export function formatDuration(ms: number, precise: boolean = false): string {
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
   return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+}
+
+/**
+ * Formats a measured average output speed for compact UI display.
+ * Only positive finite values are meaningful; anything else renders as an em dash.
+ */
+export function formatOutputSpeed(value?: number): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return '—';
+  }
+  return value.toFixed(1) + ' tok/s';
 }
 
 export function resolveRenderOptions(config: ConfigGetter): StatusBarRenderOptions {
@@ -152,6 +164,7 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
     activeToolName,
     elapsedSec = 0,
     cost,
+    outputTokensPerSecond,
     gitBranch,
     todos,
     options,
@@ -160,6 +173,9 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
   const icon = hasRunningTool ? '$(sync~spin)' : '$(sparkle)';
   const pctStr = `${percentage}%`;
   const tokensStr = `${formatK(totalTokens)}/${formatK(contextLimit)}`;
+  const speedText = formatOutputSpeed(outputTokensPerSecond);
+  // Minimal preset stays glanceable and intentionally omits optional extras.
+  const speedSuffix = options.preset !== 'minimal' && speedText !== '—' ? ` · ${speedText}` : '';
 
   let contextValueStr = pctStr;
   if (options.contextFormat === 'tokens') {
@@ -187,7 +203,7 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
     if (extraParts.length > 0) {
       statusPart += ` │ ${extraParts.join(' │ ')}`;
     }
-    return statusPart;
+    return statusPart + speedSuffix;
   }
 
   // 2. Minimal Preset: $(sparkle) 7%
@@ -198,12 +214,12 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
   // 3. Compact Preset: $(sparkle) 7% · Sonnet 3.7 OR $(sync~spin) 7% · Tool (3s)
   if (options.preset === 'compact') {
     if (hasRunningTool && activeToolName && options.showTools) {
-      return `${icon} ${pctStr} · ${activeToolName} (${elapsedSec}s)`;
+      return `${icon} ${pctStr} · ${activeToolName} (${elapsedSec}s)` + speedSuffix;
     }
     if (options.showModel && modelDisplay) {
-      return `${icon} ${pctStr} · ${modelDisplay}`;
+      return `${icon} ${pctStr} · ${modelDisplay}` + speedSuffix;
     }
-    return `${icon} ${pctStr}`;
+    return `${icon} ${pctStr}` + speedSuffix;
   }
 
   // 4. Detailed or Custom Presets: build modularly
@@ -235,7 +251,7 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
   const mainPart = `${icon} ${barPrefix}${contextValueStr}`;
 
   if (parts.length > 0) {
-    return `${mainPart} · ${parts.join(' · ')}`;
+    return `${mainPart} · ${parts.join(' · ')}` + speedSuffix;
   }
-  return mainPart;
+  return mainPart + speedSuffix;
 }

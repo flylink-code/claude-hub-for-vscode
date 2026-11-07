@@ -2,6 +2,24 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.24] - 2026-11-07
+
+### 中文
+
+- **输出速率：** IDE 会话由真实请求记录自动估算最近一次已完成响应的平均 tok/s（去重输出 Token / 请求开始至最后响应记录的耗时），无需开关；包含首 Token 等待与思考时间，不是实时解码速度。
+- **速率防闪烁：** 监控行标签固定，仅在内容变化时更新速率 DOM，避免会话与配置刷新反复重写文本；“上次 / 采样中”状态保留在悬停提示。
+- **采样状态：** 新请求进行中在提示中标记“采样中”，保留的读数标为“上次”；无样本显示 `—`，模型变化、`/clear`、计数重置或记录不完整时重建 / 降级，不伪造 0 速率。
+- **私有字段降级：** 测速依赖观察到的 `api-request` / `assistant` / `usage` 字段而非稳定公开 API；字段缺失或变化时降级为无数据并说明，其他功能不受影响。
+- **终端采集（可选）：** 原有启用 / 停用命令仅管理终端 `statusLine` 采样，已启用但无样本时不再诱导重复启用；停用终端采集不影响 IDE 自动测速。需要 Node.js 18+ 和执行 `statusLine` 的宿主，不采集正文、提示词或凭据，不联网。
+
+### English
+
+- **Output speed:** IDE sessions automatically estimate the latest completed response average from real request records (deduplicated output tokens / elapsed time from request-start to last-response records), with no toggle. Includes first-token wait and thinking time; not live decode speed.
+- **Speed anti-flicker:** The monitor label stays fixed and speed DOM properties update only when content changes, avoiding repeated text rewrites during session/config refreshes. Last/sampling status remains in the tooltip.
+- **Sampling states:** A request in progress is marked as sampling in the tooltip and any retained reading is labelled "last"; without a sample the UI shows `—`. Readings reset or degrade on model changes, `/clear`, counter resets, or incomplete records, and never report a fake zero.
+- **Private-field degradation:** The estimate relies on observed `api-request` / `assistant` / `usage` fields, not a stable public API. Missing or changed fields degrade to no data with an explanation while other features keep working.
+- **Terminal collection (optional):** The existing enable/disable commands now manage only terminal `statusLine` sampling, and an already-enabled collector waits for a sample instead of offering setup again. Disabling terminal collection does not affect automatic IDE measurement. Requires Node.js 18+ and a host that executes `statusLine`; collects no content, prompts or credentials and makes no network requests.
+
 ## [0.2.23] - 2026-11-06
 
 ### 中文

@@ -388,6 +388,58 @@ export function getWebviewContent(): string {
       white-space: nowrap;
     }
 
+    /* Compact, text-only output speed line under the token bubbles.
+       Uses existing semantic theme tokens; no chart or extra color system. */
+    .output-speed-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      margin: 0 0 4px 0;
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .output-speed-label {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .output-speed-value {
+      flex: 0 0 auto;
+      font-weight: 600;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .output-speed-model {
+      flex: 1 1 70px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0.85;
+    }
+
+    .output-speed-enable {
+      flex: 0 0 auto;
+      margin-left: auto;
+      border: 1px solid var(--card-border);
+      background: var(--vscode-input-background, var(--card-bg));
+      color: var(--vscode-textLink-foreground, var(--hub-accent));
+      border-radius: 3px;
+      font-size: 9.5px;
+      line-height: 1.4;
+      padding: 1px 6px;
+      cursor: pointer;
+    }
+
+    .output-speed-enable:hover {
+      border-color: var(--vscode-focusBorder, var(--card-border));
+    }
+
     /* Runtime facts: grid + wrapping values keeps model / branch / duration
        readable without the old single-line ellipsis clipping. */
     .hud-info-row {
@@ -2306,6 +2358,15 @@ export function getWebviewContent(): string {
           <div class="metric-bubble"><span class="metric-bubble-lbl">输出</span><span id="m-out" class="metric-bubble-val">0</span></div>
         </div>
 
+        <!-- Latest completed-response average speed. IDE session records work automatically;
+             the button only enables terminal statusLine collection. -->
+        <div class="output-speed-row" id="output-speed-row">
+          <span class="output-speed-label" id="output-speed-label">最近响应平均速率</span>
+          <span class="output-speed-value" id="output-speed-value">—</span>
+          <span class="output-speed-model" id="output-speed-model"></span>
+          <button type="button" class="output-speed-enable" id="output-speed-enable" data-action="enableOutputSpeed">启用终端速率采集</button>
+        </div>
+
         <!-- Runtime facts: values wrap instead of being clipped. -->
         <div class="hud-info-row" role="list" aria-label="运行摘要">
           <span class="hud-fact hud-fact-model" role="listitem"><span class="hud-fact-label">模型</span><span id="model-tag" class="hud-fact-value">--</span></span>
@@ -2664,6 +2725,17 @@ export function getWebviewContent(): string {
       modeNone: 'No todos',
       checklistAlso: 'Checklist also present',
       checklistHidden: 'Checklist hidden (tasks-only)',
+      speedLabel: 'Latest response average',
+      speedHint: 'Estimated from session records: output tokens divided by the API time of the latest completed request. Includes wait and thinking time; not live decode speed.',
+      speedLast: 'last',
+      speedSampling: 'sampling…',
+      speedUnsupported: 'Session records lack the fields needed to estimate speed.',
+      speedTerminalEnabled: 'Terminal collection is enabled; waiting for a sample.',
+      speedSourceTranscript: 'session record estimate',
+      speedSourceStatusLine: 'terminal status-line sample',
+      speedMeasuredAt: 'sampled at {time}',
+      speedEnable: 'Enable terminal speed collection',
+      speedWaiting: 'Waiting for a completed response with usable timing records.',
     };
     function applyHubUiStrings(ui) {
       if (!ui || typeof ui !== 'object') return;
@@ -2673,7 +2745,7 @@ export function getWebviewContent(): string {
       if (typeof ui.chipDone === 'string') hubUiStrings.chipDone = ui.chipDone;
       if (typeof ui.expand === 'string') hubUiStrings.expand = ui.expand;
       if (typeof ui.collapse === 'string') hubUiStrings.collapse = ui.collapse;
-      const copyKeys = ['tbRefresh','tbRefreshShort','tbSlash','tbSearch','tbCost','tbTasks','tbWorktree','tbFilter','tbFilterWs','tbFilterAll','tbFilterWsShort','tbFilterAllShort','todoToolsTitle','todoToolsToggle','todoToolsCaveat','todoToolsOn','todoToolsOff','todoToolsEffectiveOn','todoToolsEffectiveOff','todoToolsObserved','todoToolsHooksNote','hubTodosTitle','hubTodosHint','clearHideOnly','pickList','needsList','creating','depends','blocks','sourceNative','sourceTasks','sourceTodoWrite','sourcePlan','sourceMarkdown','sourceNone','listId','optInHint','modeTask','modeChecklist','modeNone','checklistAlso','checklistHidden'];
+      const copyKeys = ['tbRefresh','tbRefreshShort','tbSlash','tbSearch','tbCost','tbTasks','tbWorktree','tbFilter','tbFilterWs','tbFilterAll','tbFilterWsShort','tbFilterAllShort','todoToolsTitle','todoToolsToggle','todoToolsCaveat','todoToolsOn','todoToolsOff','todoToolsEffectiveOn','todoToolsEffectiveOff','todoToolsObserved','todoToolsHooksNote','hubTodosTitle','hubTodosHint','clearHideOnly','pickList','needsList','creating','depends','blocks','sourceNative','sourceTasks','sourceTodoWrite','sourcePlan','sourceMarkdown','sourceNone','listId','optInHint','modeTask','modeChecklist','modeNone','checklistAlso','checklistHidden','speedLabel','speedHint','speedEnable','speedWaiting','speedLast','speedSampling','speedUnsupported','speedTerminalEnabled','speedSourceTranscript','speedSourceStatusLine','speedMeasuredAt'];
       for (const k of copyKeys) { if (typeof ui[k] === 'string') hubUiStrings[k] = ui[k]; }
       const titleEl = document.getElementById('todos-title-label');
       if (titleEl && hubUiStrings.hubTodosTitle) {
@@ -2684,6 +2756,8 @@ export function getWebviewContent(): string {
       if (clearBtn && hubUiStrings.clearHideOnly) clearBtn.title = hubUiStrings.clearHideOnly;
       const pickBtn = document.getElementById('todos-pick-list-btn');
       if (pickBtn && hubUiStrings.pickList) pickBtn.textContent = hubUiStrings.pickList;
+      // The speed renderer owns its DOM, including localized text. Avoid an
+      // intermediate label/button reset on every session or config update.
 }
 
 
@@ -3205,6 +3279,81 @@ export function getWebviewContent(): string {
       return escapeHtml(value);
     }
 
+    function isValidOutputSpeed(value) {
+      return typeof value === 'number' && isFinite(value) && value > 0;
+    }
+
+    function formatOutputSpeed(value) {
+      return isValidOutputSpeed(value) ? value.toFixed(1) + ' tok/s' : '—';
+    }
+
+    function updateOutputSpeedProperty(element, property, value) {
+      if (element && element[property] !== value) element[property] = value;
+    }
+
+    function updateOutputSpeedButton(button, hidden) {
+      if (!button) return;
+      updateOutputSpeedProperty(button, 'hidden', hidden);
+      updateOutputSpeedProperty(button.style, 'display', hidden ? 'none' : '');
+    }
+
+    function renderOutputSpeed(session) {
+      const row = document.getElementById('output-speed-row');
+      if (!row) return;
+      const labelEl = document.getElementById('output-speed-label');
+      const valueEl = document.getElementById('output-speed-value');
+      const modelEl = document.getElementById('output-speed-model');
+      const enableBtn = document.getElementById('output-speed-enable');
+      const label = hubUiStrings.speedLabel || '最近响应平均速率';
+      const state = session && typeof session.outputSpeedState === 'string' ? session.outputSpeedState : '';
+      const integrationEnabled = !!(session && session.outputSpeedIntegrationEnabled === true);
+      const isSampling = state === 'sampling';
+      const lastLabel = hubUiStrings.speedLast || '上次';
+
+      updateOutputSpeedProperty(labelEl, 'textContent', label);
+      updateOutputSpeedProperty(enableBtn, 'textContent', hubUiStrings.speedEnable || '启用终端速率采集');
+
+      const sample = session && session.outputSpeed;
+      const tps = sample ? Number(sample.tokensPerSecond) : NaN;
+      const hasSpeed = isValidOutputSpeed(tps);
+      if (hasSpeed) {
+        const modelText = sample.model ? String(sample.model) : '';
+        const sourceText = sample.source === 'statusLine'
+          ? (hubUiStrings.speedSourceStatusLine || '')
+          : sample.source === 'transcript'
+            ? (hubUiStrings.speedSourceTranscript || '')
+            : '';
+        const measuredAt = Number(sample.measuredAt);
+        const measuredText = hubUiStrings.speedMeasuredAt && isFinite(measuredAt) && measuredAt > 0
+          ? String(hubUiStrings.speedMeasuredAt).replace('{time}', new Date(measuredAt).toLocaleTimeString())
+          : '';
+        updateOutputSpeedProperty(valueEl, 'textContent', formatOutputSpeed(tps));
+        updateOutputSpeedProperty(modelEl, 'textContent', modelText);
+        updateOutputSpeedProperty(modelEl, 'title', modelText);
+        updateOutputSpeedProperty(row, 'title', [
+          label,
+          isSampling ? lastLabel : '',
+          modelText,
+          sourceText,
+          measuredText,
+          hubUiStrings.speedHint || '',
+          isSampling ? (hubUiStrings.speedSampling || '') : ''
+        ].filter(Boolean).join(' · '));
+        updateOutputSpeedButton(enableBtn, true);
+      } else {
+        let metaText = '';
+        if (isSampling) metaText = hubUiStrings.speedSampling || '';
+        else if (integrationEnabled) metaText = hubUiStrings.speedTerminalEnabled || '';
+        else if (state === 'unsupported') metaText = hubUiStrings.speedUnsupported || '';
+        updateOutputSpeedProperty(valueEl, 'textContent', '—');
+        updateOutputSpeedProperty(modelEl, 'textContent', metaText);
+        updateOutputSpeedProperty(modelEl, 'title', metaText);
+        // Waiting/unsupported text is already explicit; do not claim a zero speed.
+        updateOutputSpeedProperty(row, 'title', metaText || hubUiStrings.speedWaiting || '');
+        updateOutputSpeedButton(enableBtn, integrationEnabled);
+      }
+    }
+
     document.addEventListener('click', event => {
       const source = event.target instanceof Element ? event.target : null;
       if (openSessionMenuId && !(source && source.closest('.session-more-wrap'))) {
@@ -3223,7 +3372,7 @@ export function getWebviewContent(): string {
         sendMessage(action, { sessionId: actionElement.getAttribute('data-session-id') || '' });
       } else if (action === 'openWorktree') {
         sendMessage(action, { worktreePath: actionElement.getAttribute('data-worktree-path') || '' });
-      } else if (action === 'slashCommand' || action === 'workspaceCostReport' || action === 'searchTranscript' || action === 'openBackgroundTasks' || action === 'openMemoryIndex' || action === 'syncMemoryIndex' || action === 'startWorktreeSession') {
+      } else if (action === 'slashCommand' || action === 'workspaceCostReport' || action === 'searchTranscript' || action === 'openBackgroundTasks' || action === 'openMemoryIndex' || action === 'syncMemoryIndex' || action === 'startWorktreeSession' || action === 'enableOutputSpeed') {
         sendMessage(action, {});
       } else if (action === 'createMemoryEntry') {
         openMemoryInlineForm('create');
@@ -4364,6 +4513,23 @@ export function getWebviewContent(): string {
         const rightMetaParts = [];
         if (durationBadge) rightMetaParts.push(durationBadge);
         if (timeStr) rightMetaParts.push(timeStr);
+        const speedTps = s.outputSpeed ? Number(s.outputSpeed.tokensPerSecond) : NaN;
+        if (isValidOutputSpeed(speedTps)) {
+          const speedModel = s.outputSpeed && s.outputSpeed.model ? String(s.outputSpeed.model) : '';
+          const speedSampling = s.outputSpeedState === 'sampling';
+          const speedSource = s.outputSpeed && s.outputSpeed.source === 'statusLine'
+            ? (hubUiStrings.speedSourceStatusLine || '')
+            : s.outputSpeed && s.outputSpeed.source === 'transcript'
+              ? (hubUiStrings.speedSourceTranscript || '')
+              : '';
+          const speedTitle = hubUiStrings.speedLabel
+            + (speedSampling ? ' · ' + (hubUiStrings.speedLast || '') : '')
+            + (speedModel ? ' · ' + speedModel : '')
+            + (speedSource ? ' · ' + speedSource : '')
+            + (speedSampling ? ' · ' + (hubUiStrings.speedSampling || '') : '')
+            + ' · ' + hubUiStrings.speedHint;
+          rightMetaParts.push('<span title="' + escapeAttribute(speedTitle) + '">⚡ ' + escapeHtml(formatOutputSpeed(speedTps)) + '</span>');
+        }
         const rightMetaHtml = rightMetaParts.join(' · ');
 
         let tokenText = pct + ' (' + tokens + ' Tokens)';
@@ -4620,6 +4786,7 @@ export function getWebviewContent(): string {
             document.getElementById('m-write').innerText = formatTokenCount(s.tokenUsage.cacheCreationTokens);
             document.getElementById('m-out').innerText = formatTokenCount(s.tokenUsage.outputTokens);
           }
+          renderOutputSpeed(s);
 
           const dispModel = s.modelDisplay || s.model || '默认';
           const respExtra = (s.lastResponseModelDisplay && s.lastResponseModelDisplay !== dispModel)
@@ -4858,6 +5025,8 @@ export function getWebviewContent(): string {
             userManuallyOpened = false;
           }
         } else {
+          // No focused session: never leave a stale speed reading behind.
+          renderOutputSpeed(null);
           const todosWrap = document.getElementById('todos-container');
           if (todosWrap) todosWrap.style.display = 'none';
           const todosList = document.getElementById('todos-list');
@@ -4912,6 +5081,7 @@ export function getWebviewContent(): string {
 
       if (msg.type === 'loadConfig') {
         applyHubUiStrings(msg.ui);
+        renderOutputSpeed(currentSession);
         renderTodoToolsPanel(msg);
         const c = msg.config || {};
         if (msg.projectDocs) {

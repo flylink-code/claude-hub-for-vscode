@@ -12,6 +12,8 @@
   "command.forkSession": "Fork Claude Session",
   "command.deleteSession": "Delete Claude Session",
   "command.configureStatusBar": "Configure Status Bar Style",
+  "command.enableOutputSpeed": "Enable Terminal Speed Collection (tok/s)",
+  "command.disableOutputSpeed": "Disable Terminal Speed Collection (tok/s)",
   "config.title": "Claude Hub",
   "config.filterMode.desc": "Filter sessions by current workspace folder or show all active system sessions.",
   "config.filterMode.currentWorkspace": "Only show Claude Code sessions belonging to the currently open VS Code workspace folder",

@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.23",
+  "version": "0.2.24",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -50,6 +50,16 @@
       ]
     },
     "commands": [
+      {
+        "command": "claudeHub.enableOutputSpeed",
+        "title": "%command.enableOutputSpeed%",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.disableOutputSpeed",
+        "title": "%command.disableOutputSpeed%",
+        "category": "Claude Hub"
+      },
       {
         "command": "claudeHub.openDashboard",
         "title": "%command.openDashboard%",

@@ -8,6 +8,7 @@ import { SessionManager } from './sessionManager.js';
 import { SessionInfo } from './types.js';
 import { TerminalManager } from './terminalManager.js';
 import { TaskIntegrationManager } from './taskIntegration.js';
+import { SpeedIntegrationManager } from './outputSpeed.js';
 import * as path from 'path';
 import { buildWorkspaceCostReport, formatWorkspaceCostMarkdown } from './workspaceCost.js';
 import { searchSessions, searchTranscriptFile } from './transcriptSearch.js';
@@ -70,7 +71,50 @@ export function registerCommands(
   configManager: ClaudeConfigManager,
   dashboardProvider?: ClaudeHubDashboardProvider,
 ): void {
+  const speedIntegration = () => new SpeedIntegrationManager(
+    sessionManager.claudeConfigDir, context.asAbsolutePath('resources/speed-bridge.cjs'),
+  );
   context.subscriptions.push(
+    vscode.commands.registerCommand('claudeHub.enableOutputSpeed', async () => {
+      if (!vscode.workspace.isTrusted) {
+        vscode.window.showWarningMessage(t('speed.trust'));
+        return;
+      }
+      if (speedIntegration().isEnabled()) {
+        await sessionManager.scanSessions();
+        vscode.window.showInformationMessage(t('speed.enabled'));
+        return;
+      }
+      const confirm = t('speed.confirm');
+      const choice = await vscode.window.showWarningMessage(
+        t('speed.consent', { file: path.join(sessionManager.claudeConfigDir, 'settings.json') }),
+        { modal: true }, confirm,
+      );
+      if (choice !== confirm) return;
+      try {
+        speedIntegration().enable();
+        await sessionManager.scanSessions();
+        vscode.window.showInformationMessage(t('speed.enabled'));
+      } catch (error) {
+        vscode.window.showErrorMessage(t('speed.error', { err: String(error) }));
+      }
+    }),
+    vscode.commands.registerCommand('claudeHub.disableOutputSpeed', async () => {
+      if (!vscode.workspace.isTrusted) {
+        vscode.window.showWarningMessage(t('speed.trust'));
+        return;
+      }
+      const confirm = t('speed.confirmDisable');
+      const choice = await vscode.window.showWarningMessage(t('speed.disableConsent'), { modal: true }, confirm);
+      if (choice !== confirm) return;
+      try {
+        speedIntegration().disable();
+        await sessionManager.scanSessions();
+        vscode.window.showInformationMessage(t('speed.disabled'));
+      } catch (error) {
+        vscode.window.showErrorMessage(t('speed.error', { err: String(error) }));
+      }
+    }),
     vscode.commands.registerCommand('claudeHub.refresh', async () => {
       await Promise.all([sessionManager.scanSessions(), sessionManager.refreshSubscription()]);
       vscode.window.showInformationMessage(t('cmd.refreshed'));

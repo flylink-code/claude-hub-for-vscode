@@ -123,6 +123,18 @@ export interface SubscriptionUsageData {
   lastUpdated: Date;
 }
 
+/** Latest completed response average, including first-token latency (not live decode TPS). */
+export interface OutputSpeedSample {
+  tokensPerSecond: number;
+  outputTokens: number;
+  durationMs: number;
+  model: string;
+  measuredAt: number;
+  source?: 'transcript' | 'statusLine';
+}
+
+export type OutputSpeedState = 'waiting' | 'sampling' | 'available' | 'unsupported';
+
 export interface SessionInfo {
   sessionId: string;
   sessionFile: string;
@@ -134,6 +146,11 @@ export interface SessionInfo {
   configuredModel?: string;
   contextLimit: number;
   tokenUsage: TokenUsage;
+  outputSpeed?: OutputSpeedSample;
+  transcriptOutputSpeed?: OutputSpeedSample;
+  outputSpeedState?: OutputSpeedState;
+  outputSpeedIntegrationEnabled?: boolean;
+  outputSpeedResetAt?: number;
   tools: ToolEntry[];
   activeTools: ToolEntry[];
   agents: AgentEntry[];

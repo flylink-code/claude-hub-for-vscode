@@ -8,6 +8,7 @@ import {
   ConfigGetter,
   formatDuration,
   formatK,
+  formatOutputSpeed,
   formatProgressBar,
   formatStatusBarText,
   resolveRenderOptions,
@@ -33,6 +34,7 @@ export {
   ConfigGetter,
   formatDuration,
   formatK,
+  formatOutputSpeed,
   formatProgressBar,
   formatStatusBarText,
   resolveRenderOptions,
@@ -217,6 +219,7 @@ export class StatusBarController implements vscode.Disposable {
       activeToolName,
       elapsedSec,
       cost,
+      outputTokensPerSecond: session.outputSpeed?.tokensPerSecond,
       gitBranch: session.gitBranch,
       todos: session.todos,
       options: renderOpts,
@@ -278,6 +281,7 @@ export class StatusBarController implements vscode.Disposable {
       activeToolName: tTool?.name,
       elapsedSec,
       cost,
+      outputTokensPerSecond: session.outputSpeed?.tokensPerSecond,
       gitBranch: session.gitBranch,
       todos: session.todos,
       options: renderOpts,
@@ -426,6 +430,40 @@ export class StatusBarController implements vscode.Disposable {
     const branchPart = session.gitBranch ? ' · 分支: `' + session.gitBranch + '`' : '';
     md.appendMarkdown('模型: `' + model + '`' + modelExtra + branchPart + '\n\n');
 
+    const speedSample = session.outputSpeed;
+    const speedState = session.outputSpeedState;
+    const speedValue = speedSample ? formatOutputSpeed(speedSample.tokensPerSecond) : '—';
+    if (speedSample && speedValue !== '—') {
+      const details: string[] = [];
+      const speedModel = sanitizeMarkdownCode(
+        speedSample.model ? formatModelDisplayName(speedSample.model, gwMap) : '',
+      );
+      if (speedModel) details.push('`' + speedModel + '`');
+      if (speedSample.source === 'transcript') {
+        details.push('*' + t('speed.sourceTranscript') + '*');
+      } else if (speedSample.source === 'statusLine') {
+        details.push('*' + t('speed.sourceStatusLine') + '*');
+      }
+      if (typeof speedSample.measuredAt === 'number' && Number.isFinite(speedSample.measuredAt) && speedSample.measuredAt > 0) {
+        details.push(t('speed.measuredAt', { time: new Date(speedSample.measuredAt).toLocaleTimeString() }));
+      }
+      if (speedState === 'sampling') {
+        details.push('*' + t('speed.last') + ' · ' + t('speed.sampling') + '*');
+      }
+      const detailPart = details.length > 0 ? ' · ' + details.join(' · ') : '';
+      md.appendMarkdown(
+        '⚡ ' + t('speed.label') + ': **' + speedValue + '**' + detailPart + ' · *' + t('speed.hint') + '*\n\n',
+      );
+    } else if (speedState === 'sampling') {
+      md.appendMarkdown('⚡ ' + t('speed.label') + ': *' + t('speed.sampling') + '*\n\n');
+    } else if (speedState === 'unsupported') {
+      md.appendMarkdown('⚡ ' + t('speed.label') + ': ' + t('speed.unsupported') + '\n\n');
+    } else if (session.outputSpeedIntegrationEnabled) {
+      md.appendMarkdown('⚡ ' + t('speed.label') + ': ' + t('speed.terminalEnabled') + ' *' + t('speed.autoNote') + '*\n\n');
+    } else if (speedState === 'waiting') {
+      md.appendMarkdown('⚡ ' + t('speed.label') + ': ' + t('speed.waiting') + '\n\n');
+    }
+
     // Token breakdown in single compact line
     md.appendMarkdown(
       'Token: 入 **' +
@@ -502,6 +540,11 @@ export class StatusBarController implements vscode.Disposable {
     this.item.dispose();
     this.isItemVisible = false;
   }
+}
+
+/** Strip Markdown code-span delimiters and line breaks from untrusted snippets. */
+function sanitizeMarkdownCode(value: string): string {
+  return String(value).replace(/[\r\n]+/g, ' ').replace(/`/g, '').trim();
 }
 
 /**

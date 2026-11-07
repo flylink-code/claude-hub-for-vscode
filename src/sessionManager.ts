@@ -17,6 +17,8 @@ import { AgentEntry, FilterMode, SessionInfo, SubscriptionUsageData, TaskSource,
 import { ClaudeConfigManager } from './claudeConfigManager.js';
 import { NativeTaskReader, TaskDataWatcher, readTaskAssociation, writeTaskAssociation, resolveNativeListCandidate, isAllowedPlanPath, isSafeId, listTaskLists, taskSnapshot, mergeDiskPlanTodos } from './nativeTasks.js';
 import { SessionAlertController } from './sessionAlerts.js';
+import { isSpeedIntegrationInstalled, readOutputSpeed } from './outputSpeed.js';
+import { selectOutputSpeed } from './transcriptSpeed.js';
 import { readProjectTodoPolicy, projectTodoPolicyWatchPaths, resolvePreferSource, allowChecklistFill, todoModeFromSource } from './projectTodoPolicy.js';
 
 export { generateForkTitle };
@@ -67,6 +69,7 @@ export class SessionManager implements vscode.Disposable {
 
   private fileWatcher: fs.FSWatcher | null = null;
   private sessionWatcher: fs.FSWatcher | null = null;
+  private speedWatcher: fs.FSWatcher | null = null;
   private refreshTimer: NodeJS.Timeout | null = null;
   private subscriptionTimer: NodeJS.Timeout | null = null;
   private debounceTimer: NodeJS.Timeout | null = null;
@@ -439,6 +442,9 @@ export class SessionManager implements vscode.Disposable {
   }
 
   private initWatchers(): void {
+    this.speedWatcher?.close();
+    this.speedWatcher = null;
+    this.watchOutputSpeed();
     this.taskReader.clear();
     this.taskWatcher.refresh(this.getConfigDir(), this.taskStorageDir, []);
     if (this.fileWatcher) {
@@ -466,6 +472,46 @@ export class SessionManager implements vscode.Disposable {
       console.warn('[Claude Hub] Failed to set up recursive watcher on projects dir:', err);
     }
     this.watchClaudeSessions();
+  }
+
+  /** Refresh lightweight samples without reparsing transcripts on every statusLine frame. */
+  private refreshOutputSpeeds(): void {
+    if (this.disposed) return;
+    let changed = false;
+    for (const session of this._sessions) {
+      const enabled = isSpeedIntegrationInstalled(this.getConfigDir());
+      const responseModel = session.lastResponseModel || session.model;
+      const sample = session.wasCleared ? undefined : selectOutputSpeed(
+        session.transcriptOutputSpeed,
+        readOutputSpeed(this.getConfigDir(), session.sessionId, session.sessionFile, responseModel),
+        responseModel, session.outputSpeedResetAt,
+      );
+      if (JSON.stringify(sample) !== JSON.stringify(session.outputSpeed) ||
+          enabled !== session.outputSpeedIntegrationEnabled) {
+        session.outputSpeed = sample;
+        session.outputSpeedIntegrationEnabled = enabled;
+        changed = true;
+      }
+    }
+    if (changed) this._onDidUpdateSessions.fire(this.getFilteredSessions());
+  }
+
+  private watchOutputSpeed(): void {
+    const dir = path.join(this.getConfigDir(), 'hub-speed', 'samples');
+    if (!fs.existsSync(dir)) {
+      this.speedWatcher?.close();
+      this.speedWatcher = null;
+      return;
+    }
+    if (this.speedWatcher) return;
+    try {
+      this.speedWatcher = fs.watch(dir, (_event, filename) => {
+        if (filename && !String(filename).endsWith('.json')) return;
+        this.refreshOutputSpeeds();
+      });
+    } catch (error) {
+      console.warn('[Claude Hub] Failed to watch output speed samples:', error);
+    }
   }
 
   private watchClaudeSessions(): void {
@@ -894,6 +940,15 @@ export class SessionManager implements vscode.Disposable {
             configuredModel: isCurrentWorkspace ? configuredModel : undefined,
             contextLimit,
             tokenUsage: parsed.tokenUsage,
+            outputSpeed: parsed.wasCleared ? undefined : selectOutputSpeed(
+              parsed.outputSpeed,
+              readOutputSpeed(this.getConfigDir(), sessionId, filePath, lastResponseModel || effectiveModel),
+              lastResponseModel || effectiveModel, parsed.outputSpeedResetAt,
+            ),
+            transcriptOutputSpeed: parsed.outputSpeed,
+            outputSpeedState: parsed.outputSpeedState,
+            outputSpeedResetAt: parsed.outputSpeedResetAt,
+            outputSpeedIntegrationEnabled: isSpeedIntegrationInstalled(this.getConfigDir()),
             tools,
             activeTools,
             agents: activeAgents,
@@ -947,6 +1002,7 @@ export class SessionManager implements vscode.Disposable {
       });
 
       this._sessions = discoveredSessions;
+      this.watchOutputSpeed();
       if (dismissedChanged) await this.context.globalState.update('dismissedTaskSnapshots', dismissed);
       const discoveredWatchMd = [
         ...discoveredSessions.map(s => s.plan?.path).filter((p): p is string => !!p),
@@ -965,6 +1021,8 @@ export class SessionManager implements vscode.Disposable {
 
   public dispose(): void {
     this.disposed = true;
+    this.speedWatcher?.close();
+    this.speedWatcher = null;
     this.taskWatcher.dispose();
     this.taskReader.clear();
     if (this.fileWatcher) {

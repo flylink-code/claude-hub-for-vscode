@@ -86,6 +86,10 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           }
           break;
 
+        case 'enableOutputSpeed':
+          await vscode.commands.executeCommand('claudeHub.enableOutputSpeed');
+          break;
+
         case 'refresh':
           await Promise.all([this.sessionManager.scanSessions(), this.sessionManager.refreshSubscription()]);
           this.sendSessionUpdate();
@@ -566,6 +570,9 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       rawModel: s.model,
       lastResponseModel: s.lastResponseModel ? formatModelDisplayName(s.lastResponseModel, gwMap) : undefined,
       tokenUsage: s.tokenUsage,
+      outputSpeed: s.outputSpeed,
+      outputSpeedState: s.outputSpeedState,
+      outputSpeedIntegrationEnabled: s.outputSpeedIntegrationEnabled,
       lastUpdated: s.lastUpdated.getTime(),
       isIdle: s.isIdle,
       isCurrentWorkspace: s.isCurrentWorkspace,
@@ -658,6 +665,17 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
         modeNone: t('task.modeNone'),
         checklistAlso: t('task.checklistAlso'),
         checklistHidden: t('task.checklistHidden'),
+        speedLabel: t('speed.label'),
+        speedHint: t('speed.hint'),
+        speedEnable: t('speed.enable'),
+        speedWaiting: t('speed.waiting'),
+        speedLast: t('speed.last'),
+        speedSampling: t('speed.sampling'),
+        speedUnsupported: t('speed.unsupported'),
+        speedTerminalEnabled: t('speed.terminalEnabled'),
+        speedSourceTranscript: t('speed.sourceTranscript'),
+        speedSourceStatusLine: t('speed.sourceStatusLine'),
+        speedMeasuredAt: t('speed.measuredAt'),
       },
     });
   }
@@ -746,6 +764,17 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
         modeNone: t('task.modeNone'),
         checklistAlso: t('task.checklistAlso'),
         checklistHidden: t('task.checklistHidden'),
+        speedLabel: t('speed.label'),
+        speedHint: t('speed.hint'),
+        speedEnable: t('speed.enable'),
+        speedWaiting: t('speed.waiting'),
+        speedLast: t('speed.last'),
+        speedSampling: t('speed.sampling'),
+        speedUnsupported: t('speed.unsupported'),
+        speedTerminalEnabled: t('speed.terminalEnabled'),
+        speedSourceTranscript: t('speed.sourceTranscript'),
+        speedSourceStatusLine: t('speed.sourceStatusLine'),
+        speedMeasuredAt: t('speed.measuredAt'),
       },
     });
   }
