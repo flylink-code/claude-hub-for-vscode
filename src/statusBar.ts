@@ -113,9 +113,9 @@ export class StatusBarController implements vscode.Disposable {
     const gwMap = this.configManager?.getGatewayModelMap();
     const configured = this.configManager?.getActiveModel(session.model || session.lastResponseModel);
     if (session.isCurrentWorkspace && configured) {
-      return formatSelectedModelName(configured, gwMap, this.configManager?.getEffortLevel());
+      return formatSelectedModelName(configured, gwMap, session.effortLevel);
     }
-    return formatModelDisplayName(session.model, gwMap);
+    return formatSelectedModelName(session.model, gwMap, session.effortLevel);
   }
 
   public update(): void {

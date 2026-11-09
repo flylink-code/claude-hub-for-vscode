@@ -4,107 +4,107 @@
 
 [Module](ui-dashboard.md) · [Source](../../src/statusBar.ts) · page 1/2
 
-Source SHA-256: 15b5e21fbf3a742ed52376de7a74df3f7976656165d02ee6746316427c578c04
+Source SHA-256: 08ccff087490ef1c4aef3281772fe4b1d73000727fc09f256036f0aa3408fbeb
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| runningBackgroundJobs | FunctionDeclaration |  | [22](../../src/statusBar.ts#L22) |
-| withBackgroundSuffix | FunctionDeclaration |  | [27](../../src/statusBar.ts#L27) |
-| ConfigGetter | ExportSpecifier |  | [33](../../src/statusBar.ts#L33) |
-| formatDuration | ExportSpecifier |  | [34](../../src/statusBar.ts#L34) |
-| formatK | ExportSpecifier |  | [35](../../src/statusBar.ts#L35) |
-| formatProgressBar | ExportSpecifier |  | [36](../../src/statusBar.ts#L36) |
-| formatStatusBarText | ExportSpecifier |  | [37](../../src/statusBar.ts#L37) |
-| resolveRenderOptions | ExportSpecifier |  | [38](../../src/statusBar.ts#L38) |
-| StatusBarContextFormat | ExportSpecifier |  | [39](../../src/statusBar.ts#L39) |
-| StatusBarFormatInput | ExportSpecifier |  | [40](../../src/statusBar.ts#L40) |
-| StatusBarPosition | ExportSpecifier |  | [41](../../src/statusBar.ts#L41) |
-| StatusBarPreset | ExportSpecifier |  | [42](../../src/statusBar.ts#L42) |
-| StatusBarRenderOptions | ExportSpecifier |  | [43](../../src/statusBar.ts#L43) |
-| StatusBarController | ClassDeclaration |  | [46](../../src/statusBar.ts#L46) |
-| item | PropertyDeclaration | StatusBarController | [47](../../src/statusBar.ts#L47) |
-| currentPosition | PropertyDeclaration | StatusBarController | [48](../../src/statusBar.ts#L48) |
-| timer | PropertyDeclaration | StatusBarController | [49](../../src/statusBar.ts#L49) |
-| disposables | PropertyDeclaration | StatusBarController | [50](../../src/statusBar.ts#L50) |
-| lastTooltipString | PropertyDeclaration | StatusBarController | [51](../../src/statusBar.ts#L51) |
-| lastSemanticFingerprint | PropertyDeclaration | StatusBarController | [52](../../src/statusBar.ts#L52) |
-| isItemVisible | PropertyDeclaration | StatusBarController | [53](../../src/statusBar.ts#L53) |
-| lastBgColorId | PropertyDeclaration | StatusBarController | [54](../../src/statusBar.ts#L54) |
-| constructor | Constructor | StatusBarController | [56](../../src/statusBar.ts#L56) |
-| configListener | VariableDeclaration | StatusBarController | [68](../../src/statusBar.ts#L68) |
-| active | VariableDeclaration | StatusBarController | [78](../../src/statusBar.ts#L78) |
-| createItem | MethodDeclaration | StatusBarController | [87](../../src/statusBar.ts#L87) |
-| config | VariableDeclaration | StatusBarController.createItem | [88](../../src/statusBar.ts#L88) |
-| pos | VariableDeclaration | StatusBarController.createItem | [89](../../src/statusBar.ts#L89) |
-| alignment | VariableDeclaration | StatusBarController.createItem | [92](../../src/statusBar.ts#L92) |
-| clickAction | VariableDeclaration | StatusBarController.createItem | [95](../../src/statusBar.ts#L95) |
-| checkPositionAndRecreate | MethodDeclaration | StatusBarController | [99](../../src/statusBar.ts#L99) |
-| config | VariableDeclaration | StatusBarController.checkPositionAndRecreate | [100](../../src/statusBar.ts#L100) |
-| targetPos | VariableDeclaration | StatusBarController.checkPositionAndRecreate | [101](../../src/statusBar.ts#L101) |
-| modelLabel | MethodDeclaration | StatusBarController | [110](../../src/statusBar.ts#L110) |
-| gwMap | VariableDeclaration | StatusBarController.modelLabel | [111](../../src/statusBar.ts#L111) |
-| configured | VariableDeclaration | StatusBarController.modelLabel | [112](../../src/statusBar.ts#L112) |
-| update | MethodDeclaration | StatusBarController | [119](../../src/statusBar.ts#L119) |
-| config | VariableDeclaration | StatusBarController.update | [120](../../src/statusBar.ts#L120) |
-| show | VariableDeclaration | StatusBarController.update | [121](../../src/statusBar.ts#L121) |
-| clickAction | VariableDeclaration | StatusBarController.update | [128](../../src/statusBar.ts#L128) |
-| targetCommand | VariableDeclaration | StatusBarController.update | [129](../../src/statusBar.ts#L129) |
-| session | VariableDeclaration | StatusBarController.update | [134](../../src/statusBar.ts#L134) |
-| filterMode | VariableDeclaration | StatusBarController.update | [135](../../src/statusBar.ts#L135) |
-| allSessions | VariableDeclaration | StatusBarController.update | [136](../../src/statusBar.ts#L136) |
-| otherActive | VariableDeclaration | StatusBarController.update | [139](../../src/statusBar.ts#L139) |
-| bgCount | VariableDeclaration | StatusBarController.update | [140](../../src/statusBar.ts#L140) |
-| targetText | VariableDeclaration | StatusBarController.update | [141](../../src/statusBar.ts#L141) |
-| idleFingerprint | VariableDeclaration | StatusBarController.update | [156](../../src/statusBar.ts#L156) |
-| tip | VariableDeclaration | StatusBarController.update | [160](../../src/statusBar.ts#L160) |
-| tip | VariableDeclaration | StatusBarController.update | [172](../../src/statusBar.ts#L172) |
-| warningThreshold | VariableDeclaration | StatusBarController.update | [191](../../src/statusBar.ts#L191) |
-| dangerThreshold | VariableDeclaration | StatusBarController.update | [192](../../src/statusBar.ts#L192) |
-| modelDisplay | VariableDeclaration | StatusBarController.update | [194](../../src/statusBar.ts#L194) |
-| pct | VariableDeclaration | StatusBarController.update | [195](../../src/statusBar.ts#L195) |
-| hasRunningTool | VariableDeclaration | StatusBarController.update | [198](../../src/statusBar.ts#L198) |
-| activeToolName | VariableDeclaration | StatusBarController.update | [199](../../src/statusBar.ts#L199) |
-| elapsedSec | VariableDeclaration | StatusBarController.update | [200](../../src/statusBar.ts#L200) |
-| tTool | VariableDeclaration | StatusBarController.update | [203](../../src/statusBar.ts#L203) |
-| renderOpts | VariableDeclaration | StatusBarController.update | [208](../../src/statusBar.ts#L208) |
-| cost | VariableDeclaration | StatusBarController.update | [209](../../src/statusBar.ts#L209) |
-| targetText | VariableDeclaration | StatusBarController.update | [211](../../src/statusBar.ts#L211) |
-| targetBgId | VariableDeclaration | StatusBarController.update | [230](../../src/statusBar.ts#L230) |
-| subscription | VariableDeclaration | StatusBarController.update | [243](../../src/statusBar.ts#L243) |
-| updateRunningState | MethodDeclaration | StatusBarController | [256](../../src/statusBar.ts#L256) |
-| session | VariableDeclaration | StatusBarController.updateRunningState | [257](../../src/statusBar.ts#L257) |
-| config | VariableDeclaration | StatusBarController.updateRunningState | [260](../../src/statusBar.ts#L260) |
-| show | VariableDeclaration | StatusBarController.updateRunningState | [261](../../src/statusBar.ts#L261) |
-| renderOpts | VariableDeclaration | StatusBarController.updateRunningState | [264](../../src/statusBar.ts#L264) |
-| hasRunningTool | VariableDeclaration | StatusBarController.updateRunningState | [265](../../src/statusBar.ts#L265) |
-| tTool | VariableDeclaration | StatusBarController.updateRunningState | [266](../../src/statusBar.ts#L266) |
-| elapsedSec | VariableDeclaration | StatusBarController.updateRunningState | [267](../../src/statusBar.ts#L267) |
-| modelDisplay | VariableDeclaration | StatusBarController.updateRunningState | [268](../../src/statusBar.ts#L268) |
-| cost | VariableDeclaration | StatusBarController.updateRunningState | [269](../../src/statusBar.ts#L269) |
-| newText | VariableDeclaration | StatusBarController.updateRunningState | [272](../../src/statusBar.ts#L272) |
-| setTooltipIfChanged | MethodDeclaration | StatusBarController | [295](../../src/statusBar.ts#L295) |
-| buildTooltip | MethodDeclaration | StatusBarController | [302](../../src/statusBar.ts#L302) |
-| md | VariableDeclaration | StatusBarController.buildTooltip | [306](../../src/statusBar.ts#L306) |
-| stateBadge | VariableDeclaration | StatusBarController.buildTooltip | [310](../../src/statusBar.ts#L310) |
-| gwMap | VariableDeclaration | StatusBarController.buildTooltip | [311](../../src/statusBar.ts#L311) |
-| model | VariableDeclaration | StatusBarController.buildTooltip | [312](../../src/statusBar.ts#L312) |
-| modelExtra | VariableDeclaration | StatusBarController.buildTooltip | [313](../../src/statusBar.ts#L313) |
-| respModel | VariableDeclaration | StatusBarController.buildTooltip | [319](../../src/statusBar.ts#L319) |
-| pct | VariableDeclaration | StatusBarController.buildTooltip | [325](../../src/statusBar.ts#L325) |
-| bar | VariableDeclaration | StatusBarController.buildTooltip | [326](../../src/statusBar.ts#L326) |
-| totalK | VariableDeclaration | StatusBarController.buildTooltip | [327](../../src/statusBar.ts#L327) |
-| limitK | VariableDeclaration | StatusBarController.buildTooltip | [328](../../src/statusBar.ts#L328) |
-| inTokens | VariableDeclaration | StatusBarController.buildTooltip | [330](../../src/statusBar.ts#L330) |
-| cacheRead | VariableDeclaration | StatusBarController.buildTooltip | [331](../../src/statusBar.ts#L331) |
-| cacheWrite | VariableDeclaration | StatusBarController.buildTooltip | [332](../../src/statusBar.ts#L332) |
-| outTokens | VariableDeclaration | StatusBarController.buildTooltip | [333](../../src/statusBar.ts#L333) |
-| totalIn | VariableDeclaration | StatusBarController.buildTooltip | [334](../../src/statusBar.ts#L334) |
-| hitRate | VariableDeclaration | StatusBarController.buildTooltip | [335](../../src/statusBar.ts#L335) |
-| cost | VariableDeclaration | StatusBarController.buildTooltip | [336](../../src/statusBar.ts#L336) |
-| durationMs | VariableDeclaration | StatusBarController.buildTooltip | [338](../../src/statusBar.ts#L338) |
-| durationText | VariableDeclaration | StatusBarController.buildTooltip | [339](../../src/statusBar.ts#L339) |
-| turnMs | VariableDeclaration | StatusBarController.buildTooltip | [341](../../src/statusBar.ts#L341) |
-| turnText | VariableDeclaration | StatusBarController.buildTooltip | [342](../../src/statusBar.ts#L342) |
-| totalText | VariableDeclaration | StatusBarController.buildTooltip | [343](../../src/statusBar.ts#L343) |
-| durText | VariableDeclaration | StatusBarController.buildTooltip | [346](../../src/statusBar.ts#L346) |
-| durationLabel | VariableDeclaration | StatusBarController.buildTooltip | [353](../../src/statusBar.ts#L353) |
+| runningBackgroundJobs | FunctionDeclaration |  | [23](../../src/statusBar.ts#L23) |
+| withBackgroundSuffix | FunctionDeclaration |  | [28](../../src/statusBar.ts#L28) |
+| ConfigGetter | ExportSpecifier |  | [34](../../src/statusBar.ts#L34) |
+| formatDuration | ExportSpecifier |  | [35](../../src/statusBar.ts#L35) |
+| formatK | ExportSpecifier |  | [36](../../src/statusBar.ts#L36) |
+| formatOutputSpeed | ExportSpecifier |  | [37](../../src/statusBar.ts#L37) |
+| formatProgressBar | ExportSpecifier |  | [38](../../src/statusBar.ts#L38) |
+| formatStatusBarText | ExportSpecifier |  | [39](../../src/statusBar.ts#L39) |
+| resolveRenderOptions | ExportSpecifier |  | [40](../../src/statusBar.ts#L40) |
+| StatusBarContextFormat | ExportSpecifier |  | [41](../../src/statusBar.ts#L41) |
+| StatusBarFormatInput | ExportSpecifier |  | [42](../../src/statusBar.ts#L42) |
+| StatusBarPosition | ExportSpecifier |  | [43](../../src/statusBar.ts#L43) |
+| StatusBarPreset | ExportSpecifier |  | [44](../../src/statusBar.ts#L44) |
+| StatusBarRenderOptions | ExportSpecifier |  | [45](../../src/statusBar.ts#L45) |
+| StatusBarController | ClassDeclaration |  | [48](../../src/statusBar.ts#L48) |
+| item | PropertyDeclaration | StatusBarController | [49](../../src/statusBar.ts#L49) |
+| currentPosition | PropertyDeclaration | StatusBarController | [50](../../src/statusBar.ts#L50) |
+| timer | PropertyDeclaration | StatusBarController | [51](../../src/statusBar.ts#L51) |
+| disposables | PropertyDeclaration | StatusBarController | [52](../../src/statusBar.ts#L52) |
+| lastTooltipString | PropertyDeclaration | StatusBarController | [53](../../src/statusBar.ts#L53) |
+| lastSemanticFingerprint | PropertyDeclaration | StatusBarController | [54](../../src/statusBar.ts#L54) |
+| isItemVisible | PropertyDeclaration | StatusBarController | [55](../../src/statusBar.ts#L55) |
+| lastBgColorId | PropertyDeclaration | StatusBarController | [56](../../src/statusBar.ts#L56) |
+| constructor | Constructor | StatusBarController | [58](../../src/statusBar.ts#L58) |
+| configListener | VariableDeclaration | StatusBarController | [70](../../src/statusBar.ts#L70) |
+| active | VariableDeclaration | StatusBarController | [80](../../src/statusBar.ts#L80) |
+| createItem | MethodDeclaration | StatusBarController | [89](../../src/statusBar.ts#L89) |
+| config | VariableDeclaration | StatusBarController.createItem | [90](../../src/statusBar.ts#L90) |
+| pos | VariableDeclaration | StatusBarController.createItem | [91](../../src/statusBar.ts#L91) |
+| alignment | VariableDeclaration | StatusBarController.createItem | [94](../../src/statusBar.ts#L94) |
+| clickAction | VariableDeclaration | StatusBarController.createItem | [97](../../src/statusBar.ts#L97) |
+| checkPositionAndRecreate | MethodDeclaration | StatusBarController | [101](../../src/statusBar.ts#L101) |
+| config | VariableDeclaration | StatusBarController.checkPositionAndRecreate | [102](../../src/statusBar.ts#L102) |
+| targetPos | VariableDeclaration | StatusBarController.checkPositionAndRecreate | [103](../../src/statusBar.ts#L103) |
+| modelLabel | MethodDeclaration | StatusBarController | [112](../../src/statusBar.ts#L112) |
+| gwMap | VariableDeclaration | StatusBarController.modelLabel | [113](../../src/statusBar.ts#L113) |
+| configured | VariableDeclaration | StatusBarController.modelLabel | [114](../../src/statusBar.ts#L114) |
+| update | MethodDeclaration | StatusBarController | [121](../../src/statusBar.ts#L121) |
+| config | VariableDeclaration | StatusBarController.update | [122](../../src/statusBar.ts#L122) |
+| show | VariableDeclaration | StatusBarController.update | [123](../../src/statusBar.ts#L123) |
+| clickAction | VariableDeclaration | StatusBarController.update | [130](../../src/statusBar.ts#L130) |
+| targetCommand | VariableDeclaration | StatusBarController.update | [131](../../src/statusBar.ts#L131) |
+| session | VariableDeclaration | StatusBarController.update | [136](../../src/statusBar.ts#L136) |
+| filterMode | VariableDeclaration | StatusBarController.update | [137](../../src/statusBar.ts#L137) |
+| allSessions | VariableDeclaration | StatusBarController.update | [138](../../src/statusBar.ts#L138) |
+| otherActive | VariableDeclaration | StatusBarController.update | [141](../../src/statusBar.ts#L141) |
+| bgCount | VariableDeclaration | StatusBarController.update | [142](../../src/statusBar.ts#L142) |
+| targetText | VariableDeclaration | StatusBarController.update | [143](../../src/statusBar.ts#L143) |
+| idleFingerprint | VariableDeclaration | StatusBarController.update | [158](../../src/statusBar.ts#L158) |
+| tip | VariableDeclaration | StatusBarController.update | [162](../../src/statusBar.ts#L162) |
+| tip | VariableDeclaration | StatusBarController.update | [174](../../src/statusBar.ts#L174) |
+| warningThreshold | VariableDeclaration | StatusBarController.update | [193](../../src/statusBar.ts#L193) |
+| dangerThreshold | VariableDeclaration | StatusBarController.update | [194](../../src/statusBar.ts#L194) |
+| modelDisplay | VariableDeclaration | StatusBarController.update | [196](../../src/statusBar.ts#L196) |
+| pct | VariableDeclaration | StatusBarController.update | [197](../../src/statusBar.ts#L197) |
+| hasRunningTool | VariableDeclaration | StatusBarController.update | [200](../../src/statusBar.ts#L200) |
+| activeToolName | VariableDeclaration | StatusBarController.update | [201](../../src/statusBar.ts#L201) |
+| elapsedSec | VariableDeclaration | StatusBarController.update | [202](../../src/statusBar.ts#L202) |
+| tTool | VariableDeclaration | StatusBarController.update | [205](../../src/statusBar.ts#L205) |
+| renderOpts | VariableDeclaration | StatusBarController.update | [210](../../src/statusBar.ts#L210) |
+| cost | VariableDeclaration | StatusBarController.update | [211](../../src/statusBar.ts#L211) |
+| targetText | VariableDeclaration | StatusBarController.update | [213](../../src/statusBar.ts#L213) |
+| targetBgId | VariableDeclaration | StatusBarController.update | [233](../../src/statusBar.ts#L233) |
+| subscription | VariableDeclaration | StatusBarController.update | [246](../../src/statusBar.ts#L246) |
+| updateRunningState | MethodDeclaration | StatusBarController | [259](../../src/statusBar.ts#L259) |
+| session | VariableDeclaration | StatusBarController.updateRunningState | [260](../../src/statusBar.ts#L260) |
+| config | VariableDeclaration | StatusBarController.updateRunningState | [263](../../src/statusBar.ts#L263) |
+| show | VariableDeclaration | StatusBarController.updateRunningState | [264](../../src/statusBar.ts#L264) |
+| renderOpts | VariableDeclaration | StatusBarController.updateRunningState | [267](../../src/statusBar.ts#L267) |
+| hasRunningTool | VariableDeclaration | StatusBarController.updateRunningState | [268](../../src/statusBar.ts#L268) |
+| tTool | VariableDeclaration | StatusBarController.updateRunningState | [269](../../src/statusBar.ts#L269) |
+| elapsedSec | VariableDeclaration | StatusBarController.updateRunningState | [270](../../src/statusBar.ts#L270) |
+| modelDisplay | VariableDeclaration | StatusBarController.updateRunningState | [271](../../src/statusBar.ts#L271) |
+| cost | VariableDeclaration | StatusBarController.updateRunningState | [272](../../src/statusBar.ts#L272) |
+| newText | VariableDeclaration | StatusBarController.updateRunningState | [275](../../src/statusBar.ts#L275) |
+| setTooltipIfChanged | MethodDeclaration | StatusBarController | [299](../../src/statusBar.ts#L299) |
+| buildTooltip | MethodDeclaration | StatusBarController | [306](../../src/statusBar.ts#L306) |
+| md | VariableDeclaration | StatusBarController.buildTooltip | [310](../../src/statusBar.ts#L310) |
+| stateBadge | VariableDeclaration | StatusBarController.buildTooltip | [314](../../src/statusBar.ts#L314) |
+| gwMap | VariableDeclaration | StatusBarController.buildTooltip | [315](../../src/statusBar.ts#L315) |
+| model | VariableDeclaration | StatusBarController.buildTooltip | [316](../../src/statusBar.ts#L316) |
+| modelExtra | VariableDeclaration | StatusBarController.buildTooltip | [317](../../src/statusBar.ts#L317) |
+| respModel | VariableDeclaration | StatusBarController.buildTooltip | [323](../../src/statusBar.ts#L323) |
+| pct | VariableDeclaration | StatusBarController.buildTooltip | [329](../../src/statusBar.ts#L329) |
+| bar | VariableDeclaration | StatusBarController.buildTooltip | [330](../../src/statusBar.ts#L330) |
+| totalK | VariableDeclaration | StatusBarController.buildTooltip | [331](../../src/statusBar.ts#L331) |
+| limitK | VariableDeclaration | StatusBarController.buildTooltip | [332](../../src/statusBar.ts#L332) |
+| inTokens | VariableDeclaration | StatusBarController.buildTooltip | [334](../../src/statusBar.ts#L334) |
+| cacheRead | VariableDeclaration | StatusBarController.buildTooltip | [335](../../src/statusBar.ts#L335) |
+| cacheWrite | VariableDeclaration | StatusBarController.buildTooltip | [336](../../src/statusBar.ts#L336) |
+| outTokens | VariableDeclaration | StatusBarController.buildTooltip | [337](../../src/statusBar.ts#L337) |
+| totalIn | VariableDeclaration | StatusBarController.buildTooltip | [338](../../src/statusBar.ts#L338) |
+| hitRate | VariableDeclaration | StatusBarController.buildTooltip | [339](../../src/statusBar.ts#L339) |
+| cost | VariableDeclaration | StatusBarController.buildTooltip | [340](../../src/statusBar.ts#L340) |
+| durationMs | VariableDeclaration | StatusBarController.buildTooltip | [342](../../src/statusBar.ts#L342) |
+| durationText | VariableDeclaration | StatusBarController.buildTooltip | [343](../../src/statusBar.ts#L343) |
+| turnMs | VariableDeclaration | StatusBarController.buildTooltip | [345](../../src/statusBar.ts#L345) |
+| turnText | VariableDeclaration | StatusBarController.buildTooltip | [346](../../src/statusBar.ts#L346) |
+| totalText | VariableDeclaration | StatusBarController.buildTooltip | [347](../../src/statusBar.ts#L347) |
+| durText | VariableDeclaration | StatusBarController.buildTooltip | [350](../../src/statusBar.ts#L350) |

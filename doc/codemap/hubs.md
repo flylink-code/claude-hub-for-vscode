@@ -4,23 +4,25 @@
 
 [Root index](../CODE_MAP_INDEX.md)
 
-47 files · 3265 symbols · import edges: 248 resolved, 0 ambiguous, 41 unresolved.
+51 files · 3779 symbols · import edges: 274 resolved, 0 ambiguous, 49 unresolved.
 
 Edges come from `use`/`import` statements: relative specifiers for TypeScript, `crate`/`self`/`super` module paths plus a unique-name fallback for Rust. Lexical evidence, not type-checked resolution: an ambiguous or unresolved import is counted, never guessed.
 
 | Symbol | Kind | Module | In-degree | Line |
 | --- | --- | --- | ---: | --- |
-| SessionInfo | InterfaceDeclaration | core-entry | 13 | [126](../../src/types.ts#L126) |
+| SessionInfo | InterfaceDeclaration | core-entry | 13 | [138](../../src/types.ts#L138) |
 | getWebviewContent | FunctionDeclaration | ui-dashboard | 9 | [1](../../src/webviewHtml.ts#L1) |
 | ClaudeConfigManager | ClassDeclaration | config-features | 6 | [86](../../src/claudeConfigManager.ts#L86) |
 | resolveClaudeConfigDir | FunctionDeclaration | config-features | 6 | [7](../../src/configDir.ts#L7) |
 | ClaudeConfigDirProvider | TypeAliasDeclaration | config-features | 5 | [5](../../src/configDir.ts#L5) |
 | estimateCostUsd | FunctionDeclaration | usage-pricing | 5 | [422](../../src/modelPricing.ts#L422) |
-| t | FunctionDeclaration | core-entry | 5 | [499](../../src/i18n.ts#L499) |
+| t | FunctionDeclaration | core-entry | 5 | [539](../../src/i18n.ts#L539) |
 | ClaudeFeaturesManager | ClassDeclaration | config-features | 4 | [143](../../src/claudeFeatures.ts#L143) |
-| SessionManager | ClassDeclaration | session-parser | 4 | [56](../../src/sessionManager.ts#L56) |
+| OutputSpeedSample | InterfaceDeclaration | core-entry | 4 | [127](../../src/types.ts#L127) |
+| SessionManager | ClassDeclaration | session-parser | 4 | [58](../../src/sessionManager.ts#L58) |
 | formatModelDisplayName | FunctionDeclaration | usage-pricing | 4 | [103](../../src/contextLimit.ts#L103) |
 | isPathInWorkspace | FunctionDeclaration | config-features | 4 | [66](../../src/configDir.ts#L66) |
+| parseTranscriptFile | FunctionDeclaration | session-parser | 4 | [616](../../src/transcriptParser.ts#L616) |
 | SessionPlan | InterfaceDeclaration | core-entry | 3 | [54](../../src/types.ts#L54) |
 | SubscriptionUsageData | InterfaceDeclaration | core-entry | 3 | [120](../../src/types.ts#L120) |
 | TaskIntegrationManager | ClassDeclaration | todo-tasks | 3 | [91](../../src/taskIntegration.ts#L91) |
@@ -29,24 +31,22 @@ Edges come from `use`/`import` statements: relative specifiers for TypeScript, `
 | formatCostForDisplay | FunctionDeclaration | usage-pricing | 3 | [470](../../src/modelPricing.ts#L470) |
 | formatCostUsd | FunctionDeclaration | usage-pricing | 3 | [462](../../src/modelPricing.ts#L462) |
 | formatSelectedModelName | FunctionDeclaration | usage-pricing | 3 | [167](../../src/contextLimit.ts#L167) |
-| parseTranscriptFile | FunctionDeclaration | session-parser | 3 | [610](../../src/transcriptParser.ts#L610) |
 | AgentEntry | InterfaceDeclaration | core-entry | 2 | [21](../../src/types.ts#L21) |
 | BackgroundJob | InterfaceDeclaration | core-entry | 2 | [99](../../src/types.ts#L99) |
 | ClaudeHubDashboardProvider | ClassDeclaration | ui-dashboard | 2 | [17](../../src/dashboardView.ts#L17) |
 | NativeTaskReader | ClassDeclaration | todo-tasks | 2 | [65](../../src/nativeTasks.ts#L65) |
+| OutputSpeedState | TypeAliasDeclaration | core-entry | 2 | [136](../../src/types.ts#L136) |
 | PRICING_TABLE_VERSION | VariableDeclaration | usage-pricing | 2 | [8](../../src/modelPricing.ts#L8) |
+| SpeedIntegrationManager | ClassDeclaration | core-entry | 2 | [349](../../src/outputSpeed.ts#L349) |
 | StatusBarRenderOptions | InterfaceDeclaration | ui-dashboard | 2 | [5](../../src/statusBarFormatter.ts#L5) |
 | TokenUsage | InterfaceDeclaration | core-entry | 2 | [1](../../src/types.ts#L1) |
+| TranscriptSpeedCollector | ClassDeclaration | core-entry | 2 | [29](../../src/transcriptSpeed.ts#L29) |
 | allowChecklistFill | FunctionDeclaration | todo-tasks | 2 | [232](../../src/projectTodoPolicy.ts#L232) |
-| backgroundJobsForLiveProcess | FunctionDeclaration | session-parser | 2 | [928](../../src/transcriptParser.ts#L928) |
+| backgroundJobsForLiveProcess | FunctionDeclaration | session-parser | 2 | [934](../../src/transcriptParser.ts#L934) |
 | buildTaskSyncPrompt | FunctionDeclaration | todo-tasks | 2 | [256](../../src/projectTodoPolicy.ts#L256) |
 | buildWorkspaceCostReport | FunctionDeclaration | usage-pricing | 2 | [58](../../src/workspaceCost.ts#L58) |
-| clearTranscriptCache | FunctionDeclaration | session-parser | 2 | [62](../../src/transcriptParser.ts#L62) |
+| clearTranscriptCache | FunctionDeclaration | session-parser | 2 | [68](../../src/transcriptParser.ts#L68) |
 | compareForkSessions | FunctionDeclaration | session-parser | 2 | [38](../../src/forkCompare.ts#L38) |
 | decodeProjectPath | FunctionDeclaration | config-features | 2 | [34](../../src/configDir.ts#L34) |
-| extractMarkdownTodos | FunctionDeclaration | session-parser | 2 | [585](../../src/transcriptParser.ts#L585) |
-| extractPlanTodos | FunctionDeclaration | session-parser | 2 | [275](../../src/transcriptParser.ts#L275) |
-| extractTimelineEvents | FunctionDeclaration | session-parser | 2 | [71](../../src/timelineEvents.ts#L71) |
-| formatDuration | FunctionDeclaration | ui-dashboard | 2 | [56](../../src/statusBarFormatter.ts#L56) |
-| formatForkCompareMarkdown | FunctionDeclaration | session-parser | 2 | [75](../../src/forkCompare.ts#L75) |
-| formatK | FunctionDeclaration | ui-dashboard | 2 | [41](../../src/statusBarFormatter.ts#L41) |
+| extractMarkdownTodos | FunctionDeclaration | session-parser | 2 | [591](../../src/transcriptParser.ts#L591) |
+| extractPlanTodos | FunctionDeclaration | session-parser | 2 | [281](../../src/transcriptParser.ts#L281) |

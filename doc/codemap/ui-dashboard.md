@@ -9,7 +9,7 @@
 | File | Symbols | Symbol pages |
 | --- | ---: | --- |
 | [src/dashboardView.ts](../../src/dashboardView.ts) | 95 | [1](src_dashboardView.ts-29dddfd7-1.md) |
-| [src/statusBar.ts](../../src/statusBar.ts) | 139 | [1](src_statusBar.ts-70fffed5-1.md) [2](src_statusBar.ts-70fffed5-2.md) |
-| [src/statusBarFormatter.ts](../../src/statusBarFormatter.ts) | 68 | [1](src_statusBarFormatter.ts-70f23d06-1.md) |
+| [src/statusBar.ts](../../src/statusBar.ts) | 147 | [1](src_statusBar.ts-70fffed5-1.md) [2](src_statusBar.ts-70fffed5-2.md) |
+| [src/statusBarFormatter.ts](../../src/statusBarFormatter.ts) | 73 | [1](src_statusBarFormatter.ts-70f23d06-1.md) |
 | [src/terminalManager.ts](../../src/terminalManager.ts) | 18 | [1](src_terminalManager.ts-905d4b39-1.md) |
 | [src/webviewHtml.ts](../../src/webviewHtml.ts) | 1 | [1](src_webviewHtml.ts-1e7e6d77-1.md) |

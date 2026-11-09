@@ -205,6 +205,35 @@ test('parseTranscriptFile parses basic transcript fixture', async () => {
   assert.ok(Array.isArray(parsed.todos));
 });
 
+test('parseTranscriptFile reads session effort without using global defaults or tool arguments', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-hub-effort-'));
+  try {
+    const cases = [
+      { entries: [{ type: 'assistant', effort: 'medium', perTurnEffort: null }], expected: 'medium' },
+      { entries: [{ type: 'api-request', params: { output_config: { effort: 'medium' } } }], expected: 'medium' },
+      { entries: [{ type: 'assistant', effort: 'high' }, { type: 'assistant', effort: 'medium' }], expected: 'medium' },
+      { entries: [{ type: 'assistant', effort: 'high', perTurnEffort: 'low' }], expected: 'low' },
+      { entries: [{ type: 'assistant', effort: 'medium' }, { type: 'api-request', params: { output_config: { effort: 'xhigh' } } }], expected: 'xhigh' },
+      { entries: [{ type: 'assistant', effort: 'medium' }, { type: 'assistant', effort: null }], expected: 'medium' },
+      { entries: [{ type: 'assistant', effort: ' HIGH ' }], expected: 'high' },
+      { entries: [{ type: 'assistant', effort: 'invalid' }], expected: undefined },
+      { entries: [{ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Agent', input: { effort: 'high' } }] } }], expected: undefined },
+    ];
+    for (const [index, { entries, expected }] of cases.entries()) {
+      const file = path.join(tempDir, `${index}.jsonl`);
+      fs.writeFileSync(file, entries.map((entry) => JSON.stringify(entry)).join('\n') + '\n');
+      const parsed = await parseTranscriptFile(file);
+      assert.strictEqual(parsed.effortLevel, expected, `case ${index}`);
+      assert.strictEqual(
+        formatSelectedModelName('custom-model', undefined, parsed.effortLevel),
+        expected ? `custom-model ${{ low: 'Low', medium: 'Medium', high: 'High', xhigh: 'xHigh' }[expected]}` : 'custom-model',
+      );
+    }
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('resolveEffectiveModel prefers the latest explicit picker choice', () => {
   assert.strictEqual(resolveEffectiveModel('kiro/claude-sonnet-5-5', 'opencode-go/deepseek-v4.1-flash'), 'kiro/claude-sonnet-5-5');
   assert.strictEqual(resolveEffectiveModel('', 'claude-opus-5-5'), 'claude-opus-5-5');

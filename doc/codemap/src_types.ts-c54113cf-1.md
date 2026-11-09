@@ -4,7 +4,7 @@
 
 [Module](core-entry.md) · [Source](../../src/types.ts) · page 1/2
 
-Source SHA-256: e402b0610e7d45b0db25fdf928fa016fc64e712fee9a22174cd08ba8be1ef1a2
+Source SHA-256: ba46915a5840adb218f3bf5042c83b514ec7c84a60f373e14aab2d8aca268f51
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -107,4 +107,4 @@ Source SHA-256: e402b0610e7d45b0db25fdf928fa016fc64e712fee9a22174cd08ba8be1ef1a2
 | session | PropertySignature | SubscriptionUsageData | [121](../../src/types.ts#L121) |
 | meters | PropertySignature | SubscriptionUsageData | [122](../../src/types.ts#L122) |
 | lastUpdated | PropertySignature | SubscriptionUsageData | [123](../../src/types.ts#L123) |
-| SessionInfo | InterfaceDeclaration |  | [126](../../src/types.ts#L126) |
+| OutputSpeedSample | InterfaceDeclaration |  | [127](../../src/types.ts#L127) |

@@ -2,6 +2,18 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.25] - 2026-11-09
+
+### 中文
+
+- **推理等级显示：** Dashboard、会话列表和状态栏改为读取各会话日志最近记录的实际 effort，修复当前对话选择 `medium` 却显示全局默认 `high` 的问题。
+- **会话隔离与降级：** 支持日志记录的会话中途等级变更，忽略子代理参数；日志未记录 effort 时不显示等级，不再以全局默认配置冒充会话实际值。
+
+### English
+
+- **Effort display:** The dashboard, session list, and status bar now use the latest effort recorded in each session transcript, fixing sessions selected as `medium` being displayed with the global `high` default.
+- **Session isolation and fallback:** Tracks recorded effort changes within a session and ignores subagent arguments. When effort is absent from the transcript, no level is shown instead of presenting the global default as the session's actual value.
+
 ## [0.2.24] - 2026-11-07
 
 ### 中文

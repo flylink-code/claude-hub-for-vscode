@@ -551,13 +551,12 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     }
 
     const gwMap = this.configManager.getGatewayModelMap();
-    const effort = this.configManager.getEffortLevel();
-    const modelLabelOf = (s: { isCurrentWorkspace: boolean; model: string; lastResponseModel?: string }): string => {
+    const modelLabelOf = (s: { isCurrentWorkspace: boolean; model: string; lastResponseModel?: string; effortLevel?: string }): string => {
       const active = this.configManager.getActiveModel(s.model || s.lastResponseModel);
       if (s.isCurrentWorkspace && active) {
-        return formatSelectedModelName(active, gwMap, effort);
+        return formatSelectedModelName(active, gwMap, s.effortLevel);
       }
-      return formatModelDisplayName(s.model, gwMap);
+      return formatSelectedModelName(s.model, gwMap, s.effortLevel);
     };
     const pinnedSessionIds = getPinnedSessionIds(this.context);
     const allSessions = sortSessionsWithPins(this.sessionManager.allSessions, pinnedSessionIds).map((s) => ({

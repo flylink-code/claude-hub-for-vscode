@@ -143,6 +143,8 @@ export interface SessionInfo {
   sessionTitle: string;
   model: string;
   lastResponseModel?: string;
+  /** 会话日志中最近一次记录的实际推理等级，不等同于全局默认配置。 */
+  effortLevel?: string;
   configuredModel?: string;
   contextLimit: number;
   tokenUsage: TokenUsage;

@@ -7,16 +7,16 @@ Read AGENTS.md → [hubs](codemap/hubs.md) → module → file/symbol page → s
 | Module | Files | Symbols | Map |
 | --- | ---: | ---: | --- |
 | config-features | 3 | 487 | [open](codemap/config-features.md) |
-| core-entry | 5 | 296 | [open](codemap/core-entry.md) |
+| core-entry | 7 | 494 | [open](codemap/core-entry.md) |
 | scripts | 2 | 0 | [open](codemap/scripts.md) |
 | session-ops | 4 | 60 | [open](codemap/session-ops.md) |
-| session-parser | 5 | 767 | [open](codemap/session-parser.md) |
-| tests | 14 | 500 | [open](codemap/tests.md) |
+| session-parser | 5 | 786 | [open](codemap/session-parser.md) |
+| tests | 16 | 784 | [open](codemap/tests.md) |
 | todo-tasks | 4 | 299 | [open](codemap/todo-tasks.md) |
 | tooling | 1 | 322 | [open](codemap/tooling.md) |
-| ui-dashboard | 5 | 321 | [open](codemap/ui-dashboard.md) |
+| ui-dashboard | 5 | 334 | [open](codemap/ui-dashboard.md) |
 | usage-pricing | 4 | 213 | [open](codemap/usage-pricing.md) |
 
-Total: 47 source files, 3265 extracted symbols, 0 parser diagnostics; import edges 248 resolved / 0 ambiguous / 41 unresolved.
+Total: 51 source files, 3779 extracted symbols, 0 parser diagnostics; import edges 274 resolved / 0 ambiguous / 49 unresolved.
 
 Scope includes Rust/TS/JS declarations; excludes imports, parameters, runtime/macro-generated symbols. Shell/PowerShell/BAT use lexical navigation.

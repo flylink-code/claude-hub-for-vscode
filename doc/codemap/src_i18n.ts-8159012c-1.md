@@ -4,26 +4,26 @@
 
 [Module](core-entry.md) · [Source](../../src/i18n.ts) · page 1/1
 
-Source SHA-256: d07d4507baa12de64ff004d578aef4da8b0021170cd37f3318fbd5450f69826e
+Source SHA-256: cfefbe268f55e77833b9ab7a29bf7c5249bdb6946635f9dddbce47c43910496c
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
 | getVsCode | FunctionDeclaration |  | [1](../../src/i18n.ts#L1) |
 | LanguageCode | TypeAliasDeclaration |  | [10](../../src/i18n.ts#L10) |
 | enMessages | VariableDeclaration |  | [12](../../src/i18n.ts#L12) |
-| zhMessages | VariableDeclaration |  | [245](../../src/i18n.ts#L245) |
-| MessageKey | TypeAliasDeclaration |  | [478](../../src/i18n.ts#L478) |
-| resolveLanguage | FunctionDeclaration |  | [480](../../src/i18n.ts#L480) |
-| chosen | VariableDeclaration | resolveLanguage | [481](../../src/i18n.ts#L481) |
-| vLang | VariableDeclaration | resolveLanguage | [485](../../src/i18n.ts#L485) |
-| getCurrentLanguage | FunctionDeclaration |  | [492](../../src/i18n.ts#L492) |
-| vsc | VariableDeclaration | getCurrentLanguage | [493](../../src/i18n.ts#L493) |
-| configLang | VariableDeclaration | getCurrentLanguage | [494](../../src/i18n.ts#L494) |
-| vscodeLang | VariableDeclaration | getCurrentLanguage | [495](../../src/i18n.ts#L495) |
-| t | FunctionDeclaration |  | [499](../../src/i18n.ts#L499) |
-| lang | VariableDeclaration | t | [500](../../src/i18n.ts#L500) |
-| dict | VariableDeclaration | t | [501](../../src/i18n.ts#L501) |
-| text | VariableDeclaration | t | [502](../../src/i18n.ts#L502) |
-| [k, v] | VariableDeclaration | t | [505](../../src/i18n.ts#L505) |
-| k | BindingElement | t.[k, v] | [505](../../src/i18n.ts#L505) |
-| v | BindingElement | t.[k, v] | [505](../../src/i18n.ts#L505) |
+| zhMessages | VariableDeclaration |  | [265](../../src/i18n.ts#L265) |
+| MessageKey | TypeAliasDeclaration |  | [518](../../src/i18n.ts#L518) |
+| resolveLanguage | FunctionDeclaration |  | [520](../../src/i18n.ts#L520) |
+| chosen | VariableDeclaration | resolveLanguage | [521](../../src/i18n.ts#L521) |
+| vLang | VariableDeclaration | resolveLanguage | [525](../../src/i18n.ts#L525) |
+| getCurrentLanguage | FunctionDeclaration |  | [532](../../src/i18n.ts#L532) |
+| vsc | VariableDeclaration | getCurrentLanguage | [533](../../src/i18n.ts#L533) |
+| configLang | VariableDeclaration | getCurrentLanguage | [534](../../src/i18n.ts#L534) |
+| vscodeLang | VariableDeclaration | getCurrentLanguage | [535](../../src/i18n.ts#L535) |
+| t | FunctionDeclaration |  | [539](../../src/i18n.ts#L539) |
+| lang | VariableDeclaration | t | [540](../../src/i18n.ts#L540) |
+| dict | VariableDeclaration | t | [541](../../src/i18n.ts#L541) |
+| text | VariableDeclaration | t | [542](../../src/i18n.ts#L542) |
+| [k, v] | VariableDeclaration | t | [545](../../src/i18n.ts#L545) |
+| k | BindingElement | t.[k, v] | [545](../../src/i18n.ts#L545) |
+| v | BindingElement | t.[k, v] | [545](../../src/i18n.ts#L545) |

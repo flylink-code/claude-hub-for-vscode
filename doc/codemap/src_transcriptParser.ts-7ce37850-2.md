@@ -4,107 +4,107 @@
 
 [Module](session-parser.md) · [Source](../../src/transcriptParser.ts) · page 2/5
 
-Source SHA-256: 403886321ff3b4dc0b0b477a1e63c0711724c71a2c4febefb5370da020c5658a
+Source SHA-256: dd23f6017103a41ad9d73bfaaf35b88daf8b0bc78da5d2fbe3546d586345d1ea
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| seen | VariableDeclaration | extractPlanTodos | [384](../../src/transcriptParser.ts#L384) |
-| results | VariableDeclaration | extractPlanTodos | [385](../../src/transcriptParser.ts#L385) |
-| item | VariableDeclaration | extractPlanTodos | [386](../../src/transcriptParser.ts#L386) |
-| resolveTaskId | FunctionDeclaration |  | [401](../../src/transcriptParser.ts#L401) |
-| raw | VariableDeclaration | resolveTaskId | [403](../../src/transcriptParser.ts#L403) |
-| id | VariableDeclaration | resolveTaskId | [405](../../src/transcriptParser.ts#L405) |
-| PendingTaskCreate | InterfaceDeclaration |  | [410](../../src/transcriptParser.ts#L410) |
-| toolUseId | PropertySignature | PendingTaskCreate | [411](../../src/transcriptParser.ts#L411) |
-| subject | PropertySignature | PendingTaskCreate | [412](../../src/transcriptParser.ts#L412) |
-| description | PropertySignature | PendingTaskCreate | [413](../../src/transcriptParser.ts#L413) |
-| normalizeOfficialTaskItem | FunctionDeclaration |  | [417](../../src/transcriptParser.ts#L417) |
-| id | VariableDeclaration | normalizeOfficialTaskItem | [419](../../src/transcriptParser.ts#L419) |
-| subject | VariableDeclaration | normalizeOfficialTaskItem | [421](../../src/transcriptParser.ts#L421) |
-| status | VariableDeclaration | normalizeOfficialTaskItem | [428](../../src/transcriptParser.ts#L428) |
-| active | VariableDeclaration | normalizeOfficialTaskItem | [431](../../src/transcriptParser.ts#L431) |
-| description | VariableDeclaration | normalizeOfficialTaskItem | [432](../../src/transcriptParser.ts#L432) |
-| blockedBy | VariableDeclaration | normalizeOfficialTaskItem | [433](../../src/transcriptParser.ts#L433) |
-| blocks | VariableDeclaration | normalizeOfficialTaskItem | [436](../../src/transcriptParser.ts#L436) |
-| extractTaskListItems | FunctionDeclaration |  | [451](../../src/transcriptParser.ts#L451) |
-| key | VariableDeclaration | extractTaskListItems | [454](../../src/transcriptParser.ts#L454) |
-| v | VariableDeclaration | extractTaskListItems | [455](../../src/transcriptParser.ts#L455) |
-| parsed | VariableDeclaration | extractTaskListItems | [461](../../src/transcriptParser.ts#L461) |
-| extractTaskGetItem | FunctionDeclaration |  | [468](../../src/transcriptParser.ts#L468) |
-| parsed | VariableDeclaration | extractTaskGetItem | [479](../../src/transcriptParser.ts#L479) |
-| advancePlanProgress | FunctionDeclaration |  | [497](../../src/transcriptParser.ts#L497) |
-| authoritative | PropertySignature | advancePlanProgress | [502](../../src/transcriptParser.ts#L502) |
-| fp | VariableDeclaration | advancePlanProgress | [511](../../src/transcriptParser.ts#L511) |
-| execTools | VariableDeclaration | advancePlanProgress | [515](../../src/transcriptParser.ts#L515) |
-| MIN_TARGET_LEN | VariableDeclaration | advancePlanProgress | [518](../../src/transcriptParser.ts#L518) |
-| targets | VariableDeclaration | advancePlanProgress | [519](../../src/transcriptParser.ts#L519) |
-| fp | VariableDeclaration | advancePlanProgress | [522](../../src/transcriptParser.ts#L522) |
-| base | VariableDeclaration | advancePlanProgress | [523](../../src/transcriptParser.ts#L523) |
-| withoutExt | VariableDeclaration | advancePlanProgress | [526](../../src/transcriptParser.ts#L526) |
-| cmd | VariableDeclaration | advancePlanProgress | [532](../../src/transcriptParser.ts#L532) |
-| slice | VariableDeclaration | advancePlanProgress | [540](../../src/transcriptParser.ts#L540) |
-| usable | VariableDeclaration | advancePlanProgress | [545](../../src/transcriptParser.ts#L545) |
-| matchedIndex | VariableDeclaration | advancePlanProgress | [548](../../src/transcriptParser.ts#L548) |
-| i | VariableDeclaration | advancePlanProgress | [549](../../src/transcriptParser.ts#L549) |
-| itemContent | VariableDeclaration | advancePlanProgress | [551](../../src/transcriptParser.ts#L551) |
-| hasMatch | VariableDeclaration | advancePlanProgress | [552](../../src/transcriptParser.ts#L552) |
-| i | VariableDeclaration | advancePlanProgress | [560](../../src/transcriptParser.ts#L560) |
-| itemContent | VariableDeclaration | advancePlanProgress | [561](../../src/transcriptParser.ts#L561) |
-| hasMatch | VariableDeclaration | advancePlanProgress | [562](../../src/transcriptParser.ts#L562) |
-| targetItem | VariableDeclaration | advancePlanProgress | [572](../../src/transcriptParser.ts#L572) |
-| extractMarkdownTodos | FunctionDeclaration |  | [585](../../src/transcriptParser.ts#L585) |
-| stripped | VariableDeclaration | extractMarkdownTodos | [587](../../src/transcriptParser.ts#L587) |
-| lines | VariableDeclaration | extractMarkdownTodos | [588](../../src/transcriptParser.ts#L588) |
-| results | VariableDeclaration | extractMarkdownTodos | [589](../../src/transcriptParser.ts#L589) |
-| rawLine | VariableDeclaration | extractMarkdownTodos | [590](../../src/transcriptParser.ts#L590) |
-| trimmed | VariableDeclaration | extractMarkdownTodos | [591](../../src/transcriptParser.ts#L591) |
-| match | VariableDeclaration | extractMarkdownTodos | [592](../../src/transcriptParser.ts#L592) |
-| mark | VariableDeclaration | extractMarkdownTodos | [595](../../src/transcriptParser.ts#L595) |
-| content | VariableDeclaration | extractMarkdownTodos | [596](../../src/transcriptParser.ts#L596) |
-| status | VariableDeclaration | extractMarkdownTodos | [599](../../src/transcriptParser.ts#L599) |
-| parseTranscriptFile | FunctionDeclaration |  | [610](../../src/transcriptParser.ts#L610) |
-| stats | VariableDeclaration | parseTranscriptFile | [611](../../src/transcriptParser.ts#L611) |
-| cached | VariableDeclaration | parseTranscriptFile | [618](../../src/transcriptParser.ts#L618) |
-| result | VariableDeclaration | parseTranscriptFile | [623](../../src/transcriptParser.ts#L623) |
-| oldestKey | VariableDeclaration | parseTranscriptFile | [625](../../src/transcriptParser.ts#L625) |
-| createEmptyTranscript | FunctionDeclaration |  | [639](../../src/transcriptParser.ts#L639) |
-| BG_SHELL_ID | VariableDeclaration |  | [667](../../src/transcriptParser.ts#L667) |
-| BG_OUTPUT | VariableDeclaration |  | [668](../../src/transcriptParser.ts#L668) |
-| BG_EXIT | VariableDeclaration |  | [669](../../src/transcriptParser.ts#L669) |
-| BG_NOTIFY_ID | VariableDeclaration |  | [670](../../src/transcriptParser.ts#L670) |
-| clipBackgroundLabel | FunctionDeclaration |  | [672](../../src/transcriptParser.ts#L672) |
-| flat | VariableDeclaration | clipBackgroundLabel | [673](../../src/transcriptParser.ts#L673) |
-| decodeXmlText | FunctionDeclaration |  | [678](../../src/transcriptParser.ts#L678) |
-| mapNotificationStatus | FunctionDeclaration |  | [687](../../src/transcriptParser.ts#L687) |
-| ensureBackgroundJob | FunctionDeclaration |  | [710](../../src/transcriptParser.ts#L710) |
-| existing | VariableDeclaration | ensureBackgroundJob | [716](../../src/transcriptParser.ts#L716) |
-| created | VariableDeclaration | ensureBackgroundJob | [718](../../src/transcriptParser.ts#L718) |
-| setBackgroundStatus | FunctionDeclaration |  | [729](../../src/transcriptParser.ts#L729) |
-| decoded | VariableDeclaration | setBackgroundStatus | [739](../../src/transcriptParser.ts#L739) |
-| clipped | VariableDeclaration | setBackgroundStatus | [740](../../src/transcriptParser.ts#L740) |
-| exit | VariableDeclaration | setBackgroundStatus | [742](../../src/transcriptParser.ts#L742) |
-| noteBackgroundToolResult | FunctionDeclaration |  | [746](../../src/transcriptParser.ts#L746) |
-| res | VariableDeclaration | noteBackgroundToolResult | [755](../../src/transcriptParser.ts#L755) |
-| shellId | VariableDeclaration | noteBackgroundToolResult | [756](../../src/transcriptParser.ts#L756) |
-| job | VariableDeclaration | noteBackgroundToolResult | [763](../../src/transcriptParser.ts#L763) |
-| command | VariableDeclaration | noteBackgroundToolResult | [767](../../src/transcriptParser.ts#L767) |
-| label | VariableDeclaration | noteBackgroundToolResult | [771](../../src/transcriptParser.ts#L771) |
-| output | VariableDeclaration | noteBackgroundToolResult | [773](../../src/transcriptParser.ts#L773) |
-| agentId | VariableDeclaration | noteBackgroundToolResult | [778](../../src/transcriptParser.ts#L778) |
-| agentLaunched | VariableDeclaration | noteBackgroundToolResult | [779](../../src/transcriptParser.ts#L779) |
-| job | VariableDeclaration | noteBackgroundToolResult | [784](../../src/transcriptParser.ts#L784) |
-| desc | VariableDeclaration | noteBackgroundToolResult | [788](../../src/transcriptParser.ts#L788) |
-| label | VariableDeclaration | noteBackgroundToolResult | [792](../../src/transcriptParser.ts#L792) |
-| stoppedId | VariableDeclaration | noteBackgroundToolResult | [797](../../src/transcriptParser.ts#L797) |
-| stopped | VariableDeclaration | noteBackgroundToolResult | [798](../../src/transcriptParser.ts#L798) |
-| kind | VariableDeclaration | noteBackgroundToolResult | [800](../../src/transcriptParser.ts#L800) |
-| job | VariableDeclaration | noteBackgroundToolResult | [802](../../src/transcriptParser.ts#L802) |
-| command | VariableDeclaration | noteBackgroundToolResult | [804](../../src/transcriptParser.ts#L804) |
-| label | VariableDeclaration | noteBackgroundToolResult | [805](../../src/transcriptParser.ts#L805) |
-| wfId | VariableDeclaration | noteBackgroundToolResult | [810](../../src/transcriptParser.ts#L810) |
-| effectiveWfId | VariableDeclaration | noteBackgroundToolResult | [818](../../src/transcriptParser.ts#L818) |
-| job | VariableDeclaration | noteBackgroundToolResult | [820](../../src/transcriptParser.ts#L820) |
-| wfLabel | VariableDeclaration | noteBackgroundToolResult | [824](../../src/transcriptParser.ts#L824) |
-| collectNotificationText | FunctionDeclaration |  | [831](../../src/transcriptParser.ts#L831) |
-| item | VariableDeclaration | collectNotificationText | [839](../../src/transcriptParser.ts#L839) |
-| child | VariableDeclaration | collectNotificationText | [842](../../src/transcriptParser.ts#L842) |
+| content | VariableDeclaration | extractPlanTodos | [339](../../src/transcriptParser.ts#L339) |
+| unorderedMatch | VariableDeclaration | extractPlanTodos | [357](../../src/transcriptParser.ts#L357) |
+| content | VariableDeclaration | extractPlanTodos | [359](../../src/transcriptParser.ts#L359) |
+| candidates | VariableDeclaration | extractPlanTodos | [371](../../src/transcriptParser.ts#L371) |
+| seen | VariableDeclaration | extractPlanTodos | [390](../../src/transcriptParser.ts#L390) |
+| results | VariableDeclaration | extractPlanTodos | [391](../../src/transcriptParser.ts#L391) |
+| item | VariableDeclaration | extractPlanTodos | [392](../../src/transcriptParser.ts#L392) |
+| resolveTaskId | FunctionDeclaration |  | [407](../../src/transcriptParser.ts#L407) |
+| raw | VariableDeclaration | resolveTaskId | [409](../../src/transcriptParser.ts#L409) |
+| id | VariableDeclaration | resolveTaskId | [411](../../src/transcriptParser.ts#L411) |
+| PendingTaskCreate | InterfaceDeclaration |  | [416](../../src/transcriptParser.ts#L416) |
+| toolUseId | PropertySignature | PendingTaskCreate | [417](../../src/transcriptParser.ts#L417) |
+| subject | PropertySignature | PendingTaskCreate | [418](../../src/transcriptParser.ts#L418) |
+| description | PropertySignature | PendingTaskCreate | [419](../../src/transcriptParser.ts#L419) |
+| normalizeOfficialTaskItem | FunctionDeclaration |  | [423](../../src/transcriptParser.ts#L423) |
+| id | VariableDeclaration | normalizeOfficialTaskItem | [425](../../src/transcriptParser.ts#L425) |
+| subject | VariableDeclaration | normalizeOfficialTaskItem | [427](../../src/transcriptParser.ts#L427) |
+| status | VariableDeclaration | normalizeOfficialTaskItem | [434](../../src/transcriptParser.ts#L434) |
+| active | VariableDeclaration | normalizeOfficialTaskItem | [437](../../src/transcriptParser.ts#L437) |
+| description | VariableDeclaration | normalizeOfficialTaskItem | [438](../../src/transcriptParser.ts#L438) |
+| blockedBy | VariableDeclaration | normalizeOfficialTaskItem | [439](../../src/transcriptParser.ts#L439) |
+| blocks | VariableDeclaration | normalizeOfficialTaskItem | [442](../../src/transcriptParser.ts#L442) |
+| extractTaskListItems | FunctionDeclaration |  | [457](../../src/transcriptParser.ts#L457) |
+| key | VariableDeclaration | extractTaskListItems | [460](../../src/transcriptParser.ts#L460) |
+| v | VariableDeclaration | extractTaskListItems | [461](../../src/transcriptParser.ts#L461) |
+| parsed | VariableDeclaration | extractTaskListItems | [467](../../src/transcriptParser.ts#L467) |
+| extractTaskGetItem | FunctionDeclaration |  | [474](../../src/transcriptParser.ts#L474) |
+| parsed | VariableDeclaration | extractTaskGetItem | [485](../../src/transcriptParser.ts#L485) |
+| advancePlanProgress | FunctionDeclaration |  | [503](../../src/transcriptParser.ts#L503) |
+| authoritative | PropertySignature | advancePlanProgress | [508](../../src/transcriptParser.ts#L508) |
+| fp | VariableDeclaration | advancePlanProgress | [517](../../src/transcriptParser.ts#L517) |
+| execTools | VariableDeclaration | advancePlanProgress | [521](../../src/transcriptParser.ts#L521) |
+| MIN_TARGET_LEN | VariableDeclaration | advancePlanProgress | [524](../../src/transcriptParser.ts#L524) |
+| targets | VariableDeclaration | advancePlanProgress | [525](../../src/transcriptParser.ts#L525) |
+| fp | VariableDeclaration | advancePlanProgress | [528](../../src/transcriptParser.ts#L528) |
+| base | VariableDeclaration | advancePlanProgress | [529](../../src/transcriptParser.ts#L529) |
+| withoutExt | VariableDeclaration | advancePlanProgress | [532](../../src/transcriptParser.ts#L532) |
+| cmd | VariableDeclaration | advancePlanProgress | [538](../../src/transcriptParser.ts#L538) |
+| slice | VariableDeclaration | advancePlanProgress | [546](../../src/transcriptParser.ts#L546) |
+| usable | VariableDeclaration | advancePlanProgress | [551](../../src/transcriptParser.ts#L551) |
+| matchedIndex | VariableDeclaration | advancePlanProgress | [554](../../src/transcriptParser.ts#L554) |
+| i | VariableDeclaration | advancePlanProgress | [555](../../src/transcriptParser.ts#L555) |
+| itemContent | VariableDeclaration | advancePlanProgress | [557](../../src/transcriptParser.ts#L557) |
+| hasMatch | VariableDeclaration | advancePlanProgress | [558](../../src/transcriptParser.ts#L558) |
+| i | VariableDeclaration | advancePlanProgress | [566](../../src/transcriptParser.ts#L566) |
+| itemContent | VariableDeclaration | advancePlanProgress | [567](../../src/transcriptParser.ts#L567) |
+| hasMatch | VariableDeclaration | advancePlanProgress | [568](../../src/transcriptParser.ts#L568) |
+| targetItem | VariableDeclaration | advancePlanProgress | [578](../../src/transcriptParser.ts#L578) |
+| extractMarkdownTodos | FunctionDeclaration |  | [591](../../src/transcriptParser.ts#L591) |
+| stripped | VariableDeclaration | extractMarkdownTodos | [593](../../src/transcriptParser.ts#L593) |
+| lines | VariableDeclaration | extractMarkdownTodos | [594](../../src/transcriptParser.ts#L594) |
+| results | VariableDeclaration | extractMarkdownTodos | [595](../../src/transcriptParser.ts#L595) |
+| rawLine | VariableDeclaration | extractMarkdownTodos | [596](../../src/transcriptParser.ts#L596) |
+| trimmed | VariableDeclaration | extractMarkdownTodos | [597](../../src/transcriptParser.ts#L597) |
+| match | VariableDeclaration | extractMarkdownTodos | [598](../../src/transcriptParser.ts#L598) |
+| mark | VariableDeclaration | extractMarkdownTodos | [601](../../src/transcriptParser.ts#L601) |
+| content | VariableDeclaration | extractMarkdownTodos | [602](../../src/transcriptParser.ts#L602) |
+| status | VariableDeclaration | extractMarkdownTodos | [605](../../src/transcriptParser.ts#L605) |
+| parseTranscriptFile | FunctionDeclaration |  | [616](../../src/transcriptParser.ts#L616) |
+| stats | VariableDeclaration | parseTranscriptFile | [617](../../src/transcriptParser.ts#L617) |
+| cached | VariableDeclaration | parseTranscriptFile | [624](../../src/transcriptParser.ts#L624) |
+| result | VariableDeclaration | parseTranscriptFile | [629](../../src/transcriptParser.ts#L629) |
+| oldestKey | VariableDeclaration | parseTranscriptFile | [631](../../src/transcriptParser.ts#L631) |
+| createEmptyTranscript | FunctionDeclaration |  | [645](../../src/transcriptParser.ts#L645) |
+| BG_SHELL_ID | VariableDeclaration |  | [673](../../src/transcriptParser.ts#L673) |
+| BG_OUTPUT | VariableDeclaration |  | [674](../../src/transcriptParser.ts#L674) |
+| BG_EXIT | VariableDeclaration |  | [675](../../src/transcriptParser.ts#L675) |
+| BG_NOTIFY_ID | VariableDeclaration |  | [676](../../src/transcriptParser.ts#L676) |
+| clipBackgroundLabel | FunctionDeclaration |  | [678](../../src/transcriptParser.ts#L678) |
+| flat | VariableDeclaration | clipBackgroundLabel | [679](../../src/transcriptParser.ts#L679) |
+| decodeXmlText | FunctionDeclaration |  | [684](../../src/transcriptParser.ts#L684) |
+| mapNotificationStatus | FunctionDeclaration |  | [693](../../src/transcriptParser.ts#L693) |
+| ensureBackgroundJob | FunctionDeclaration |  | [716](../../src/transcriptParser.ts#L716) |
+| existing | VariableDeclaration | ensureBackgroundJob | [722](../../src/transcriptParser.ts#L722) |
+| created | VariableDeclaration | ensureBackgroundJob | [724](../../src/transcriptParser.ts#L724) |
+| setBackgroundStatus | FunctionDeclaration |  | [735](../../src/transcriptParser.ts#L735) |
+| decoded | VariableDeclaration | setBackgroundStatus | [745](../../src/transcriptParser.ts#L745) |
+| clipped | VariableDeclaration | setBackgroundStatus | [746](../../src/transcriptParser.ts#L746) |
+| exit | VariableDeclaration | setBackgroundStatus | [748](../../src/transcriptParser.ts#L748) |
+| noteBackgroundToolResult | FunctionDeclaration |  | [752](../../src/transcriptParser.ts#L752) |
+| res | VariableDeclaration | noteBackgroundToolResult | [761](../../src/transcriptParser.ts#L761) |
+| shellId | VariableDeclaration | noteBackgroundToolResult | [762](../../src/transcriptParser.ts#L762) |
+| job | VariableDeclaration | noteBackgroundToolResult | [769](../../src/transcriptParser.ts#L769) |
+| command | VariableDeclaration | noteBackgroundToolResult | [773](../../src/transcriptParser.ts#L773) |
+| label | VariableDeclaration | noteBackgroundToolResult | [777](../../src/transcriptParser.ts#L777) |
+| output | VariableDeclaration | noteBackgroundToolResult | [779](../../src/transcriptParser.ts#L779) |
+| agentId | VariableDeclaration | noteBackgroundToolResult | [784](../../src/transcriptParser.ts#L784) |
+| agentLaunched | VariableDeclaration | noteBackgroundToolResult | [785](../../src/transcriptParser.ts#L785) |
+| job | VariableDeclaration | noteBackgroundToolResult | [790](../../src/transcriptParser.ts#L790) |
+| desc | VariableDeclaration | noteBackgroundToolResult | [794](../../src/transcriptParser.ts#L794) |
+| label | VariableDeclaration | noteBackgroundToolResult | [798](../../src/transcriptParser.ts#L798) |
+| stoppedId | VariableDeclaration | noteBackgroundToolResult | [803](../../src/transcriptParser.ts#L803) |
+| stopped | VariableDeclaration | noteBackgroundToolResult | [804](../../src/transcriptParser.ts#L804) |
+| kind | VariableDeclaration | noteBackgroundToolResult | [806](../../src/transcriptParser.ts#L806) |
+| job | VariableDeclaration | noteBackgroundToolResult | [808](../../src/transcriptParser.ts#L808) |
+| command | VariableDeclaration | noteBackgroundToolResult | [810](../../src/transcriptParser.ts#L810) |
+| label | VariableDeclaration | noteBackgroundToolResult | [811](../../src/transcriptParser.ts#L811) |
+| wfId | VariableDeclaration | noteBackgroundToolResult | [816](../../src/transcriptParser.ts#L816) |
+| effectiveWfId | VariableDeclaration | noteBackgroundToolResult | [824](../../src/transcriptParser.ts#L824) |
+| job | VariableDeclaration | noteBackgroundToolResult | [826](../../src/transcriptParser.ts#L826) |

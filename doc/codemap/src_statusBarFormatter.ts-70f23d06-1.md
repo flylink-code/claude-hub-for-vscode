@@ -4,7 +4,7 @@
 
 [Module](ui-dashboard.md) · [Source](../../src/statusBarFormatter.ts) · page 1/1
 
-Source SHA-256: 090ad086716f302d141fa34012819fc2968c9b23e9362509534398161e97da1d
+Source SHA-256: 77159696982d83c917eb79f3327e8bceaf0a538d109ab1015cb927049173e1f3
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
@@ -29,50 +29,55 @@ Source SHA-256: 090ad086716f302d141fa34012819fc2968c9b23e9362509534398161e97da1d
 | activeToolName | PropertySignature | StatusBarFormatInput | [22](../../src/statusBarFormatter.ts#L22) |
 | elapsedSec | PropertySignature | StatusBarFormatInput | [23](../../src/statusBarFormatter.ts#L23) |
 | cost | PropertySignature | StatusBarFormatInput | [24](../../src/statusBarFormatter.ts#L24) |
-| gitBranch | PropertySignature | StatusBarFormatInput | [25](../../src/statusBarFormatter.ts#L25) |
-| todos | PropertySignature | StatusBarFormatInput | [26](../../src/statusBarFormatter.ts#L26) |
-| status | PropertySignature | StatusBarFormatInput.todos | [26](../../src/statusBarFormatter.ts#L26) |
-| options | PropertySignature | StatusBarFormatInput | [27](../../src/statusBarFormatter.ts#L27) |
-| ConfigGetter | InterfaceDeclaration |  | [30](../../src/statusBarFormatter.ts#L30) |
-| get | MethodSignature | ConfigGetter | [31](../../src/statusBarFormatter.ts#L31) |
-| T | TypeParameter | ConfigGetter.get | [31](../../src/statusBarFormatter.ts#L31) |
-| formatProgressBar | FunctionDeclaration |  | [34](../../src/statusBarFormatter.ts#L34) |
-| clamped | VariableDeclaration | formatProgressBar | [35](../../src/statusBarFormatter.ts#L35) |
-| filled | VariableDeclaration | formatProgressBar | [36](../../src/statusBarFormatter.ts#L36) |
-| empty | VariableDeclaration | formatProgressBar | [37](../../src/statusBarFormatter.ts#L37) |
-| formatK | FunctionDeclaration |  | [41](../../src/statusBarFormatter.ts#L41) |
-| formatDuration | FunctionDeclaration |  | [56](../../src/statusBarFormatter.ts#L56) |
-| totalSec | VariableDeclaration | formatDuration | [58](../../src/statusBarFormatter.ts#L58) |
-| minutes | VariableDeclaration | formatDuration | [62](../../src/statusBarFormatter.ts#L62) |
-| seconds | VariableDeclaration | formatDuration | [63](../../src/statusBarFormatter.ts#L63) |
-| hours | VariableDeclaration | formatDuration | [67](../../src/statusBarFormatter.ts#L67) |
-| remainingMinutes | VariableDeclaration | formatDuration | [68](../../src/statusBarFormatter.ts#L68) |
-| days | VariableDeclaration | formatDuration | [72](../../src/statusBarFormatter.ts#L72) |
-| remainingHours | VariableDeclaration | formatDuration | [73](../../src/statusBarFormatter.ts#L73) |
-| resolveRenderOptions | FunctionDeclaration |  | [77](../../src/statusBarFormatter.ts#L77) |
-| preset | VariableDeclaration | resolveRenderOptions | [78](../../src/statusBarFormatter.ts#L78) |
-| formatStatusBarText | FunctionDeclaration |  | [145](../../src/statusBarFormatter.ts#L145) |
-| { percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | VariableDeclaration | formatStatusBarText | [146](../../src/statusBarFormatter.ts#L146) |
-| percentage | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [147](../../src/statusBarFormatter.ts#L147) |
-| totalTokens | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [148](../../src/statusBarFormatter.ts#L148) |
-| contextLimit | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [149](../../src/statusBarFormatter.ts#L149) |
-| modelDisplay | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [150](../../src/statusBarFormatter.ts#L150) |
-| hasRunningTool | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [151](../../src/statusBarFormatter.ts#L151) |
-| activeToolName | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [152](../../src/statusBarFormatter.ts#L152) |
-| elapsedSec | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [153](../../src/statusBarFormatter.ts#L153) |
-| cost | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [154](../../src/statusBarFormatter.ts#L154) |
-| gitBranch | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [155](../../src/statusBarFormatter.ts#L155) |
-| todos | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [156](../../src/statusBarFormatter.ts#L156) |
-| options | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, gitBranch, todos, options, } | [157](../../src/statusBarFormatter.ts#L157) |
-| icon | VariableDeclaration | formatStatusBarText | [160](../../src/statusBarFormatter.ts#L160) |
-| pctStr | VariableDeclaration | formatStatusBarText | [161](../../src/statusBarFormatter.ts#L161) |
-| tokensStr | VariableDeclaration | formatStatusBarText | [162](../../src/statusBarFormatter.ts#L162) |
-| contextValueStr | VariableDeclaration | formatStatusBarText | [164](../../src/statusBarFormatter.ts#L164) |
-| bar | VariableDeclaration | formatStatusBarText | [173](../../src/statusBarFormatter.ts#L173) |
-| badge | VariableDeclaration | formatStatusBarText | [174](../../src/statusBarFormatter.ts#L174) |
-| statusPart | VariableDeclaration | formatStatusBarText | [175](../../src/statusBarFormatter.ts#L175) |
-| extraParts | VariableDeclaration | formatStatusBarText | [177](../../src/statusBarFormatter.ts#L177) |
-| parts | VariableDeclaration | formatStatusBarText | [210](../../src/statusBarFormatter.ts#L210) |
-| completed | VariableDeclaration | formatStatusBarText | [226](../../src/statusBarFormatter.ts#L226) |
-| barPrefix | VariableDeclaration | formatStatusBarText | [234](../../src/statusBarFormatter.ts#L234) |
-| mainPart | VariableDeclaration | formatStatusBarText | [235](../../src/statusBarFormatter.ts#L235) |
+| outputTokensPerSecond | PropertySignature | StatusBarFormatInput | [25](../../src/statusBarFormatter.ts#L25) |
+| gitBranch | PropertySignature | StatusBarFormatInput | [26](../../src/statusBarFormatter.ts#L26) |
+| todos | PropertySignature | StatusBarFormatInput | [27](../../src/statusBarFormatter.ts#L27) |
+| status | PropertySignature | StatusBarFormatInput.todos | [27](../../src/statusBarFormatter.ts#L27) |
+| options | PropertySignature | StatusBarFormatInput | [28](../../src/statusBarFormatter.ts#L28) |
+| ConfigGetter | InterfaceDeclaration |  | [31](../../src/statusBarFormatter.ts#L31) |
+| get | MethodSignature | ConfigGetter | [32](../../src/statusBarFormatter.ts#L32) |
+| T | TypeParameter | ConfigGetter.get | [32](../../src/statusBarFormatter.ts#L32) |
+| formatProgressBar | FunctionDeclaration |  | [35](../../src/statusBarFormatter.ts#L35) |
+| clamped | VariableDeclaration | formatProgressBar | [36](../../src/statusBarFormatter.ts#L36) |
+| filled | VariableDeclaration | formatProgressBar | [37](../../src/statusBarFormatter.ts#L37) |
+| empty | VariableDeclaration | formatProgressBar | [38](../../src/statusBarFormatter.ts#L38) |
+| formatK | FunctionDeclaration |  | [42](../../src/statusBarFormatter.ts#L42) |
+| formatDuration | FunctionDeclaration |  | [57](../../src/statusBarFormatter.ts#L57) |
+| totalSec | VariableDeclaration | formatDuration | [59](../../src/statusBarFormatter.ts#L59) |
+| minutes | VariableDeclaration | formatDuration | [63](../../src/statusBarFormatter.ts#L63) |
+| seconds | VariableDeclaration | formatDuration | [64](../../src/statusBarFormatter.ts#L64) |
+| hours | VariableDeclaration | formatDuration | [68](../../src/statusBarFormatter.ts#L68) |
+| remainingMinutes | VariableDeclaration | formatDuration | [69](../../src/statusBarFormatter.ts#L69) |
+| days | VariableDeclaration | formatDuration | [73](../../src/statusBarFormatter.ts#L73) |
+| remainingHours | VariableDeclaration | formatDuration | [74](../../src/statusBarFormatter.ts#L74) |
+| formatOutputSpeed | FunctionDeclaration |  | [82](../../src/statusBarFormatter.ts#L82) |
+| resolveRenderOptions | FunctionDeclaration |  | [89](../../src/statusBarFormatter.ts#L89) |
+| preset | VariableDeclaration | resolveRenderOptions | [90](../../src/statusBarFormatter.ts#L90) |
+| formatStatusBarText | FunctionDeclaration |  | [157](../../src/statusBarFormatter.ts#L157) |
+| { percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | VariableDeclaration | formatStatusBarText | [158](../../src/statusBarFormatter.ts#L158) |
+| percentage | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [159](../../src/statusBarFormatter.ts#L159) |
+| totalTokens | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [160](../../src/statusBarFormatter.ts#L160) |
+| contextLimit | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [161](../../src/statusBarFormatter.ts#L161) |
+| modelDisplay | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [162](../../src/statusBarFormatter.ts#L162) |
+| hasRunningTool | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [163](../../src/statusBarFormatter.ts#L163) |
+| activeToolName | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [164](../../src/statusBarFormatter.ts#L164) |
+| elapsedSec | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [165](../../src/statusBarFormatter.ts#L165) |
+| cost | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [166](../../src/statusBarFormatter.ts#L166) |
+| outputTokensPerSecond | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [167](../../src/statusBarFormatter.ts#L167) |
+| gitBranch | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [168](../../src/statusBarFormatter.ts#L168) |
+| todos | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [169](../../src/statusBarFormatter.ts#L169) |
+| options | BindingElement | formatStatusBarText.{ percentage, totalTokens, contextLimit, modelDisplay, hasRunningTool, activeToolName, elapsedSec = 0, cost, outputTokensPerSecond, gitBranch, todos, options, } | [170](../../src/statusBarFormatter.ts#L170) |
+| icon | VariableDeclaration | formatStatusBarText | [173](../../src/statusBarFormatter.ts#L173) |
+| pctStr | VariableDeclaration | formatStatusBarText | [174](../../src/statusBarFormatter.ts#L174) |
+| tokensStr | VariableDeclaration | formatStatusBarText | [175](../../src/statusBarFormatter.ts#L175) |
+| speedText | VariableDeclaration | formatStatusBarText | [176](../../src/statusBarFormatter.ts#L176) |
+| speedSuffix | VariableDeclaration | formatStatusBarText | [178](../../src/statusBarFormatter.ts#L178) |
+| contextValueStr | VariableDeclaration | formatStatusBarText | [180](../../src/statusBarFormatter.ts#L180) |
+| bar | VariableDeclaration | formatStatusBarText | [189](../../src/statusBarFormatter.ts#L189) |
+| badge | VariableDeclaration | formatStatusBarText | [190](../../src/statusBarFormatter.ts#L190) |
+| statusPart | VariableDeclaration | formatStatusBarText | [191](../../src/statusBarFormatter.ts#L191) |
+| extraParts | VariableDeclaration | formatStatusBarText | [193](../../src/statusBarFormatter.ts#L193) |
+| parts | VariableDeclaration | formatStatusBarText | [226](../../src/statusBarFormatter.ts#L226) |
+| completed | VariableDeclaration | formatStatusBarText | [242](../../src/statusBarFormatter.ts#L242) |
+| barPrefix | VariableDeclaration | formatStatusBarText | [250](../../src/statusBarFormatter.ts#L250) |
+| mainPart | VariableDeclaration | formatStatusBarText | [251](../../src/statusBarFormatter.ts#L251) |

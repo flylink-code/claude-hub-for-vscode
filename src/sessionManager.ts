@@ -937,6 +937,7 @@ export class SessionManager implements vscode.Disposable {
             sessionTitle: parsed.sessionTitle || '',
             model: effectiveModel,
             lastResponseModel,
+            effortLevel: parsed.effortLevel,
             configuredModel: isCurrentWorkspace ? configuredModel : undefined,
             contextLimit,
             tokenUsage: parsed.tokenUsage,

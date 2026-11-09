@@ -14,6 +14,7 @@ export interface ParsedTranscript {
   sessionTitle?: string;
   model: string;
   lastResponseModel?: string;
+  effortLevel?: string;
   outputSpeed?: OutputSpeedSample;
   outputSpeedState?: OutputSpeedState;
   outputSpeedResetAt?: number;
@@ -1138,6 +1139,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
   let slugTitle: string | undefined;
   let lastDeclaredModel = '';
   let lastAssistantModel = '';
+  let effortLevel: string | undefined;
   let lastClearIndex = -1;
   let userMessagesAfterClear = 0;
   let lineIndex = 0;
@@ -1243,6 +1245,18 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     try {
       const entry = JSON.parse(line);
       speedCollector.consume(entry);
+      // 只读取主会话的结构化元数据，避免把 Agent 参数或正文中的 effort 当作会话设置。
+      const recordedEffort = entry.type === 'api-request'
+        ? entry.params?.output_config?.effort
+        : entry.type === 'assistant'
+          ? entry.perTurnEffort ?? entry.effort
+          : undefined;
+      if (!entry.isSidechain && typeof recordedEffort === 'string') {
+        const normalized = recordedEffort.trim().toLowerCase();
+        if (['low', 'medium', 'high', 'xhigh', 'max', 'ultracode'].includes(normalized)) {
+          effortLevel = normalized;
+        }
+      }
       const ts = entry.timestamp ? new Date(entry.timestamp) : new Date();
       if (line.includes('<task-id>') && line.includes('<status>')) {
         const chunks: string[] = [];
@@ -1666,6 +1680,7 @@ async function parseTranscriptStream(filePath: string): Promise<ParsedTranscript
     sessionTitle: customTitle || slugTitle || '',
     model: effectiveModel,
     lastResponseModel: lastAssistantModel || undefined,
+    effortLevel,
     outputSpeed: wasCleared ? undefined : speed.sample,
     outputSpeedState: wasCleared ? 'waiting' : speed.state,
     outputSpeedResetAt: speed.resetAt,

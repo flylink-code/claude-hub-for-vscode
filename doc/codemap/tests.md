@@ -13,7 +13,8 @@
 | [test/modelPricing.test.ts](../../test/modelPricing.test.ts) | 2 | [1](test_modelPricing.test.ts-d8313c87-1.md) |
 | [test/modelPricingOverrides.test.ts](../../test/modelPricingOverrides.test.ts) | 2 | [1](test_modelPricingOverrides.test.ts-68dc997e-1.md) |
 | [test/officialTasks.test.ts](../../test/officialTasks.test.ts) | 27 | [1](test_officialTasks.test.ts-dfd06203-1.md) |
-| [test/parser.test.ts](../../test/parser.test.ts) | 299 | [1](test_parser.test.ts-34fd732f-1.md) [2](test_parser.test.ts-34fd732f-2.md) [3](test_parser.test.ts-34fd732f-3.md) |
+| [test/outputSpeed.test.ts](../../test/outputSpeed.test.ts) | 201 | [1](test_outputSpeed.test.ts-a168e25b-1.md) [2](test_outputSpeed.test.ts-a168e25b-2.md) [3](test_outputSpeed.test.ts-a168e25b-3.md) |
+| [test/parser.test.ts](../../test/parser.test.ts) | 349 | [1](test_parser.test.ts-34fd732f-1.md) [2](test_parser.test.ts-34fd732f-2.md) [3](test_parser.test.ts-34fd732f-3.md) [4](test_parser.test.ts-34fd732f-4.md) |
 | [test/projectTodoPolicy.test.ts](../../test/projectTodoPolicy.test.ts) | 21 | [1](test_projectTodoPolicy.test.ts-caafebd9-1.md) |
 | [test/sessionCardMenu.test.ts](../../test/sessionCardMenu.test.ts) | 41 | [1](test_sessionCardMenu.test.ts-77528088-1.md) |
 | [test/timelineEvents.test.ts](../../test/timelineEvents.test.ts) | 4 | [1](test_timelineEvents.test.ts-88d66be2-1.md) |
@@ -21,4 +22,5 @@
 | [test/todoToolsEnv.test.ts](../../test/todoToolsEnv.test.ts) | 34 | [1](test_todoToolsEnv.test.ts-422432a4-1.md) |
 | [test/topBarToolbar.test.ts](../../test/topBarToolbar.test.ts) | 16 | [1](test_topBarToolbar.test.ts-78205882-1.md) |
 | [test/transcriptSearch.test.ts](../../test/transcriptSearch.test.ts) | 4 | [1](test_transcriptSearch.test.ts-947161b1-1.md) |
+| [test/transcriptSpeed.test.ts](../../test/transcriptSpeed.test.ts) | 33 | [1](test_transcriptSpeed.test.ts-02159217-1.md) |
 | [test/workspaceCost.test.ts](../../test/workspaceCost.test.ts) | 4 | [1](test_workspaceCost.test.ts-c5d37b61-1.md) |

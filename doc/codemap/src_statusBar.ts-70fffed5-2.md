@@ -4,46 +4,54 @@
 
 [Module](ui-dashboard.md) · [Source](../../src/statusBar.ts) · page 2/2
 
-Source SHA-256: 15b5e21fbf3a742ed52376de7a74df3f7976656165d02ee6746316427c578c04
+Source SHA-256: 08ccff087490ef1c4aef3281772fe4b1d73000727fc09f256036f0aa3408fbeb
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| rawProjectName | VariableDeclaration | StatusBarController.buildTooltip | [356](../../src/statusBar.ts#L356) |
-| isThisExtension | VariableDeclaration | StatusBarController.buildTooltip | [357](../../src/statusBar.ts#L357) |
-| displayProjectName | VariableDeclaration | StatusBarController.buildTooltip | [358](../../src/statusBar.ts#L358) |
-| titleSuffix | VariableDeclaration | StatusBarController.buildTooltip | [360](../../src/statusBar.ts#L360) |
-| cleanTitle | VariableDeclaration | StatusBarController.buildTooltip | [367](../../src/statusBar.ts#L367) |
-| clampedTitle | VariableDeclaration | StatusBarController.buildTooltip | [368](../../src/statusBar.ts#L368) |
-| activityText | VariableDeclaration | StatusBarController.buildTooltip | [375](../../src/statusBar.ts#L375) |
-| tTool | VariableDeclaration | StatusBarController.buildTooltip | [378](../../src/statusBar.ts#L378) |
-| elapsedSec | VariableDeclaration | StatusBarController.buildTooltip | [379](../../src/statusBar.ts#L379) |
-| targetStr | VariableDeclaration | StatusBarController.buildTooltip | [380](../../src/statusBar.ts#L380) |
-| ownRunning | VariableDeclaration | StatusBarController.buildTooltip | [389](../../src/statusBar.ts#L389) |
-| lines | VariableDeclaration | StatusBarController.buildTooltip | [391](../../src/statusBar.ts#L391) |
-| start | VariableDeclaration | StatusBarController.buildTooltip.lines | [392](../../src/statusBar.ts#L392) |
-| elapsed | VariableDeclaration | StatusBarController.buildTooltip.lines | [393](../../src/statusBar.ts#L393) |
-| safeLabel | VariableDeclaration | StatusBarController.buildTooltip.lines | [394](../../src/statusBar.ts#L394) |
-| branchPart | VariableDeclaration | StatusBarController.buildTooltip | [426](../../src/statusBar.ts#L426) |
-| completed | VariableDeclaration | StatusBarController.buildTooltip | [444](../../src/statusBar.ts#L444) |
-| inProgress | VariableDeclaration | StatusBarController.buildTooltip | [445](../../src/statusBar.ts#L445) |
-| todoPct | VariableDeclaration | StatusBarController.buildTooltip | [446](../../src/statusBar.ts#L446) |
-| todoSummary | VariableDeclaration | StatusBarController.buildTooltip | [447](../../src/statusBar.ts#L447) |
-| cleanContent | VariableDeclaration | StatusBarController.buildTooltip | [449](../../src/statusBar.ts#L449) |
-| shortContent | VariableDeclaration | StatusBarController.buildTooltip | [450](../../src/statusBar.ts#L450) |
-| runningAgents | VariableDeclaration | StatusBarController.buildTooltip | [458](../../src/statusBar.ts#L458) |
-| subTokens | VariableDeclaration | StatusBarController.buildTooltip | [459](../../src/statusBar.ts#L459) |
-| agentStatus | VariableDeclaration | StatusBarController.buildTooltip | [460](../../src/statusBar.ts#L460) |
-| resetStr | VariableDeclaration | StatusBarController.buildTooltip | [466](../../src/statusBar.ts#L466) |
-| diffMs | VariableDeclaration | StatusBarController.buildTooltip | [468](../../src/statusBar.ts#L468) |
-| h | VariableDeclaration | StatusBarController.buildTooltip | [470](../../src/statusBar.ts#L470) |
-| min | VariableDeclaration | StatusBarController.buildTooltip | [471](../../src/statusBar.ts#L471) |
-| filterLabel | VariableDeclaration | StatusBarController.buildTooltip | [480](../../src/statusBar.ts#L480) |
-| dispose | MethodDeclaration | StatusBarController | [497](../../src/statusBar.ts#L497) |
-| d | VariableDeclaration | StatusBarController.dispose | [499](../../src/statusBar.ts#L499) |
-| formatToolTarget | FunctionDeclaration |  | [511](../../src/statusBar.ts#L511) |
-| trimmed | VariableDeclaration | formatToolTarget | [513](../../src/statusBar.ts#L513) |
-| parts | VariableDeclaration | formatToolTarget | [518](../../src/statusBar.ts#L518) |
-| fname | VariableDeclaration | formatToolTarget | [519](../../src/statusBar.ts#L519) |
-| firstLine | VariableDeclaration | formatToolTarget | [526](../../src/statusBar.ts#L526) |
-| maxLen | VariableDeclaration | formatToolTarget | [528](../../src/statusBar.ts#L528) |
-| clamped | VariableDeclaration | formatToolTarget | [529](../../src/statusBar.ts#L529) |
+| durationLabel | VariableDeclaration | StatusBarController.buildTooltip | [357](../../src/statusBar.ts#L357) |
+| rawProjectName | VariableDeclaration | StatusBarController.buildTooltip | [360](../../src/statusBar.ts#L360) |
+| isThisExtension | VariableDeclaration | StatusBarController.buildTooltip | [361](../../src/statusBar.ts#L361) |
+| displayProjectName | VariableDeclaration | StatusBarController.buildTooltip | [362](../../src/statusBar.ts#L362) |
+| titleSuffix | VariableDeclaration | StatusBarController.buildTooltip | [364](../../src/statusBar.ts#L364) |
+| cleanTitle | VariableDeclaration | StatusBarController.buildTooltip | [371](../../src/statusBar.ts#L371) |
+| clampedTitle | VariableDeclaration | StatusBarController.buildTooltip | [372](../../src/statusBar.ts#L372) |
+| activityText | VariableDeclaration | StatusBarController.buildTooltip | [379](../../src/statusBar.ts#L379) |
+| tTool | VariableDeclaration | StatusBarController.buildTooltip | [382](../../src/statusBar.ts#L382) |
+| elapsedSec | VariableDeclaration | StatusBarController.buildTooltip | [383](../../src/statusBar.ts#L383) |
+| targetStr | VariableDeclaration | StatusBarController.buildTooltip | [384](../../src/statusBar.ts#L384) |
+| ownRunning | VariableDeclaration | StatusBarController.buildTooltip | [393](../../src/statusBar.ts#L393) |
+| lines | VariableDeclaration | StatusBarController.buildTooltip | [395](../../src/statusBar.ts#L395) |
+| start | VariableDeclaration | StatusBarController.buildTooltip.lines | [396](../../src/statusBar.ts#L396) |
+| elapsed | VariableDeclaration | StatusBarController.buildTooltip.lines | [397](../../src/statusBar.ts#L397) |
+| safeLabel | VariableDeclaration | StatusBarController.buildTooltip.lines | [398](../../src/statusBar.ts#L398) |
+| branchPart | VariableDeclaration | StatusBarController.buildTooltip | [430](../../src/statusBar.ts#L430) |
+| speedSample | VariableDeclaration | StatusBarController.buildTooltip | [433](../../src/statusBar.ts#L433) |
+| speedState | VariableDeclaration | StatusBarController.buildTooltip | [434](../../src/statusBar.ts#L434) |
+| speedValue | VariableDeclaration | StatusBarController.buildTooltip | [435](../../src/statusBar.ts#L435) |
+| details | VariableDeclaration | StatusBarController.buildTooltip | [437](../../src/statusBar.ts#L437) |
+| speedModel | VariableDeclaration | StatusBarController.buildTooltip | [438](../../src/statusBar.ts#L438) |
+| detailPart | VariableDeclaration | StatusBarController.buildTooltip | [453](../../src/statusBar.ts#L453) |
+| completed | VariableDeclaration | StatusBarController.buildTooltip | [482](../../src/statusBar.ts#L482) |
+| inProgress | VariableDeclaration | StatusBarController.buildTooltip | [483](../../src/statusBar.ts#L483) |
+| todoPct | VariableDeclaration | StatusBarController.buildTooltip | [484](../../src/statusBar.ts#L484) |
+| todoSummary | VariableDeclaration | StatusBarController.buildTooltip | [485](../../src/statusBar.ts#L485) |
+| cleanContent | VariableDeclaration | StatusBarController.buildTooltip | [487](../../src/statusBar.ts#L487) |
+| shortContent | VariableDeclaration | StatusBarController.buildTooltip | [488](../../src/statusBar.ts#L488) |
+| runningAgents | VariableDeclaration | StatusBarController.buildTooltip | [496](../../src/statusBar.ts#L496) |
+| subTokens | VariableDeclaration | StatusBarController.buildTooltip | [497](../../src/statusBar.ts#L497) |
+| agentStatus | VariableDeclaration | StatusBarController.buildTooltip | [498](../../src/statusBar.ts#L498) |
+| resetStr | VariableDeclaration | StatusBarController.buildTooltip | [504](../../src/statusBar.ts#L504) |
+| diffMs | VariableDeclaration | StatusBarController.buildTooltip | [506](../../src/statusBar.ts#L506) |
+| h | VariableDeclaration | StatusBarController.buildTooltip | [508](../../src/statusBar.ts#L508) |
+| min | VariableDeclaration | StatusBarController.buildTooltip | [509](../../src/statusBar.ts#L509) |
+| filterLabel | VariableDeclaration | StatusBarController.buildTooltip | [518](../../src/statusBar.ts#L518) |
+| dispose | MethodDeclaration | StatusBarController | [535](../../src/statusBar.ts#L535) |
+| d | VariableDeclaration | StatusBarController.dispose | [537](../../src/statusBar.ts#L537) |
+| sanitizeMarkdownCode | FunctionDeclaration |  | [546](../../src/statusBar.ts#L546) |
+| formatToolTarget | FunctionDeclaration |  | [554](../../src/statusBar.ts#L554) |
+| trimmed | VariableDeclaration | formatToolTarget | [556](../../src/statusBar.ts#L556) |
+| parts | VariableDeclaration | formatToolTarget | [561](../../src/statusBar.ts#L561) |
+| fname | VariableDeclaration | formatToolTarget | [562](../../src/statusBar.ts#L562) |
+| firstLine | VariableDeclaration | formatToolTarget | [569](../../src/statusBar.ts#L569) |
+| maxLen | VariableDeclaration | formatToolTarget | [571](../../src/statusBar.ts#L571) |
+| clamped | VariableDeclaration | formatToolTarget | [572](../../src/statusBar.ts#L572) |

@@ -4,12 +4,19 @@
 
 [Module](core-entry.md) · [Source](../../src/commands.ts) · page 2/2
 
-Source SHA-256: 73eca394be22452ecafeabfef1e88ba34843f91b5de1b9ac6219c5948aba3fac
+Source SHA-256: 2db2fb799376a694d8d36dc964a9d4f14ccc54fc0cd7e83b4477ba814ba1f088
 
 | Symbol | Kind | Scope | Line |
 | --- | --- | --- | ---: |
-| folder | VariableDeclaration | registerCommands | [565](../../src/commands.ts#L565) |
-| mgr | VariableDeclaration | registerCommands | [570](../../src/commands.ts#L570) |
-| st | VariableDeclaration | registerCommands | [575](../../src/commands.ts#L575) |
-| next | VariableDeclaration | registerCommands | [576](../../src/commands.ts#L576) |
-| error | VariableDeclaration | registerCommands | [588](../../src/commands.ts#L588) |
+| input | VariableDeclaration | registerCommands | [567](../../src/commands.ts#L567) |
+| tags | VariableDeclaration | registerCommands | [573](../../src/commands.ts#L573) |
+| session | VariableDeclaration | registerCommands | [585](../../src/commands.ts#L585) |
+| events | VariableDeclaration | registerCommands | [593](../../src/commands.ts#L593) |
+| md | VariableDeclaration | registerCommands | [597](../../src/commands.ts#L597) |
+| doc | VariableDeclaration | registerCommands | [598](../../src/commands.ts#L598) |
+| folders | VariableDeclaration | registerCommands | [604](../../src/commands.ts#L604) |
+| folder | VariableDeclaration | registerCommands | [609](../../src/commands.ts#L609) |
+| mgr | VariableDeclaration | registerCommands | [614](../../src/commands.ts#L614) |
+| st | VariableDeclaration | registerCommands | [619](../../src/commands.ts#L619) |
+| next | VariableDeclaration | registerCommands | [620](../../src/commands.ts#L620) |
+| error | VariableDeclaration | registerCommands | [632](../../src/commands.ts#L632) |
