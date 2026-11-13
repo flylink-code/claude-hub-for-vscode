@@ -12,6 +12,7 @@ import {
   formatProgressBar,
   formatStatusBarText,
   resolveRenderOptions,
+  shouldHideStatusBar,
   StatusBarContextFormat,
   StatusBarFormatInput,
   StatusBarPosition,
@@ -38,6 +39,7 @@ export {
   formatProgressBar,
   formatStatusBarText,
   resolveRenderOptions,
+  shouldHideStatusBar,
   StatusBarContextFormat,
   StatusBarFormatInput,
   StatusBarPosition,
@@ -134,6 +136,11 @@ export class StatusBarController implements vscode.Disposable {
     }
 
     const session = this.sessionManager.focusedSession;
+    if (shouldHideStatusBar(session, config.get<boolean>('statusBar.hideWhenInactive', true))) {
+      this.item.hide();
+      this.isItemVisible = false;
+      return;
+    }
     const filterMode = this.sessionManager.filterMode;
     const allSessions = this.sessionManager.allSessions;
 

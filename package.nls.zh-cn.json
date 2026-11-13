@@ -19,6 +19,7 @@
   "config.filterMode.currentWorkspace": "仅显示当前打开的 VS Code 项目关联的 Claude Code 会话",
   "config.filterMode.all": "显示本机系统内所有活跃运行的 Claude Code 会话",
   "config.showStatusBarItem.desc": "是否在 VS Code 底部状态栏显示 Claude Code 运行状态。",
+  "config.statusBar.hideWhenInactive.desc": "没有 Claude Code 对话在进行时（Claude Code 进程已退出，或会话空闲且无后台任务）隐藏状态栏项；对话重新活跃后自动显示。",
   "config.statusBar.preset.desc": "状态栏预设显示风格（类似 claude-hud）。",
   "config.statusBar.preset.compact": "紧凑模式: $(sparkle) 7% · Sonnet 3.7 (默认均衡)",
   "config.statusBar.preset.minimal": "极简模式: $(sparkle) 7% (极低空间占用)",

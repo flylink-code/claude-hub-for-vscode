@@ -100,33 +100,43 @@ function publishedContextWindow(id: string): number | undefined {
   return undefined;
 }
 
-export function formatModelDisplayName(
-  model: string,
-  customNames?: Record<string, string> | Map<string, string>,
-): string {
-  if (!model) return 'Claude';
+/** 中转站在 display_name 里常带 provider、括号备注或整句描述，状态栏放不下。 */
+function isNoisyDisplayName(name: string): boolean {
+  const trimmed = name.trim();
+  return trimmed.length > 24 || /[/([]/.test(trimmed);
+}
 
-  if (customNames) {
-    if (customNames instanceof Map) {
-      const match = customNames.get(model) || customNames.get(model.toLowerCase());
-      if (match) return match;
-    } else {
-      const match = customNames[model] || customNames[model.toLowerCase()];
-      if (match) return match;
-    }
-  }
+/** 名称里的中转站信息（provider/ 前缀、括号备注、`[1m]` 标记）去掉后剩下的模型名。 */
+function stripRelayNoise(name: string): string {
+  const withoutPrefix = stripGatewayProviderPrefix(name.trim());
+  const cleaned = withoutPrefix
+    .replace(/\s*[([][^)\]]*[)\]]\s*$/, '')
+    .replace(/^[^/\s]+\/\s*/, '')
+    .trim();
+  return cleaned || withoutPrefix;
+}
 
-  const m = model.toLowerCase().trim();
+/** 从模型 id 识别 Claude 家族 + 版本：claude-sonnet-5-5 → Sonnet 5.5，带日期后缀时不把日期当小版本。 */
+function formatClaudeFamilyName(id: string): string | undefined {
+  const match = /(opus|sonnet|haiku|fable|mythos)-(\d+)(?:[-.](\d{1,2}))?(?!\d)/.exec(id);
+  if (!match) return undefined;
+  const family = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+  const version = match[3] !== undefined ? `${match[2]}.${match[3]}` : match[2];
+  const name = `${family} ${version}`;
+  return family === 'Opus' && version === '5' && id.includes('[1m]') ? `${name} (1M)` : name;
+}
+
+/** 只靠 id 本身推断显示名；认不出来返回 undefined，交给调用方兜底。 */
+function deriveModelDisplayName(model: string): string | undefined {
+  const m = stripGatewayProviderPrefix(model.toLowerCase().trim());
   if (m === 'claude.auto' || m === 'auto') return 'Auto';
 
   if (m.includes('3-7-sonnet') || m.includes('3.7-sonnet')) return 'Sonnet 3.7';
   if (m.includes('3-5-sonnet') || m.includes('3.5-sonnet')) return 'Sonnet 3.5';
   if (m.includes('3-5-haiku') || m.includes('3.5-haiku')) return 'Haiku 3.5';
-  if (m.includes('sonnet-5')) return 'Sonnet 5';
-  if (m.includes('haiku-4-5') || m.includes('haiku-4.5')) return 'Haiku 4.5';
-  if (m.includes('fable-5')) return 'Fable 5';
-  if (m.includes('opus-5[1m]')) return 'Opus 5 (1M)';
-  if (m.includes('opus-5')) return 'Opus 5';
+
+  const family = formatClaudeFamilyName(m);
+  if (family) return family;
 
   if (m.includes('sonnet')) return 'Sonnet';
   if (m.includes('opus')) return 'Opus';
@@ -136,7 +146,31 @@ export function formatModelDisplayName(
   const gatewayRest = gatewayModelRemainder(model);
   if (gatewayRest) return gatewayRest;
 
-  return model.replace(/^claude[.-]/i, '');
+  return undefined;
+}
+
+export function formatModelDisplayName(
+  model: string,
+  customNames?: Record<string, string> | Map<string, string>,
+): string {
+  if (!model) return 'Claude';
+
+  let custom: string | undefined;
+  if (customNames) {
+    if (customNames instanceof Map) {
+      custom = customNames.get(model) || customNames.get(model.toLowerCase());
+    } else {
+      custom = customNames[model] || customNames[model.toLowerCase()];
+    }
+  }
+  // 简短干净的自定义名直接用；带中转站信息的优先回到模型本身的名称。
+  if (custom && !isNoisyDisplayName(custom)) return custom;
+
+  const derived = deriveModelDisplayName(model);
+  if (derived) return derived;
+  if (custom) return stripRelayNoise(custom);
+
+  return stripGatewayProviderPrefix(model).replace(/^claude[.-]/i, '');
 }
 
 /**

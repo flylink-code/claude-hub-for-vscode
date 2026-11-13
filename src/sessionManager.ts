@@ -32,14 +32,15 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-function readLiveClaudeSessionIds(configDir: string): Set<string> {
+/** Live Claude Code processes keyed by session id; undefined when the sessions directory is unavailable. */
+function readLiveClaudeSessions(configDir: string): Map<string, { status?: string }> | undefined {
   const dir = path.join(configDir, 'sessions');
-  const ids = new Set<string>();
+  const live = new Map<string, { status?: string }>();
   let names: string[];
   try {
     names = fs.readdirSync(dir);
   } catch {
-    return ids;
+    return undefined;
   }
   for (const name of names) {
     if (!name.endsWith('.json')) continue;
@@ -50,11 +51,10 @@ function readLiveClaudeSessionIds(configDir: string): Set<string> {
       continue;
     }
     const record = parseClaudeSessionRecord(raw);
-    if (record && isProcessAlive(record.pid)) ids.add(record.sessionId);
+    if (record && isProcessAlive(record.pid)) live.set(record.sessionId, { status: record.status });
   }
-  return ids;
+  return live;
 }
-
 export class SessionManager implements vscode.Disposable {
   private _sessions: SessionInfo[] = [];
   private _focusedSessionId: string | null = null;
@@ -619,7 +619,7 @@ export class SessionManager implements vscode.Disposable {
       }
 
       const configuredModel = this.configManager?.getConfiguredModel();
-      const liveSessionIds = readLiveClaudeSessionIds(this.getConfigDir());
+      const liveSessions = readLiveClaudeSessions(this.getConfigDir());
       this.watchClaudeSessions();
       const workspaceFolders = (vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath);
       const projectDirs = fs.readdirSync(projectsDir);
@@ -666,6 +666,9 @@ export class SessionManager implements vscode.Disposable {
 
           const parsed = await parseTranscriptFile(filePath);
           const sessionId = parsed.sessionId || file.replace('.jsonl', '').substring(0, 8);
+          const liveRecord = liveSessions?.get(sessionId);
+          const processLive = liveSessions ? !!liveRecord : undefined;
+          const processBusy = liveRecord?.status === 'busy';
           const projectPath = parsed.cwd || decoded.fullPath;
           const association = readTaskAssociation(this.taskStorageDir, sessionId, projectPath);
           const selections = this.context.globalState.get<Record<string, string>>('taskListSelections', {});
@@ -955,7 +958,7 @@ export class SessionManager implements vscode.Disposable {
             agents: activeAgents,
             backgroundJobs: backgroundJobsForLiveProcess(
               parsed.backgroundJobs || [],
-              liveSessionIds.has(sessionId),
+              !!liveSessions?.has(sessionId),
             ),
             loopState: parsed.loopState,
             totalAgentsCount: totalAgentsCount > 0 ? totalAgentsCount : undefined,
@@ -982,6 +985,8 @@ export class SessionManager implements vscode.Disposable {
             totalSpanMs,
             currentTurnStartTime: parsed.currentTurnStartTime,
             isIdle,
+            processLive,
+            processBusy,
             isCurrentWorkspace,
             workspaceFolderName,
             parentSessionId: parsed.parentSessionId,

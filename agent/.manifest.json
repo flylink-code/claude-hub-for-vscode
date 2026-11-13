@@ -1,0 +1,32 @@
+{
+  "kitVersion": "2.0.0",
+  "mode": "project",
+  "projectName": "claude-hub-for-vscode",
+  "createdAt": "2026-11-13",
+  "agentsMdMode": "marker",
+  "files": {
+    "agent/index.md": "6fb28b2ef665deb382b5850eefae1a3744ca6ffda1fa87af25300a59c8045bbb",
+    "agent/rules/00-global.md": "7afd3076d87c53db2f2e2517d917830a77893413f84da96953683b092a8efeec",
+    "agent/rules/10-code.md": "b80bb9dbcaa267c6212c675c3893f22d036014605ff0ff5a42b68bbbca642906",
+    "agent/rules/15-audience.md": "ef0e3170774567f6bb53ec9c0a615b722f0dcec0147bbb55120cee75893ca226",
+    "agent/rules/20-git.md": "1303e5a81933c6df81a63728a1821dae555e66792accb12d78c16178119e0402",
+    "agent/rules/30-docs.md": "f258e140776e4757c5e85d39d6797f85b13539cc575a442b26ec16663a08e9f7",
+    "agent/rules/40-debug.md": "7c1a3cd034e457e7452157c74c17aa6e8e546bc907f4e1cc1e2589e93d22735e",
+    "agent/rules/50-research.md": "9dac7d333e493199b401c530cab9914a19df33ded56b746b994192de9ab3f0d5",
+    "agent/rules/60-archive.md": "b112695e7331980f36669f77cbcb3dbab484fdb935edde30a2f463a97f96e7ea",
+    "agent/rules/70-isolation.md": "0f61c119f5e93761488f85a443865ccd795a4225e98f5ff5005e35059781a34b",
+    "agent/playbooks/10-create.md": "535ca7d267e1a78e20adcb5152ea2fff5d76c6e3a89c154d5e12ff81779e254a",
+    "agent/playbooks/20-implement.md": "b625f0df123f12967dda9fe893fed669718a29287ad6b92b5a69e3feff5a4d29",
+    "agent/playbooks/30-debug.md": "f30e91aff84b9cd2601e653bc9bc0a7326ed2d3b8fb1b47f0b1b1aef8f42dc8a",
+    "agent/playbooks/40-optimize.md": "42c1e74dbf733f50347b0327638c284571e0e96095aa6ee2ee051bbcf5b1c9f2",
+    "agent/playbooks/50-archive.md": "bcf2108b8e0e498fe3002807f3a4af895f2ade59ba72c9ec493d98338c46dcd7",
+    "agent/context/requirements.md": "16a1b82713ce871aff3f847a5e831b4d41347053d02707e169190175a35fb0e5",
+    "agent/context/hardware.md": "268214e6c79ccd333f421765eee27f0fe28397ebb60293a7ea8c402aa99e5fe0",
+    "agent/context/software.md": "b1088cea2a5c82edc3369bcabd38f6c8f4d40ffb5d7cd1850e81184004bdb99c",
+    "agent/context/plan.md": "1b19db32af7b63448adffaf185dff7c5d061459f0e33244cd0243ee743181be3",
+    "agent/context/decisions.md": "dee2721aa0e2d6b2f7c5e7fff05a0b3d7fb3ef108a75790f1d5198023f07b7f3",
+    "agent/context/research/RESEARCH_INDEX.md": "1b6b71e055e0aa1722ddc46bac3afcd7469b7da1ab9811cb7476c4040dc45039",
+    "agent/context/archive/ARCHIVE_INDEX.md": "c819cb8de75196ed974dc7430c2ef049123f2bad352758b24a8396de40419f7c",
+    "agent/context/archive/_TEMPLATE.md": "7ba3240bb7ca1b93e13a0062b740efb7e3e0e3d39d6b9b79ceddd180d2ec24b7"
+  }
+}

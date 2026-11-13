@@ -190,6 +190,10 @@ export interface SessionInfo {
   totalSpanMs?: number;
   currentTurnStartTime?: Date;
   isIdle: boolean;
+  /** Whether a live Claude Code process owns this session; undefined when process tracking is unavailable. */
+  processLive?: boolean;
+  /** The live process reports it is working on a turn (sessions/*.json status = busy). */
+  processBusy?: boolean;
   isCurrentWorkspace: boolean;
   wasCleared: boolean;
   cwd?: string;

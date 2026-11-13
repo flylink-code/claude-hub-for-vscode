@@ -915,7 +915,7 @@ export function applyBackgroundTaskSnapshot(
   }
 }
 
-export function parseClaudeSessionRecord(raw: string): { sessionId: string; pid: number } | undefined {
+export function parseClaudeSessionRecord(raw: string): { sessionId: string; pid: number; status?: string } | undefined {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -927,7 +927,8 @@ export function parseClaudeSessionRecord(raw: string): { sessionId: string; pid:
   const sessionId = typeof record.sessionId === 'string' ? record.sessionId : '';
   const pid = typeof record.pid === 'number' ? record.pid : Number.NaN;
   if (!sessionId || !Number.isInteger(pid) || pid <= 0) return undefined;
-  return { sessionId, pid };
+  const status = typeof record.status === 'string' ? record.status : undefined;
+  return status ? { sessionId, pid, status } : { sessionId, pid };
 }
 
 /** A dead Claude Code process has an empty background-task set. */

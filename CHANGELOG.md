@@ -2,6 +2,20 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.2.26] - 2026-11-13
+
+### 中文
+
+- **状态栏自动隐藏：** 新增 `claudeHub.statusBar.hideWhenInactive`（默认开启）。没有 Claude Code 对话在进行（无运行中会话、无后台任务）时隐藏右下角状态栏项，对话重新活跃后自动显示；关闭该设置可恢复常驻显示。判定同时参考 ~/.claude/sessions 中的 Claude Code 进程：进程已退出（如关闭对话面板）立即隐藏，不再等待空闲超时。
+- **模型价格更新：** Claude 价格表新增 Fable 5.2 / Mythos 5.2（输入 $8 / 输出 $40 / 缓存读 $0.20 / 缓存写 $10 每百万 Token，较 5.1 下调 20%），`fable` / `mythos` 简称改为解析到 5.2。同时纳入非 Claude 模型的官方标价：GPT-6 Astra / 6.1 Sol / 6.1 Terra / 6 Luna / 6 Sol / 5.6 Sol·Terra·Luna、DeepSeek V4.1 Flash / V4 Pro、Gemini 3.8 Flash / 4 Argon、Kimi K3 / K3.1 Pro、GLM-5、MiniMax M3；中转站 id（如 `claude.sub2api.gpt-5.6-sol`、`openai/gpt-6.1-sol`）会先还原为模型本身再计价。限时优惠按日期自动生效并在到期后恢复标价：GPT-5.6 Sol 至 2026-11-21、Gemini 4 Argon 至 2026-11-30、Gemini 3.8 Flash 至 2026-12-31。DeepSeek 按高峰价估算（低谷为 50%）；各家长上下文加价档（如 GPT 超过 272K）无法由会话汇总得到，按标准档估算；无法精确识别的变体（如 `-highspeed`）仍显示 `—`。价格表版本为 `2026-11-13`，中转站实际计费可能不同，仍可用 `claudeHub.modelPricing` 覆盖。
+- **中转站模型名精简：** 中转站 id（如 `antigravity/claude-sonnet-5-5`）与带 provider、括号备注或整句描述的 `display_name` 统一显示为模型本身的名称（如 `Sonnet 5.5`）；简短且干净的自定义名称保持不变。
+
+### English
+
+- **Status bar auto-hide:** Added `claudeHub.statusBar.hideWhenInactive` (on by default). The bottom-right status bar item is hidden while no Claude Code conversation is active (no running session and no background jobs) and reappears when one becomes active. Turn it off to keep the item always visible. The check also looks at the Claude Code processes in ~/.claude/sessions: once a conversation's process has exited (for example the panel was closed) the item hides immediately instead of waiting for the idle timeout.
+- **Model pricing:** The Claude table adds Fable 5.2 / Mythos 5.2 ($8 input / $40 output / $0.20 cache read / $10 cache write per MTok, 20% below 5.1); the `fable` / `mythos` shorthands now resolve to 5.2. Official list prices for non-Claude models are included as well: GPT-6 Astra / 6.1 Sol / 6.1 Terra / 6 Luna / 6 Sol / 5.6 Sol, Terra and Luna, DeepSeek V4.1 Flash / V4 Pro, Gemini 3.8 Flash / 4 Argon, Kimi K3 / K3.1 Pro, GLM-5 and MiniMax M3. Relay ids (for example `claude.sub2api.gpt-5.6-sol`, `openai/gpt-6.1-sol`) are reduced to the underlying model before pricing. Time-limited promotions apply automatically by date and revert to list price afterwards: GPT-5.6 Sol through 2026-11-21, Gemini 4 Argon through 2026-11-30, Gemini 3.8 Flash through 2026-12-31. DeepSeek uses the peak price (off-peak is 50%); long-context surcharge tiers (for example GPT above 272K) cannot be derived from session totals, so the standard tier is used; unrecognized variants (for example `-highspeed`) still show `—`. Table version is `2026-11-13`; relay billing may differ, and `claudeHub.modelPricing` overrides still apply.
+- **Relay model names:** Relay ids (for example `antigravity/claude-sonnet-5-5`) and `display_name` values carrying a provider, bracketed note, or full sentence now display as the model's own name (for example `Sonnet 5.5`). Short, clean custom names are left as-is.
+
 ## [0.2.25] - 2026-11-09
 
 ### 中文

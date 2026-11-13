@@ -19,6 +19,7 @@
   "config.filterMode.currentWorkspace": "Only show Claude Code sessions belonging to the currently open VS Code workspace folder",
   "config.filterMode.all": "Show all active Claude Code sessions across the entire system",
   "config.showStatusBarItem.desc": "Show Claude Code running status in the VS Code status bar.",
+  "config.statusBar.hideWhenInactive.desc": "Hide the status bar item while no Claude Code conversation is active (its Claude Code process has exited, or it is idle with no background jobs). It reappears as soon as a conversation becomes active.",
   "config.statusBar.preset.desc": "Status bar display preset style (similar to claude-hud).",
   "config.statusBar.preset.compact": "Compact: $(sparkle) 7% · Sonnet 3.7 (default balanced mode)",
   "config.statusBar.preset.minimal": "Minimal: $(sparkle) 7% (minimal footprint)",

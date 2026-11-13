@@ -86,6 +86,28 @@ export function formatOutputSpeed(value?: number): string {
   return value.toFixed(1) + ' tok/s';
 }
 
+/**
+ * Whether the status bar item should be hidden because Claude Code is not being used.
+ * A session whose Claude Code process has exited is never in use, regardless of how
+ * recently its transcript was written. Otherwise it counts as in use when the process
+ * is busy, the session is not idle, or background jobs are still running.
+ */
+export function shouldHideStatusBar(
+  session: {
+    isIdle: boolean;
+    processLive?: boolean;
+    processBusy?: boolean;
+    backgroundJobs?: Array<{ status?: string }>;
+  } | null | undefined,
+  hideWhenInactive: boolean,
+): boolean {
+  if (!hideWhenInactive) return false;
+  if (!session) return true;
+  if (session.processLive === false) return true;
+  if (session.processBusy) return false;
+  if (!session.isIdle) return false;
+  return !(session.backgroundJobs || []).some((job) => job.status === 'running');
+}
 export function resolveRenderOptions(config: ConfigGetter): StatusBarRenderOptions {
   const preset = (config.get<StatusBarPreset>('statusBar.preset', 'compact') as StatusBarPreset) || 'compact';
 

@@ -1,13 +1,28 @@
 /**
  * Model pricing table and alias resolution for Claude Hub cost estimates.
- * Source: Anthropic Claude API list prices (docs.anthropic.com), as of 2026-10-10.
- * Rates are USD per million tokens (MTok). cacheWrite uses the 5-minute cache-write rate.
- * Non-official / unknown models resolve as unpriced (never silent Sonnet fallback).
+ * Sources, as of 2026-11-13: Anthropic API list prices; OpenAI developers pricing page;
+ * DeepSeek, Moonshot (Kimi), Z.ai (GLM) and MiniMax pay-as-you-go pages; Google Gemini API pricing.
+ * Rates are USD per million tokens (MTok). cacheWrite uses the 5-minute cache-write rate;
+ * vendors that do not bill cache writes separately use their normal input rate.
+ * Third-party models are priced at the vendor's list price. Relay prices may differ; use
+ * `claudeHub.modelPricing` to override. Unknown models resolve as unpriced (never a silent Sonnet fallback).
  */
 
-export const PRICING_TABLE_VERSION = '2026-10-10';
+export const PRICING_TABLE_VERSION = '2026-11-13';
 
-export type ModelFamily = 'opus' | 'sonnet' | 'haiku' | 'fable' | 'mythos' | 'other';
+export type ModelFamily =
+  | 'opus'
+  | 'sonnet'
+  | 'haiku'
+  | 'fable'
+  | 'mythos'
+  | 'gpt'
+  | 'deepseek'
+  | 'gemini'
+  | 'kimi'
+  | 'glm'
+  | 'minimax'
+  | 'other';
 
 export interface ModelRates {
   /** USD per MTok */
@@ -22,7 +37,10 @@ export interface PricedModel {
   id: string;
   family: ModelFamily;
   displayName: string;
+  /** Standard list price. */
   rates: ModelRates;
+  /** Time-limited promotional price; applies through the end of `until` (UTC, YYYY-MM-DD). */
+  promo?: { until: string; rates: ModelRates };
   /** Optional note e.g. retired / tiered */
   note?: string;
 }
@@ -38,6 +56,19 @@ export interface CostEstimate {
 
 /** Built-in priced models (canonical ids). */
 export const PRICED_MODELS: readonly PricedModel[] = [
+  {
+    id: 'claude-fable-5.2',
+    family: 'fable',
+    displayName: 'Fable 5.2',
+    rates: { input: 8, output: 40, cacheRead: 0.2, cacheWrite: 10 },
+  },
+  {
+    id: 'claude-mythos-5.2',
+    family: 'mythos',
+    displayName: 'Mythos 5.2',
+    rates: { input: 8, output: 40, cacheRead: 0.2, cacheWrite: 10 },
+    note: 'limited availability',
+  },
   {
     id: 'claude-fable-5.1',
     family: 'fable',
@@ -188,6 +219,121 @@ export const PRICED_MODELS: readonly PricedModel[] = [
     rates: { input: 15, output: 75, cacheRead: 1.5, cacheWrite: 18.75 },
     note: 'legacy',
   },
+  // OpenAI - developers.openai.com/api/docs/pricing. Prompts above 272K input tokens bill 2x input / 1.5x output;
+  // usage totals carry no per-request prompt size, so the standard tier is used.
+  {
+    id: 'gpt-6-astra',
+    family: 'gpt',
+    displayName: 'GPT-6 Astra',
+    rates: { input: 10, output: 50, cacheRead: 1, cacheWrite: 12.5 },
+  },
+  {
+    id: 'gpt-6.1-sol',
+    family: 'gpt',
+    displayName: 'GPT-6.1 Sol',
+    rates: { input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2.5 },
+  },
+  {
+    id: 'gpt-6.1-terra',
+    family: 'gpt',
+    displayName: 'GPT-6.1 Terra',
+    rates: { input: 1, output: 5, cacheRead: 0.05, cacheWrite: 1.25 },
+  },
+  {
+    id: 'gpt-6-sol',
+    family: 'gpt',
+    displayName: 'GPT-6 Sol',
+    rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+    note: 'superseded by 6.1 Sol (cache read halved)',
+  },
+  {
+    id: 'gpt-6-luna',
+    family: 'gpt',
+    displayName: 'GPT-6 Luna',
+    rates: { input: 0.1, output: 0.5, cacheRead: 0.01, cacheWrite: 0.125 },
+  },
+  {
+    id: 'gpt-5.6-sol',
+    family: 'gpt',
+    displayName: 'GPT-5.6 Sol',
+    rates: { input: 5, output: 30, cacheRead: 0.5, cacheWrite: 6.25 },
+    // OpenAI: promotional pricing is available "at least through November 21, 2026".
+    promo: { until: '2026-11-21', rates: { input: 4, output: 20, cacheRead: 0.4, cacheWrite: 5 } },
+    note: 'promo price ends 2026-11-21 at the earliest',
+  },
+  {
+    id: 'gpt-5.6-terra',
+    family: 'gpt',
+    displayName: 'GPT-5.6 Terra',
+    rates: { input: 2, output: 12, cacheRead: 0.2, cacheWrite: 2.5 },
+  },
+  {
+    id: 'gpt-5.6-luna',
+    family: 'gpt',
+    displayName: 'GPT-5.6 Luna',
+    rates: { input: 0.2, output: 1.2, cacheRead: 0.02, cacheWrite: 0.25 },
+  },
+  // DeepSeek - api-docs.deepseek.com/quick_start/pricing. Peak rates shown; off-peak is 50% of peak
+  // (peak: 01:00-04:00 and 06:00-10:00 UTC on weekdays). No separate cache-write charge.
+  {
+    id: 'deepseek-flash',
+    family: 'deepseek',
+    displayName: 'DeepSeek V4.1 Flash',
+    rates: { input: 0.3, output: 1.2, cacheRead: 0.006, cacheWrite: 0.3 },
+    note: 'peak price; off-peak is 50%',
+  },
+  {
+    id: 'deepseek-v4-pro',
+    family: 'deepseek',
+    displayName: 'DeepSeek V4 Pro',
+    rates: { input: 1.32, output: 3.96, cacheRead: 0.044, cacheWrite: 1.32 },
+    note: 'peak price; off-peak is 50%',
+  },
+  // Google Gemini API - ai.google.dev/gemini-api/docs/pricing. Caching is implicit, no write charge.
+  {
+    id: 'gemini-3.8-flash',
+    family: 'gemini',
+    displayName: 'Gemini 3.8 Flash',
+    rates: { input: 1.5, output: 7.5, cacheRead: 0.15, cacheWrite: 1.5 },
+    promo: { until: '2026-12-31', rates: { input: 0.75, output: 3.75, cacheRead: 0.075, cacheWrite: 0.75 } },
+    note: 'introductory price through 2026-12-31',
+  },
+  {
+    id: 'gemini-4-argon',
+    family: 'gemini',
+    displayName: 'Gemini 4 Argon',
+    rates: { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 4 },
+    promo: { until: '2026-11-30', rates: { input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2 } },
+    note: 'introductory price through 2026-11-30',
+  },
+  // Moonshot Kimi - platform.kimi.ai/docs/pricing/chat. 5-minute cache write equals the input rate.
+  {
+    id: 'kimi-k3',
+    family: 'kimi',
+    displayName: 'Kimi K3',
+    rates: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3 },
+  },
+  {
+    id: 'kimi-k3.1-pro',
+    family: 'kimi',
+    displayName: 'Kimi K3.1 Pro',
+    rates: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2 },
+  },
+  // Z.ai GLM - docs.z.ai/guides/overview/pricing (cached-input storage currently free).
+  {
+    id: 'glm-5',
+    family: 'glm',
+    displayName: 'GLM-5',
+    rates: { input: 1, output: 3.2, cacheRead: 0.2, cacheWrite: 1 },
+  },
+  // MiniMax - platform.minimax.io/docs/guides/pricing-paygo (prompts up to 512K tokens, discounted list price).
+  {
+    id: 'minimax-m3',
+    family: 'minimax',
+    displayName: 'MiniMax M3',
+    rates: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.3 },
+    note: 'prompts up to 512K tokens',
+  },
 ];
 
 /** Alias -> canonical priced model id. */
@@ -214,9 +360,15 @@ const ALIAS_TO_ID: Record<string, string> = (() => {
     ['claude-sonnet', 'claude-sonnet-5'],
     ['haiku', 'claude-haiku-4.5'],
     ['claude-haiku', 'claude-haiku-4.5'],
-    ['fable', 'claude-fable-5'],
-    ['claude-fable', 'claude-fable-5'],
-    ['mythos', 'claude-mythos-5'],
+    ['fable', 'claude-fable-5.2'],
+    ['claude-fable', 'claude-fable-5.2'],
+    ['mythos', 'claude-mythos-5.2'],
+    ['fable-5.2', 'claude-fable-5.2'],
+    ['mythos-5.2', 'claude-mythos-5.2'],
+    ['claude-fable-5-2', 'claude-fable-5.2'],
+    ['claude-mythos-5-2', 'claude-mythos-5.2'],
+    ['fable-5.1', 'claude-fable-5.1'],
+    ['mythos-5.1', 'claude-mythos-5.1'],
     ['sonnet-5.5', 'claude-sonnet-5.5'],
     ['sonnet-5', 'claude-sonnet-5'],
     ['sonnet-4.6', 'claude-sonnet-4.6'],
@@ -255,6 +407,67 @@ const ALIAS_TO_ID: Record<string, string> = (() => {
 
 const MODEL_BY_ID = new Map(PRICED_MODELS.map((m) => [m.id, m]));
 
+
+/** Strip gateway decoration (`provider/`, `claude.provider.`, `[1m]`, effort and date suffixes) from a model id. */
+function thirdPartyCandidates(raw: string): string[] {
+  const out: string[] = [];
+  const push = (value: string | undefined) => {
+    if (!value) return;
+    const slash = value.lastIndexOf('/');
+    let id = (slash >= 0 ? value.slice(slash + 1) : value).trim();
+    id = id
+      .replace(/\[[^\]]*\]$/, '')
+      .replace(/-(?:xhigh|max|high|medium|low)$/, '')
+      .replace(/-(?:\d{4}-\d{2}-\d{2}|\d{8})$/, '')
+      .replace(/(\d)-(\d)/g, '$1.$2');
+    if (id && !out.includes(id)) out.push(id);
+  };
+  push(raw);
+  const noClaude = raw.replace(/^claude\./, '');
+  if (noClaude !== raw) {
+    push(noClaude);
+    // claude.<provider>.<model>; `claude.gemini-3.8-flash` is one id whose version contains dots.
+    const multi = /^claude\.[^.]+\.(.+)$/.exec(raw);
+    if (multi && !/^\d/.test(multi[1])) push(multi[1]);
+  }
+  return out;
+}
+
+const THIRD_PARTY_PATTERNS: ReadonlyArray<[RegExp, string]> = [
+  [/^gpt-6-astra$/, 'gpt-6-astra'],
+  [/^gpt-6\.1-sol$/, 'gpt-6.1-sol'],
+  [/^gpt-6\.1-terra$/, 'gpt-6.1-terra'],
+  [/^gpt-6-sol$/, 'gpt-6-sol'],
+  [/^gpt-6-luna$/, 'gpt-6-luna'],
+  [/^gpt-5\.6-sol$/, 'gpt-5.6-sol'],
+  [/^gpt-5\.6-terra$/, 'gpt-5.6-terra'],
+  [/^gpt-5\.6-luna$/, 'gpt-5.6-luna'],
+  [/^deepseek-(?:v4\.1-|v4-)?flash(?:-1017|-vision-exp)?$/, 'deepseek-flash'],
+  [/^deepseek-v4-pro(?:-0813)?$/, 'deepseek-v4-pro'],
+  [/^gemini-3\.8-flash$/, 'gemini-3.8-flash'],
+  [/^gemini-4-argon$/, 'gemini-4-argon'],
+  [/^kimi-k3$/, 'kimi-k3'],
+  [/^kimi-k3\.1-pro$/, 'kimi-k3.1-pro'],
+  [/^glm-5$/, 'glm-5'],
+  [/^minimax-m3$/, 'minimax-m3'],
+];
+
+/** Exact-name match only: unknown variants (for example `-highspeed`) must stay unpriced. */
+function resolveThirdPartyModel(raw: string): PricedModel | null {
+  for (const candidate of thirdPartyCandidates(raw)) {
+    for (const [pattern, id] of THIRD_PARTY_PATTERNS) {
+      if (pattern.test(candidate)) return MODEL_BY_ID.get(id) ?? null;
+    }
+  }
+  return null;
+}
+
+/** Promotional rates apply through the end of their `until` day (UTC); otherwise the standard list price. */
+export function effectiveRates(model: PricedModel, now: Date = new Date()): ModelRates {
+  const promo = model.promo;
+  if (promo && now.getTime() <= Date.parse(`${promo.until}T23:59:59.999Z`)) return promo.rates;
+  return model.rates;
+}
 
 export interface PricingRateOverride {
   input?: number;
@@ -318,6 +531,9 @@ export function resolvePricedModel(model: string): PricedModel | null {
     return MODEL_BY_ID.get(ALIAS_TO_ID[cleaned]) ?? null;
   }
 
+  const thirdParty = resolveThirdPartyModel(raw);
+  if (thirdParty) return thirdParty;
+
   // Dated Anthropic ids: claude-sonnet-4-5-20250929 etc.
   const dated = raw.match(
     /claude-(opus|sonnet|haiku|fable|mythos)-(\d+(?:[.-]\d+)*)/i,
@@ -360,8 +576,8 @@ export function resolvePricedModel(model: string): PricedModel | null {
   if (!looksClaude) return null;
 
   // Ordered family defaults for vague short names already handled; for longer ids:
-  if (raw.includes('mythos')) return MODEL_BY_ID.get('claude-mythos-5') ?? null;
-  if (raw.includes('fable')) return MODEL_BY_ID.get('claude-fable-5') ?? null;
+  if (raw.includes('mythos')) return MODEL_BY_ID.get('claude-mythos-5.2') ?? null;
+  if (raw.includes('fable')) return MODEL_BY_ID.get('claude-fable-5.2') ?? null;
   if (raw.includes('opus')) {
     if (raw.includes('5.5') || raw.includes('5-5')) return MODEL_BY_ID.get('claude-opus-5.5') ?? null;
     if (raw.includes('opus-5') || raw.includes('opus 5')) return MODEL_BY_ID.get('claude-opus-5') ?? null;
@@ -419,11 +635,17 @@ function applyRateOverrides(model: PricedModel, lookupKeys: string[]): PricedMod
   };
 }
 
-export function estimateCostUsd(tokenUsage: TokenUsageLike, model: string, overrides?: PricingOverrides | null): CostEstimate {
+export function estimateCostUsd(
+  tokenUsage: TokenUsageLike,
+  model: string,
+  overrides?: PricingOverrides | null,
+  now: Date = new Date(),
+): CostEstimate {
   if (overrides) setPricingOverrides(overrides);
 
   let resolved = resolvePricedModel(model);
   if (resolved) {
+    resolved = { ...resolved, rates: effectiveRates(resolved, now) };
     resolved = applyRateOverrides(resolved, [model, normalizeModelId(model), cleanModelKeyForPricing(model), resolved.id]);
   }
   if (!resolved) {

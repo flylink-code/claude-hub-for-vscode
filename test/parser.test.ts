@@ -85,6 +85,7 @@ test('记忆目录尊重已有配置及 local 优先级，忽略无效相对路�
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+import { estimateCostUsd, resolvePricedModel } from '../src/modelPricing.js';
 import { formatModelDisplayName, formatSelectedModelName, getContextLimitForModel } from '../src/contextLimit.js';
 import { resolveLanguage, zhMessages, enMessages } from '../src/i18n.js';
 import {
@@ -93,6 +94,7 @@ import {
   formatDuration,
   formatOutputSpeed,
   resolveRenderOptions,
+  shouldHideStatusBar,
   formatStatusBarText,
   StatusBarRenderOptions,
 } from '../src/statusBarFormatter.js';
@@ -2947,8 +2949,10 @@ test('parseTranscriptFile tracks slash /tasks background shells and agents after
     assert.deepEqual(parseClaudeSessionRecord('{"pid":25876,"sessionId":"136b5730-2db7-4bb6-81b2-f7d228b37738","status":"idle"}'), {
       pid: 25876,
       sessionId: '136b5730-2db7-4bb6-81b2-f7d228b37738',
+      status: 'idle',
     });
     assert.equal(parseClaudeSessionRecord('{"status":"idle"}'), undefined);
+    assert.equal(parseClaudeSessionRecord('{"pid":7,"sessionId":"s","status":"busy"}')?.status, 'busy');
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -3399,4 +3403,50 @@ test('parseFrontmatterFields supports YAML block scalar descriptions (>- and |) 
   assert.strictEqual(parsedLiteral.name, 'requirement-doc-writer');
   assert.ok(parsedLiteral.description.includes('把原始需求整理成公司统一排版的需求文档'));
   assert.notStrictEqual(parsedLiteral.description, '|');
+});
+
+test('formatModelDisplayName reduces relay ids and noisy display names to the model name', () => {
+  assert.strictEqual(formatModelDisplayName('antigravity/claude-sonnet-5-5'), 'Sonnet 5.5');
+  assert.strictEqual(formatModelDisplayName('kiro/claude-sonnet-5.5'), 'Sonnet 5.5');
+  assert.strictEqual(formatModelDisplayName('claude-opus-5-5'), 'Opus 5.5');
+  assert.strictEqual(formatModelDisplayName('claude-fable-5-2'), 'Fable 5.2');
+  assert.strictEqual(formatModelDisplayName('claude-haiku-5-5'), 'Haiku 5.5');
+  assert.strictEqual(formatModelDisplayName('claude-sonnet-4-5-20250929'), 'Sonnet 4.5');
+  assert.strictEqual(formatModelDisplayName('claude-sonnet-5'), 'Sonnet 5');
+  assert.strictEqual(formatModelDisplayName('opencode-go/deepseek-v4.1-flash[1m]'), 'deepseek-v4.1-flash[1m]');
+
+  const noisy = new Map([
+    ['antigravity/claude-sonnet-5-5', 'Antigravity 中转站 / Claude Sonnet 5.5 (高速通道)'],
+    ['relay-x', 'relay/Custom Model (relay-x)'],
+    ['short', 'My Model'],
+  ]);
+  assert.strictEqual(formatModelDisplayName('antigravity/claude-sonnet-5-5', noisy), 'Sonnet 5.5');
+  assert.strictEqual(formatModelDisplayName('relay-x', noisy), 'Custom Model');
+  assert.strictEqual(formatModelDisplayName('short', noisy), 'My Model');
+});
+
+test('model pricing includes Fable and Mythos 5.2 at the reduced list price', () => {
+  const usage = { inputTokens: 1_000_000, outputTokens: 1_000_000, cacheReadTokens: 1_000_000, cacheCreationTokens: 1_000_000 };
+  const fable = estimateCostUsd(usage, 'claude-fable-5-2');
+  assert.strictEqual(fable.canonicalId, 'claude-fable-5.2');
+  assert.ok(Math.abs((fable.usd ?? 0) - (8 + 40 + 0.2 + 10)) < 1e-9);
+  assert.strictEqual(resolvePricedModel('claude-mythos-5-2')?.id, 'claude-mythos-5.2');
+  assert.strictEqual(resolvePricedModel('claude-fable-5.1')?.rates.input, 10);
+  assert.strictEqual(resolvePricedModel('claude-fable-5')?.rates.input, 10);
+});
+
+test('shouldHideStatusBar hides only inactive sessions and honors the setting', () => {
+  const active = { isIdle: false };
+  const idle = { isIdle: true, backgroundJobs: [] };
+  const idleWithJob = { isIdle: true, backgroundJobs: [{ status: 'running' }] };
+  assert.strictEqual(shouldHideStatusBar(null, true), true);
+  assert.strictEqual(shouldHideStatusBar(idle, true), true);
+  assert.strictEqual(shouldHideStatusBar(active, true), false);
+  assert.strictEqual(shouldHideStatusBar(idleWithJob, true), false);
+  assert.strictEqual(shouldHideStatusBar(null, false), false);
+  assert.strictEqual(shouldHideStatusBar(idle, false), false);
+  assert.strictEqual(shouldHideStatusBar({ isIdle: false, processLive: false }, true), true);
+  assert.strictEqual(shouldHideStatusBar({ isIdle: false, processLive: true }, true), false);
+  assert.strictEqual(shouldHideStatusBar({ isIdle: true, processLive: true, processBusy: true }, true), false);
+  assert.strictEqual(shouldHideStatusBar({ isIdle: true, processLive: true }, true), true);
 });

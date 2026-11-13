@@ -46,6 +46,9 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
 
   "claudeHub.showStatusBarItem": true,
 
+  // Hide the status bar item while no Claude Code conversation is active
+  "claudeHub.statusBar.hideWhenInactive": true,
+
   // Status bar display presets: "compact" | "minimal" | "detailed" | "hud" | "custom"
   "claudeHub.statusBar.preset": "compact",
 
@@ -179,6 +182,9 @@ npm test
 
   // 是否显示状态栏
   "claudeHub.showStatusBarItem": true,
+
+  // 没有 Claude Code 对话在进行时隐藏状态栏
+  "claudeHub.statusBar.hideWhenInactive": true,
 
   // 状态栏预设风格："compact"（紧凑） | "minimal"（极简） | "detailed"（详细） | "hud"（经典 HUD） | "custom"（自定义）
   "claudeHub.statusBar.preset": "compact",
