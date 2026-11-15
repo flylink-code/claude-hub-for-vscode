@@ -13,10 +13,33 @@ import { buildTaskSyncPrompt } from './projectTodoPolicy.js';
 import { getPinnedSessionIds, sortSessionsWithPins } from './sessionPins.js';
 import { getSessionTagMap } from './sessionTags.js';
 import { lastSubscriptionFetchError } from './subscriptionUsage.js';
+import { resolveTooltipSections } from './statusBarFormatter.js';
+
+const ALLOWED_STATUS_BAR_SETTING_KEYS = new Set<string>([
+  'statusBar.style',
+  'statusBar.preset',
+  'statusBar.separator',
+  'statusBar.contextFormat',
+  'statusBar.clickAction',
+  'statusBar.hideWhenInactive',
+  'statusBar.showContext',
+  'statusBar.showProgressBar',
+  'statusBar.showSpeed',
+  'statusBar.showModel',
+  'statusBar.showCost',
+  'statusBar.showTools',
+  'statusBar.showDuration',
+  'statusBar.showTodos',
+  'statusBar.showAgents',
+  'statusBar.showGitBranch',
+  'statusBar.tooltipSections',
+]);
 
 export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, vscode.Disposable {
   public static readonly viewType = 'claudeHub.dashboardView';
   private _view?: vscode.WebviewView;
+  private _panel?: vscode.WebviewPanel;
+  private _pendingPanelTab?: string;
   private featuresManager: ClaudeFeaturesManager;
   private taskIntegration: TaskIntegrationManager;
 
@@ -27,17 +50,35 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     configDirProvider?: ClaudeConfigDirProvider,
   ) {
     this.featuresManager = new ClaudeFeaturesManager(configDirProvider);
-    this.taskIntegration = new TaskIntegrationManager(context.globalStorageUri.fsPath,
+    this.taskIntegration = new TaskIntegrationManager(
+      context.globalStorageUri.fsPath,
       path.join(context.extensionUri.fsPath, 'resources', 'task-bridge.cjs'),
-      () => this.sessionManager.claudeConfigDir);
+      () => this.sessionManager.claudeConfigDir,
+    );
 
-    context.subscriptions.push(sessionManager.onDidUpdateSessions(() => {
-      this.sendSessionUpdate();
-      this.sendConfigUpdate();
-      this.sendExtensionsUpdate();
-    }));
+    context.subscriptions.push(
+      sessionManager.onDidUpdateSessions(() => {
+        this.sendSessionUpdate();
+        this.sendConfigUpdate();
+        this.sendExtensionsUpdate();
+      }),
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('claudeHub')) {
+          this.sendConfigUpdate();
+        }
+      }),
+    );
     sessionManager.onDidUpdateSubscription(() => this.sendSessionUpdate());
     configManager.onDidChange(() => this.sendConfigUpdate());
+  }
+
+  private postToViews(msg: unknown): void {
+    this._view?.webview.postMessage(msg);
+    this._panel?.webview.postMessage(msg);
+  }
+
+  private hasAnyView(): boolean {
+    return Boolean(this._view || this._panel);
   }
 
   public async show(): Promise<void> {
@@ -57,6 +98,50 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
     }
   }
 
+  public async showSettingsTab(): Promise<void> {
+    if (this._panel && this._panel.active) {
+      this._panel.webview.postMessage({ type: 'switchTab', tab: 'settings' });
+      return;
+    }
+    await this.show();
+    if (this._view) {
+      this._view.webview.postMessage({ type: 'switchTab', tab: 'settings' });
+    }
+  }
+
+  public openInEditorTab(initialTab?: string): void {
+    if (this._panel) {
+      this._panel.reveal(vscode.ViewColumn.One);
+      if (initialTab) {
+        this._panel.webview.postMessage({ type: 'switchTab', tab: initialTab });
+      }
+      return;
+    }
+
+    this._pendingPanelTab = initialTab;
+    this._panel = vscode.window.createWebviewPanel(
+      'claudeHub.dashboardTab',
+      'Claude Hub',
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [this.context.extensionUri],
+      },
+    );
+    this._panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'images', 'icon.svg');
+    this._panel.webview.html = getWebviewContent({ isSidebar: false });
+    this.attachMessageHandler(this._panel.webview, () => {
+      if (this._pendingPanelTab) {
+        this._panel?.webview.postMessage({ type: 'switchTab', tab: this._pendingPanelTab });
+        this._pendingPanelTab = undefined;
+      }
+    });
+    this._panel.onDidDispose(() => {
+      this._panel = undefined;
+    });
+  }
+
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -69,12 +154,23 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       localResourceRoots: [this.context.extensionUri],
     };
 
-    webviewView.webview.html = getWebviewContent();
+    webviewView.webview.html = getWebviewContent({ isSidebar: true });
+    this.attachMessageHandler(webviewView.webview);
 
-    webviewView.webview.onDidReceiveMessage(async (msg) => {
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this.sendSessionUpdate();
+        this.sendConfigUpdate();
+      }
+    });
+  }
+
+  private attachMessageHandler(webview: vscode.Webview, onReady?: () => void): void {
+    webview.onDidReceiveMessage(async (msg) => {
       switch (msg.type) {
         case 'ready':
-          webviewView.webview.postMessage({ type: 'restoreUiState', state: this.context.globalState.get('dashboardUiState') });
+          webview.postMessage({ type: 'restoreUiState', state: this.context.globalState.get('dashboardUiState') });
+          onReady?.();
           this.sendSessionUpdate();
           this.sendConfigUpdate();
           this.sendExtensionsUpdate();
@@ -85,6 +181,26 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
             await this.context.globalState.update('dashboardUiState', msg.state);
           }
           break;
+
+        case 'openDashboardTab':
+          this.openInEditorTab(typeof msg.tab === 'string' ? msg.tab : undefined);
+          break;
+
+        case 'openVsCodeSettings':
+          await vscode.commands.executeCommand('workbench.action.openSettings', 'claudeHub');
+          break;
+
+        case 'updateStatusBarConfig': {
+          const key = typeof msg.key === 'string' ? msg.key : '';
+          if (!ALLOWED_STATUS_BAR_SETTING_KEYS.has(key)) break;
+          await vscode.workspace.getConfiguration('claudeHub').update(
+            key,
+            msg.value,
+            vscode.ConfigurationTarget.Global,
+          );
+          this.sendConfigUpdate();
+          break;
+        }
 
         case 'enableOutputSpeed':
           await vscode.commands.executeCommand('claudeHub.enableOutputSpeed');
@@ -154,7 +270,6 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
             folder = await this.pickWorkspace();
           }
           if (!folder) {
-            // Rollback optimistic checkbox — no write happened
             this.sendConfigUpdate();
             if (folders.length === 0) {
               vscode.window.showInformationMessage(t('task.noProject'));
@@ -399,10 +514,9 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           break;
         }
 
-        case 'startWorktreeSession': {
+        case 'startWorktreeSession':
           await vscode.commands.executeCommand('claudeHub.startWorktreeSession', msg.worktreeName);
           break;
-        }
 
         case 'openSkill':
           if (msg.filePath) {
@@ -454,64 +568,58 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           break;
 
         case 'openClaudeMd':
-          await this.configManager.openProjectDocFile(msg.docType);
-          this.sendConfigUpdate();
-          break;
-
         case 'openProjectDoc':
           await this.configManager.openProjectDocFile(msg.docType);
           this.sendConfigUpdate();
           break;
 
-        
-        case 'compareFork': {
+        case 'compareFork':
           await vscode.commands.executeCommand('claudeHub.compareFork', msg.sessionId);
           break;
-        }
-        case 'editSessionTags': {
+
+        case 'editSessionTags':
           await vscode.commands.executeCommand('claudeHub.editSessionTags', msg.sessionId);
           break;
-        }
-        case 'showTimeline': {
+
+        case 'showTimeline':
           await vscode.commands.executeCommand('claudeHub.showTimeline', msg.sessionId);
           break;
-        }
-        case 'togglePinSession': {
+
+        case 'togglePinSession':
           await vscode.commands.executeCommand('claudeHub.togglePinSession', msg.sessionId);
           break;
-        }
-        case 'exportSession': {
+
+        case 'exportSession':
           await vscode.commands.executeCommand('claudeHub.exportSession', msg.sessionId);
           break;
-        }
-        case 'workspaceCostReport': {
+
+        case 'workspaceCostReport':
           await vscode.commands.executeCommand('claudeHub.workspaceCostReport');
           break;
-        }
-        case 'searchTranscript': {
+
+        case 'searchTranscript':
           await vscode.commands.executeCommand('claudeHub.searchTranscript');
           break;
-        }
-        case 'openBackgroundTasks': {
+
+        case 'openBackgroundTasks':
           await vscode.commands.executeCommand('claudeHub.openBackgroundTasks');
           break;
-        }
-        case 'resumeSession': {
+
+        case 'resumeSession':
           await vscode.commands.executeCommand('claudeHub.resumeSession', msg.sessionId);
           break;
-        }
-        case 'renameSession': {
+
+        case 'renameSession':
           await vscode.commands.executeCommand('claudeHub.renameSession', msg.sessionId);
           break;
-        }
-        case 'slashCommand': {
+
+        case 'slashCommand':
           await vscode.commands.executeCommand('claudeHub.slashCommand');
           break;
-        }
-        case 'openWorktree': {
+
+        case 'openWorktree':
           await vscode.commands.executeCommand('claudeHub.openWorktree', msg.worktreePath);
           break;
-        }
 
         case 'newConversation': {
           try {
@@ -526,24 +634,88 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           break;
         }
 
-        case 'copyText': {
+        case 'copyText':
           if (msg.text) {
             await vscode.env.clipboard.writeText(msg.text);
           }
           break;
-        }
-      }
-    });
-
-    webviewView.onDidChangeVisibility(() => {
-      if (webviewView.visible) {
-        this.sendSessionUpdate();
       }
     });
   }
 
+  private buildUiStrings(): Record<string, string> {
+    return {
+      tbRefresh: t('tb.refresh'),
+      tbRefreshShort: t('tb.refreshShort'),
+      tbOpenTab: t('tb.openTab'),
+      tbSlash: t('tb.slash'),
+      tbSearch: t('tb.search'),
+      tbCost: t('tb.cost'),
+      tbTasks: t('tb.tasks'),
+      tbWorktree: t('tb.worktree'),
+      tbFilter: t('tb.filter'),
+      tbFilterWs: t('tb.filterWs'),
+      tbFilterAll: t('tb.filterAll'),
+      tbFilterWsShort: t('tb.filterWsShort'),
+      tbFilterAllShort: t('tb.filterAllShort'),
+      tabMonitor: t('ui.tab.monitor'),
+      tabSessions: t('ui.tab.sessions'),
+      tabExtensions: t('ui.tab.extensions'),
+      tabSettings: t('ui.tab.settings'),
+      scopeWindow: t('ui.scope.window'),
+      scopeAll: t('ui.scope.all'),
+      todoToolsTitle: t('todoTools.title'),
+      todoToolsToggle: t('todoTools.toggle'),
+      todoToolsCaveat: t('todoTools.caveat'),
+      todoToolsOn: t('todoTools.on'),
+      todoToolsOff: t('todoTools.off'),
+      todoToolsEffectiveOn: t('todoTools.effectiveOn'),
+      todoToolsEffectiveOff: t('todoTools.effectiveOff'),
+      todoToolsObserved: t('todoTools.observed'),
+      todoToolsHooksNote: t('todoTools.hooksNote'),
+      planNoChecklistWarn: t('task.planNoChecklistWarn'),
+      chipPending: t('task.chipPending'),
+      chipActive: t('task.chipActive'),
+      chipDone: t('task.chipDone'),
+      expand: t('task.expand'),
+      collapse: t('task.collapse'),
+      hubTodosTitle: t('task.hubTodosTitle'),
+      hubTodosHint: t('task.hubTodosHint'),
+      clearHideOnly: t('task.clearHideOnly'),
+      pickList: t('task.pickList'),
+      needsList: t('task.needsList'),
+      creating: t('task.creating'),
+      depends: t('task.depends'),
+      blocks: t('task.blocks'),
+      sourceNative: t('task.sourceNative'),
+      sourceTasks: t('task.sourceTasks'),
+      sourceTodoWrite: t('task.sourceTodoWrite'),
+      sourcePlan: t('task.sourcePlan'),
+      sourceMarkdown: t('task.sourceMarkdown'),
+      sourceNone: t('task.sourceNone'),
+      listId: t('task.listId'),
+      optInHint: t('task.optInHint'),
+      modeTask: t('task.modeTask'),
+      modeChecklist: t('task.modeChecklist'),
+      modeNone: t('task.modeNone'),
+      checklistAlso: t('task.checklistAlso'),
+      checklistHidden: t('task.checklistHidden'),
+      speedLabel: t('speed.label'),
+      speedHint: t('speed.hint'),
+      speedEnable: t('speed.enable'),
+      speedWaiting: t('speed.waiting'),
+      speedLast: t('speed.last'),
+      speedSampling: t('speed.sampling'),
+      speedUnsupported: t('speed.unsupported'),
+      speedTerminalEnabled: t('speed.terminalEnabled'),
+      speedSourceTranscript: t('speed.sourceTranscript'),
+      speedSourceStatusLine: t('speed.sourceStatusLine'),
+      speedMeasuredAt: t('speed.measuredAt'),
+    };
+  }
+
   public sendSessionUpdate(): void {
-    if (!this._view) return;
+    if (!this.hasAnyView()) return;
     const session = this.sessionManager.focusedSession;
     let cost = '< $0.001';
     if (session) {
@@ -579,6 +751,8 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       parentSessionId: s.parentSessionId,
       sessionFile: s.sessionFile,
       gitBranch: s.gitBranch,
+      durationMs: s.durationMs,
+      totalSpanMs: s.totalSpanMs,
       agentsCount: s.totalAgentsCount ?? (s.agents?.length || 0),
       subagentsTotalTokens: s.subagentsTotalTokens,
       loopState: s.loopState,
@@ -604,7 +778,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
         }
       : null;
 
-    this._view.webview.postMessage({
+    this.postToViews({
       type: 'updateSession',
       session: sessionPayload,
       allSessions,
@@ -615,78 +789,40 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
       subscriptionError: lastSubscriptionFetchError ? lastSubscriptionFetchError.message : undefined,
       pinnedSessionIds: getPinnedSessionIds(this.context),
       cost,
-      ui: {
-        tbRefresh: t('tb.refresh'),
-        tbRefreshShort: t('tb.refreshShort'),
-        tbSlash: t('tb.slash'),
-        tbSearch: t('tb.search'),
-        tbCost: t('tb.cost'),
-        tbTasks: t('tb.tasks'),
-        tbWorktree: t('tb.worktree'),
-        tbFilter: t('tb.filter'),
-        tbFilterWs: t('tb.filterWs'),
-        tbFilterAll: t('tb.filterAll'),
-        tbFilterWsShort: t('tb.filterWsShort'),
-        tbFilterAllShort: t('tb.filterAllShort'),
-        todoToolsTitle: t('todoTools.title'),
-        todoToolsToggle: t('todoTools.toggle'),
-        todoToolsCaveat: t('todoTools.caveat'),
-        todoToolsOn: t('todoTools.on'),
-        todoToolsOff: t('todoTools.off'),
-        todoToolsEffectiveOn: t('todoTools.effectiveOn'),
-        todoToolsEffectiveOff: t('todoTools.effectiveOff'),
-        todoToolsObserved: t('todoTools.observed'),
-        todoToolsHooksNote: t('todoTools.hooksNote'),
-        planNoChecklistWarn: t('task.planNoChecklistWarn'),
-        chipPending: t('task.chipPending'),
-        chipActive: t('task.chipActive'),
-        chipDone: t('task.chipDone'),
-        expand: t('task.expand'),
-        collapse: t('task.collapse'),
-        hubTodosTitle: t('task.hubTodosTitle'),
-        hubTodosHint: t('task.hubTodosHint'),
-        clearHideOnly: t('task.clearHideOnly'),
-        pickList: t('task.pickList'),
-        needsList: t('task.needsList'),
-        creating: t('task.creating'),
-        depends: t('task.depends'),
-        blocks: t('task.blocks'),
-        sourceNative: t('task.sourceNative'),
-        sourceTasks: t('task.sourceTasks'),
-        sourceTodoWrite: t('task.sourceTodoWrite'),
-        sourcePlan: t('task.sourcePlan'),
-        sourceMarkdown: t('task.sourceMarkdown'),
-        sourceNone: t('task.sourceNone'),
-        listId: t('task.listId'),
-        optInHint: t('task.optInHint'),
-        modeTask: t('task.modeTask'),
-        modeChecklist: t('task.modeChecklist'),
-        modeNone: t('task.modeNone'),
-        checklistAlso: t('task.checklistAlso'),
-        checklistHidden: t('task.checklistHidden'),
-        speedLabel: t('speed.label'),
-        speedHint: t('speed.hint'),
-        speedEnable: t('speed.enable'),
-        speedWaiting: t('speed.waiting'),
-        speedLast: t('speed.last'),
-        speedSampling: t('speed.sampling'),
-        speedUnsupported: t('speed.unsupported'),
-        speedTerminalEnabled: t('speed.terminalEnabled'),
-        speedSourceTranscript: t('speed.sourceTranscript'),
-        speedSourceStatusLine: t('speed.sourceStatusLine'),
-        speedMeasuredAt: t('speed.measuredAt'),
-      },
+      ui: this.buildUiStrings(),
     });
   }
 
   public sendConfigUpdate(): void {
-    if (!this._view) return;
-    this._view.webview.postMessage({
+    if (!this.hasAnyView()) return;
+    const cfg = vscode.workspace.getConfiguration('claudeHub');
+    const statusBarConfig = {
+      style: cfg.get<string>('statusBar.style', 'modern') === 'classic' ? 'classic' : 'modern',
+      preset: cfg.get<string>('statusBar.preset', 'compact'),
+      separator: cfg.get<string>('statusBar.separator', 'dot') === 'pipe' ? 'pipe' : 'dot',
+      contextFormat: cfg.get<string>('statusBar.contextFormat', 'percent'),
+      clickAction: cfg.get<string>('statusBar.clickAction', 'openDashboard'),
+      hideWhenInactive: cfg.get<boolean>('statusBar.hideWhenInactive', true) !== false,
+      showContext: cfg.get<boolean>('statusBar.showContext', true) !== false,
+      showProgressBar: cfg.get<boolean>('statusBar.showProgressBar', false) === true,
+      showSpeed: cfg.get<boolean>('statusBar.showSpeed', true) !== false,
+      showModel: cfg.get<boolean>('statusBar.showModel', true) !== false,
+      showCost: cfg.get<boolean>('statusBar.showCost', false) === true,
+      showTools: cfg.get<boolean>('statusBar.showTools', true) !== false,
+      showDuration: cfg.get<boolean>('statusBar.showDuration', false) === true,
+      showTodos: cfg.get<boolean>('statusBar.showTodos', false) === true,
+      showAgents: cfg.get<boolean>('statusBar.showAgents', false) === true,
+      showGitBranch: cfg.get<boolean>('statusBar.showGitBranch', false) === true,
+      tooltipSections: resolveTooltipSections(cfg),
+    };
+
+    this.postToViews({
       type: 'loadConfig',
       config: this.configManager.getClaudeSettings(),
+      statusBarConfig,
       projectDocs: this.configManager.getProjectDocStatus(),
       todoToolsEnabledSetting: (() => {
-        const desired = vscode.workspace.getConfiguration('claudeHub').get<boolean>('todoTools.enabled', false) === true;
+        const desired = cfg.get<boolean>('todoTools.enabled', false) === true;
         const folders = vscode.workspace.workspaceFolders || [];
         let anyEnvOn = false;
         for (const folder of folders) {
@@ -698,13 +834,8 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           const st = this.taskIntegration.status(folder.uri.fsPath);
           if (st.envEnabled) anyEnvOn = true;
         }
-        // Mirror file → setting when Hub-owned env is on but setting still false
         if (anyEnvOn && !desired) {
-          void vscode.workspace.getConfiguration('claudeHub').update(
-            'todoTools.enabled',
-            true,
-            vscode.ConfigurationTarget.Workspace,
-          );
+          void cfg.update('todoTools.enabled', true, vscode.ConfigurationTarget.Workspace);
           return true;
         }
         return desired;
@@ -714,67 +845,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
           session.taskToolsObserved && isPathInWorkspace(session.projectPath, [folder.uri.fsPath]));
         return this.taskIntegration.status(folder.uri.fsPath, observed);
       }),
-      ui: {
-        tbRefresh: t('tb.refresh'),
-        tbRefreshShort: t('tb.refreshShort'),
-        tbSlash: t('tb.slash'),
-        tbSearch: t('tb.search'),
-        tbCost: t('tb.cost'),
-        tbTasks: t('tb.tasks'),
-        tbWorktree: t('tb.worktree'),
-        tbFilter: t('tb.filter'),
-        tbFilterWs: t('tb.filterWs'),
-        tbFilterAll: t('tb.filterAll'),
-        tbFilterWsShort: t('tb.filterWsShort'),
-        tbFilterAllShort: t('tb.filterAllShort'),
-        todoToolsTitle: t('todoTools.title'),
-        todoToolsToggle: t('todoTools.toggle'),
-        todoToolsCaveat: t('todoTools.caveat'),
-        todoToolsOn: t('todoTools.on'),
-        todoToolsOff: t('todoTools.off'),
-        todoToolsEffectiveOn: t('todoTools.effectiveOn'),
-        todoToolsEffectiveOff: t('todoTools.effectiveOff'),
-        todoToolsObserved: t('todoTools.observed'),
-        todoToolsHooksNote: t('todoTools.hooksNote'),
-        planNoChecklistWarn: t('task.planNoChecklistWarn'),
-        chipPending: t('task.chipPending'),
-        chipActive: t('task.chipActive'),
-        chipDone: t('task.chipDone'),
-        expand: t('task.expand'),
-        collapse: t('task.collapse'),
-        hubTodosTitle: t('task.hubTodosTitle'),
-        hubTodosHint: t('task.hubTodosHint'),
-        clearHideOnly: t('task.clearHideOnly'),
-        pickList: t('task.pickList'),
-        needsList: t('task.needsList'),
-        creating: t('task.creating'),
-        depends: t('task.depends'),
-        blocks: t('task.blocks'),
-        sourceNative: t('task.sourceNative'),
-        sourceTasks: t('task.sourceTasks'),
-        sourceTodoWrite: t('task.sourceTodoWrite'),
-        sourcePlan: t('task.sourcePlan'),
-        sourceMarkdown: t('task.sourceMarkdown'),
-        sourceNone: t('task.sourceNone'),
-        listId: t('task.listId'),
-        optInHint: t('task.optInHint'),
-        modeTask: t('task.modeTask'),
-        modeChecklist: t('task.modeChecklist'),
-        modeNone: t('task.modeNone'),
-        checklistAlso: t('task.checklistAlso'),
-        checklistHidden: t('task.checklistHidden'),
-        speedLabel: t('speed.label'),
-        speedHint: t('speed.hint'),
-        speedEnable: t('speed.enable'),
-        speedWaiting: t('speed.waiting'),
-        speedLast: t('speed.last'),
-        speedSampling: t('speed.sampling'),
-        speedUnsupported: t('speed.unsupported'),
-        speedTerminalEnabled: t('speed.terminalEnabled'),
-        speedSourceTranscript: t('speed.sourceTranscript'),
-        speedSourceStatusLine: t('speed.sourceStatusLine'),
-        speedMeasuredAt: t('speed.measuredAt'),
-      },
+      ui: this.buildUiStrings(),
     });
   }
 
@@ -790,9 +861,9 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
   }
 
   public sendExtensionsUpdate(): void {
-    if (!this._view) return;
+    if (!this.hasAnyView()) return;
     const session = this.sessionManager.focusedSession;
-    this._view.webview.postMessage({
+    this.postToViews({
       type: 'loadExtensions',
       mcpServers: this.featuresManager.getMcpServers(),
       plugins: this.featuresManager.getPlugins(),
@@ -803,6 +874,7 @@ export class ClaudeHubDashboardProvider implements vscode.WebviewViewProvider, v
   }
 
   public dispose(): void {
-    // Resources cleanup
+    this._panel?.dispose();
+    this._panel = undefined;
   }
 }

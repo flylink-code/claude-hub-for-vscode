@@ -3,18 +3,26 @@ import assert from 'node:assert/strict';
 import { runInNewContext } from 'node:vm';
 import { getWebviewContent } from '../src/webviewHtml.js';
 
-test('dashboard restores saved panels and local filters across a rebuilt webview', () => {
+test('dashboard restores saved active tab, reader selection, and local filters across a rebuilt webview', () => {
   const html = getWebviewContent();
   const start = html.indexOf('    // 同步保存至 Webview');
-  const end = html.indexOf('    // 保存折叠状态', start);
+  const end = html.indexOf('    let userToggledAgents =', start);
   assert.ok(start > 0 && end > start);
   const source = html.slice(start, end);
-  const sections = ['sec-monitor', 'sec-sessions', 'sec-extensions', 'sec-advanced'];
+  const tabs = ['monitor', 'sessions', 'extensions', 'settings'];
   const nodes: Record<string, any> = {};
-  for (const id of [...sections, 'session-search', 'ext-search-input', 'ext-search-clear', 'chip-all', 'chip-ws', 'chip-pinned', 'chip-active']) {
+  for (const id of [
+    ...tabs.map(t => 'tab-btn-' + t),
+    ...tabs.map(t => 'view-' + t),
+    'session-search', 'ext-search-input', 'ext-search-clear', 'chip-all', 'chip-ws', 'chip-pinned', 'chip-active',
+  ]) {
     const classes = new Set(id === 'chip-all' ? ['active'] : []);
     nodes[id] = {
-      value: '', style: {},
+      value: '',
+      hidden: id.startsWith('view-') && id !== 'view-monitor',
+      attrs: {} as Record<string, string>,
+      style: {},
+      setAttribute(name: string, val: string) { this.attrs[name] = val; },
       classList: {
         contains: (name: string) => classes.has(name),
         toggle: (name: string, force?: boolean) => (force ?? !classes.has(name)) ? classes.add(name) : classes.delete(name),
@@ -25,7 +33,8 @@ test('dashboard restores saved panels and local filters across a rebuilt webview
   }
   const sent: any[] = [];
   const state = {
-    sections: { 'sec-monitor': true, 'sec-sessions': false, 'sec-extensions': false, 'sec-advanced': true },
+    activeTab: 'sessions',
+    selectedReaderSessionId: 'sess-42',
     sessionFilter: 'pinned', searchKeyword: 'alpha', extActiveTab: 'skills', extSkillScope: 'plugin',
     extSearchQuery: 'memory', extGroupManualState: { mcp: true }, extShowAllPlugins: true, extShowAllLocalSkills: false,
   };
@@ -37,22 +46,24 @@ test('dashboard restores saved panels and local filters across a rebuilt webview
     requestAnimationFrame: (callback: () => void) => callback(),
     document: {
       getElementById: (id: string) => nodes[id],
-      querySelectorAll: () => sections.slice(0, 0).concat(['chip-all', 'chip-ws', 'chip-pinned', 'chip-active']).map(id => nodes[id]),
+      querySelectorAll: () => ['chip-all', 'chip-ws', 'chip-pinned', 'chip-active'].map(id => nodes[id]),
     },
-    localStorage: { getItem: () => null },
     currentFilter: 'all', searchKeyword: '', extActiveTab: 'all', extSkillScope: 'all', extSearchQuery: '',
     extGroupManualState: {}, extShowAllPlugins: false, extShowAllLocalSkills: false,
-    syncSectionState: () => {}, renderExtensionsPanel: () => {}, renderSessionsList: () => {},
+    renderExtensionsPanel: () => {}, renderSessionsList: () => {}, renderSessionReader: () => {},
     sendMessage: (type: string, payload: unknown) => sent.push({ type, payload }),
   };
-  runInNewContext(source + '\nrestoreUiState(input); saveUiState(); result = { currentFilter, searchKeyword, extActiveTab, extSkillScope, extSearchQuery, extGroupManualState, extShowAllPlugins };',
+  runInNewContext(source + '\nrestoreUiState(input); saveUiState(); result = { activeTab, selectedReaderSessionId, currentFilter, searchKeyword, extActiveTab, extSkillScope, extSearchQuery, extGroupManualState, extShowAllPlugins };',
     { ...context, input: state, result: null });
   const saved = sent[0];
-  assert.equal(nodes['sec-monitor'].classList.contains('collapsed'), true);
-  assert.equal(nodes['sec-advanced'].classList.contains('collapsed'), true);
+  assert.equal(nodes['tab-btn-sessions'].attrs['aria-selected'], 'true');
+  assert.equal(nodes['view-sessions'].hidden, false);
+  assert.equal(nodes['view-monitor'].hidden, true);
   assert.equal(nodes['chip-pinned'].classList.contains('active'), true);
   assert.equal(nodes['session-search'].value, 'alpha');
   assert.equal(nodes['ext-search-input'].value, 'memory');
+  assert.equal(saved.activeTab, 'sessions');
+  assert.equal(saved.selectedReaderSessionId, 'sess-42');
   assert.equal(saved.sessionFilter, 'pinned');
   assert.equal(saved.extActiveTab, 'skills');
   assert.equal(saved.extSkillScope, 'plugin');

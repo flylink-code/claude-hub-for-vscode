@@ -356,18 +356,36 @@ export function registerCommands(
 
     vscode.commands.registerCommand('claudeHub.configureStatusBar', async () => {
       const currentConfig = vscode.workspace.getConfiguration('claudeHub');
+      const currentStyle = currentConfig.get<string>('statusBar.style', 'modern') === 'classic' ? 'classic' : 'modern';
+      const nextStyle = currentStyle === 'modern' ? 'classic' : 'modern';
       const presets = [
-        { label: '$(dashboard) compact', description: 'Compact', preset: 'compact' },
-        { label: '$(minify) minimal', description: 'Minimal', preset: 'minimal' },
-        { label: '$(list-flat) detailed', description: 'Detailed', preset: 'detailed' },
-        { label: '$(pulse) hud', description: 'HUD', preset: 'hud' },
-        { label: '$(settings-gear) custom…', description: 'Open settings', preset: 'custom-open' },
+        {
+          label: `$(paintcan) style: ${currentStyle} → ${nextStyle}`,
+          description: currentStyle === 'modern' ? 'Switch to Classic (v0.2)' : 'Switch to Modern (v0.3 Speedometer)',
+          preset: 'toggle-style',
+        },
+        { label: '$(dashboard) compact', description: 'Compact (default)', preset: 'compact' },
+        { label: '$(zap) speed', description: 'Speed-first (tok/s · Model)', preset: 'speed' },
+        { label: '$(minify) minimal', description: 'Minimal (percentage only)', preset: 'minimal' },
+        { label: '$(pulse) hud', description: 'HUD ([Model] bar %)', preset: 'hud' },
+        { label: '$(list-flat) detailed', description: 'Detailed (all metrics)', preset: 'detailed' },
+        { label: '$(sliders) Visual customizer…', description: 'Open Settings tab in Claude Hub', preset: 'custom-ui' },
+        { label: '$(settings-gear) VS Code settings…', description: 'Open claudeHub.statusBar settings', preset: 'custom-open' },
       ];
       const picked = await vscode.window.showQuickPick(presets, {
-        placeHolder: 'Claude Hub status bar style',
+        placeHolder: 'Claude Hub status bar & tooltip style',
       });
       if (!picked) return;
-      if (picked.preset === 'custom-open') {
+      if (picked.preset === 'toggle-style') {
+        await currentConfig.update('statusBar.style', nextStyle, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Status bar style → ${nextStyle}`);
+      } else if (picked.preset === 'custom-ui') {
+        if (dashboardProvider) {
+          await dashboardProvider.showSettingsTab();
+        } else {
+          await vscode.commands.executeCommand('workbench.action.openSettings', 'claudeHub.statusBar');
+        }
+      } else if (picked.preset === 'custom-open') {
         await vscode.commands.executeCommand('workbench.action.openSettings', 'claudeHub.statusBar');
       } else {
         await currentConfig.update('statusBar.preset', picked.preset, vscode.ConfigurationTarget.Global);
@@ -634,7 +652,7 @@ export function registerCommands(
       }
     }),
 
-        vscode.commands.registerCommand('claudeHub.openDashboard', async () => {
+    vscode.commands.registerCommand('claudeHub.openDashboard', async () => {
       if (dashboardProvider) {
         await dashboardProvider.show();
         return;
@@ -649,6 +667,10 @@ export function registerCommands(
       } catch {
         /* fallback */
       }
+    }),
+
+    vscode.commands.registerCommand('claudeHub.openDashboardTab', () => {
+      dashboardProvider?.openInEditorTab();
     }),
   );
 }

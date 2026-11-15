@@ -318,10 +318,10 @@ import { ClaudeFeaturesManager, parseFrontmatterFields } from '../src/claudeFeat
 test('getWebviewContent returns valid HTML with sections and controls', () => {
   const html = getWebviewContent();
   assert.ok(html.includes('<!DOCTYPE html>'));
-  assert.ok(html.includes('sec-monitor'));
-  assert.ok(html.includes('sec-sessions'));
-  assert.ok(html.includes('sec-extensions'));
-  assert.ok(html.includes('sec-advanced'));
+  assert.ok(html.includes('view-monitor'));
+  assert.ok(html.includes('view-sessions'));
+  assert.ok(html.includes('view-extensions'));
+  assert.ok(html.includes('view-settings'));
   assert.ok(html.includes('agents-container'));
   assert.ok(html.includes('agents-list'));
   assert.ok(html.includes('toggleAgentsList'));
@@ -334,7 +334,10 @@ test('getWebviewContent returns valid HTML with sections and controls', () => {
   assert.ok(html.includes('data-action="openSessionFile"'));
   assert.ok(html.includes('data-action="toggleMcp"'));
   assert.ok(html.includes('data-action="openSkill"'));
-  assert.ok(html.includes('id="top-filter-btn"'));
+  assert.ok(html.includes('id="hdr-refresh-btn"'));
+  assert.ok(html.includes('id="hdr-open-tab-btn"'));
+  assert.ok(html.includes('id="monitor-scope-ws"'));
+  assert.ok(html.includes('id="monitor-scope-all"'));
   assert.ok(html.includes('id="btn-open-agents-md"'));
   assert.ok(html.includes('id="btn-open-claude-md"'));
   assert.ok(html.includes('id="session-dur-label"'));

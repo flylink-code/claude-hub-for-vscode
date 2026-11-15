@@ -2,64 +2,63 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getWebviewContent } from '../src/webviewHtml.js';
 
-test('top-actions icon toolbar uses equal icon/label slots and narrow hide rule', () => {
-  const html = getWebviewContent();
-  assert.ok(html.includes('class="top-actions"'));
-  assert.ok(html.includes('icon-btn-icon'));
-  assert.ok(html.includes('icon-btn-text'));
-  assert.ok(html.includes('id="top-filter-btn"'));
-  assert.ok(html.includes('data-i18n-title="tbRefresh"'));
-  assert.ok(html.includes('.top-actions .icon-btn-text'));
-  assert.ok(html.includes('min-width: 26px'));
-  assert.ok(html.includes('function setIconBtnLabel'));
-  assert.ok(html.includes('function applyToolbarI18n'));
-  // no legacy plain text-only refresh chip
-  assert.ok(!html.includes(">🔄 刷新</button>"));
-  // filter is icon-only (no short WS/工作区 label) with soft active (no accent border)
-  assert.ok(html.includes("#top-filter-btn .icon-btn-text"));
-  assert.ok(html.includes("setIconBtnLabel(btn, '📁', '')"));
-  assert.ok(html.includes("setIconBtnLabel(btn, '🌐', '')"));
-  assert.ok(html.includes("border-color: transparent"));
-  assert.ok(!html.includes('data-role="label">过滤</span>'));
+test('sticky header uses 4 tabs and crisp SVG-only header actions', () => {
+  const sidebarHtml = getWebviewContent({ isSidebar: true });
+  assert.ok(sidebarHtml.includes('class="hub-header"'));
+  assert.ok(sidebarHtml.includes('class="tabs"'));
+  assert.ok(sidebarHtml.includes('id="tab-btn-monitor"'));
+  assert.ok(sidebarHtml.includes('id="tab-btn-sessions"'));
+  assert.ok(sidebarHtml.includes('id="tab-btn-extensions"'));
+  assert.ok(sidebarHtml.includes('id="tab-btn-settings"'));
+  assert.ok(sidebarHtml.includes('id="hdr-refresh-btn"'));
+  assert.ok(sidebarHtml.includes('id="hdr-open-tab-btn"'));
+  assert.ok(sidebarHtml.includes('function switchMainTab'));
+  assert.ok(sidebarHtml.includes('function applyToolbarI18n'));
+
+  const actionsStart = sidebarHtml.indexOf('<div class="head-actions"');
+  const actionsEnd = sidebarHtml.indexOf('</div>', actionsStart);
+  assert.ok(actionsStart > 0 && actionsEnd > actionsStart);
+  const toolbar = sidebarHtml.slice(actionsStart, actionsEnd);
+  assert.equal((toolbar.match(/class="icon-btn"/g) || []).length, 2);
+  assert.equal((toolbar.match(/<svg class="ic"/g) || []).length, 2);
+
+  // Editor tab host hides the "open in editor tab" button and omits sidebar-narrow body class
+  const tabHtml = getWebviewContent({ isSidebar: false });
+  assert.match(tabHtml, /<body class="">/);
+  assert.match(tabHtml, /id="hdr-open-tab-btn"[^>]*style="display: none;"/);
 });
 
-test('dashboard uses theme tokens and accessible accordion headers', () => {
+test('dashboard uses theme tokens, accessible tabs, and switches', () => {
   const html = getWebviewContent();
-  assert.match(html, /--hub-focus:\s*var\(--vscode-focusBorder/);
-  assert.match(html, /--hub-hover:\s*var\(--vscode-list-hoverBackground/);
+  assert.match(html, /--accent:\s*var\(--vscode-focusBorder/);
+  assert.match(html, /--hover:\s*var\(--vscode-list-hoverBackground/);
+  assert.match(html, /--hub-focus:\s*var\(--accent\)/);
   assert.match(html, /button:focus-visible/);
-  assert.equal((html.match(/class="section-header" role="button" tabindex="0"/g) || []).length, 4);
-  assert.match(html, /header\.setAttribute\('aria-expanded'/);
-  assert.match(html, /event\.key === 'Enter' \|\| event\.key === ' '/);
+  assert.match(html, /\[role="tab"\]:focus-visible/);
+  assert.match(html, /\[role="switch"\]:focus-visible/);
+  assert.equal((html.match(/<button[^>]+role="tab"/g) || []).length, 4);
+  assert.equal((html.match(/<main[^>]+role="tabpanel"/g) || []).length, 4);
 });
 
-test('top bar is unified into one theme header with icon-only actions', () => {
+test('secondary actions are placed contextually in Monitor and Sessions tabs', () => {
   const html = getWebviewContent();
-  assert.match(html, /\.top-bar\s*\{[^}]*background:\s*var\(--card-bg\)/);
-  assert.match(html, /\.top-bar\s*\{[^}]*border:\s*1px solid var\(--card-border\)/);
-  assert.ok(html.includes('class="top-brand-mark"'));
-  assert.ok(html.includes('class="top-brand-name"'));
+  const monitorStart = html.indexOf('id="view-monitor"');
+  const sessionsStart = html.indexOf('id="view-sessions"');
+  const extensionsStart = html.indexOf('id="view-extensions"');
+  assert.ok(monitorStart > 0 && sessionsStart > monitorStart && extensionsStart > sessionsStart);
 
-  const start = html.indexOf('<div class="top-actions"');
-  const end = html.indexOf('</div>', start);
-  assert.ok(start > 0 && end > start);
-  const toolbar = html.slice(start, end);
-  assert.equal((toolbar.match(/class="icon-btn(?: active)?"/g) || []).length, 7);
-  assert.equal((toolbar.match(/class="icon-btn-icon"/g) || []).length, 7);
-  assert.equal((toolbar.match(/data-i18n-title=/g) || []).length, 7);
-  // Every action keeps an empty label slot so the rail stays visually uniform.
-  assert.doesNotMatch(toolbar, /data-role="label">[^<]+</);
-});
+  const monitorSlice = html.slice(monitorStart, sessionsStart);
+  assert.ok(monitorSlice.includes('id="monitor-scope-ws"'));
+  assert.ok(monitorSlice.includes('id="monitor-scope-all"'));
+  assert.ok(monitorSlice.includes('data-action="slashCommand"'));
+  assert.ok(monitorSlice.includes('data-action="openBackgroundTasks"'));
+  assert.ok(monitorSlice.includes('data-action="workspaceCostReport"'));
 
-test('section titles drop redundant English subtitles', () => {
-  const html = getWebviewContent();
-  assert.ok(html.includes('🕒 会话历史'));
-  assert.ok(html.includes('🧩 扩展与记忆'));
-  assert.ok(html.includes('🤖 协作代理拓扑'));
-  assert.doesNotMatch(
-    html,
-    /\(Session Manager\)|\(Agent Map\)|\(Memory · Plugins · MCP · Skills\)|\(Memory\)|\(Plugins\)|\(Agents\)|\(Skills\)/
-  );
+  const sessionsSlice = html.slice(sessionsStart, extensionsStart);
+  assert.ok(sessionsSlice.includes('data-action="searchTranscript"'));
+  assert.ok(sessionsSlice.includes('data-action="startWorktreeSession"'));
+  assert.ok(sessionsSlice.includes('id="sessions-split"'));
+  assert.ok(sessionsSlice.includes('id="session-reader"'));
 });
 
 test('first-screen monitor facts wrap instead of clipping model, branch, and duration', () => {
@@ -69,7 +68,6 @@ test('first-screen monitor facts wrap instead of clipping model, branch, and dur
   assert.match(html, /\.hud-fact-value\s*\{[^}]*overflow-wrap:\s*anywhere/);
   assert.match(html, /\.hud-fact-model\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/);
   assert.match(html, /class="hud-fact hud-fact-model"[^>]*>[\s\S]*?id="model-tag"/);
-  assert.ok(!/\.hud-info-row > span\s*\{[^}]*text-overflow:\s*ellipsis/.test(html));
   for (const id of ['model-tag', 'branch-tag', 'cost-label', 'session-dur-label']) {
     assert.ok(html.includes('id="' + id + '" class="hud-fact-value"'), 'missing monitor fact: ' + id);
   }
@@ -88,14 +86,11 @@ test('search input and task cards use the host theme instead of dark-only fills'
   assert.match(rule('todos-mode-chip.task'), /background:\s*var\(--vscode-button-background/);
 });
 
-test('section headers inherit the outer corner radius so focus rings stay closed', () => {
+test('hero, kpi, session cards, and running banner clip background to padding box', () => {
   const html = getWebviewContent();
   const rule = (selector: string) =>
     html.match(new RegExp('\\.' + selector.replaceAll('.', '\\.') + '\\s*\\{([^}]*)\\}'))?.[1] || '';
-  // 5px = 6px 外圆角 - 1px 边框，避免方角背景盖住外层边框圆角
-  assert.match(rule('section-header'), /border-radius:\s*5px 5px 0 0/);
-  assert.match(rule('section-wrap.collapsed .section-header'), /border-radius:\s*5px/);
-  for (const selector of ['section-wrap', 'session-card', 'metric-bubble', 'running-bar']) {
+  for (const selector of ['hero', 'kpi', 'session-card', 'running-bar']) {
     assert.match(rule(selector), /background-clip:\s*padding-box/, selector + ' should clip its background to the padding box');
   }
   assert.match(rule('session-card'), /transition:\s*background-color[^;]*border-color/);
@@ -107,7 +102,7 @@ test('token progress fill keeps the theme color and has no inline background ove
   assert.ok(tokenFillTag);
   assert.ok(!/background/.test(tokenFillTag), 'token-fill must not set an inline background');
   assert.match(html, /\.progress-bar-fill\s*\{[^}]*background-color:\s*var\(--vscode-textLink-foreground/);
-  assert.ok(html.includes("document.getElementById('token-fill').style.width = Math.min(pct, 100) + '%'"));
+  assert.ok(html.includes("if (fillEl) fillEl.style.width = Math.min(pct, 100) + '%'"));
   assert.ok(!html.includes("token-fill').style.background"));
   assert.ok(html.includes("tokenBar.setAttribute('aria-valuenow'"));
 });

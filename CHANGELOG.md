@@ -2,6 +2,28 @@
 
 本文件记录 Claude Hub for VS Code 的版本变更。
 
+## [0.3.0] - 2026-11-15
+
+### 中文
+
+- **四分栏双宿主仪表盘：** 左侧栏升级为吸顶四分栏（`监控 / 会话 / 扩展 / 设置`），顶栏仅保留刷新与宽屏打开纯 SVG 按钮；新增 `Claude Hub: 在编辑器标签页打开仪表盘`（`claudeHub.openDashboardTab`），窄侧边栏单列钻取，宽屏编辑器自动切换为双栏 Master-Detail 视图。
+- **状态栏与悬浮窗双风格深度定制：**
+  - 新增 `claudeHub.statusBar.style`（默认 `modern` 表格对齐风与主题 Codicon；可一键切换回 `classic` 0.2 经典 Claude Hub 风格）。
+  - 新增 `speed`（速率优先）底栏预设，支持 `separator`（`dot` / `pipe`）、`clickAction`（新增 `openDashboardTab`）及 `showContext`、`showSpeed`、`showDuration`、`showAgents` 等 10 项底栏字段开关。
+  - 新增 `claudeHub.statusBar.tooltipSections`，支持独立裁剪悬浮窗 9 大信息区块；在「设置」Tab 内提供可视化实时配置工作台。
+- **协作代理拓扑溢出修复与扩展开关升级：** 修复超长 `worktree` 分支名及嵌套子代理卡片在极窄侧边栏下的横向溢出（`Bug.md`）；MCP 服务与插件启停按钮升级为无障碍 `.switch` 拨动开关。
+- **分支保留与静态预览：** 在 `release/v0.2.x` 分支锚定保留 0.2 系列；新增 `npm run preview` 生成脱离 VS Code 宿主的离线预览页。
+
+### English
+
+- **4-tab dual-host dashboard:** Redesigned the sidebar around a sticky 4-tab bar (`Monitor / Sessions / Extensions / Settings`) with SVG-only header actions (`Refresh` and `Open in Editor Tab`). Added `claudeHub.openDashboardTab` so narrow sidebars drill down single-column while wide editor tabs render a two-column Master-Detail reader.
+- **Dual-style customizable status bar & hover tooltip:**
+  - Added `claudeHub.statusBar.style` (`modern` borderless HTML tables & theme Codicons by default, or `classic` to retain the 0.2 Claude Hub style).
+  - Added the `speed` preset, `separator` (`dot` / `pipe`), `clickAction` (`openDashboardTab`), and 10 field toggles (`showContext`, `showSpeed`, `showDuration`, `showAgents`, etc.).
+  - Added `claudeHub.statusBar.tooltipSections` to toggle 9 independent hover-card sections, with a live visual customizer built directly into the **Settings** tab.
+- **Subagent topology overflow fix & UI polish:** Fixed horizontal overflow on nested subagents and long worktree branch chips in narrow sidebars (`Bug.md`), and upgraded MCP/Plugin toggles to accessible `.switch` controls.
+- **Legacy branch preservation & offline preview:** Preserved the 0.2.x line on `release/v0.2.x` and added `npm run preview` to generate standalone sidebar/editor preview HTMLs.
+
 ## [0.2.26] - 2026-11-13
 
 ### 中文

@@ -14,6 +14,7 @@ updated: 2026-11-13
 
 | 编号 | 决策 | 状态 | 详情 |
 | --- | --- | --- | --- |
+| 0002 | v0.3.0 采用四分栏双宿主 Webview + 右下角 Modern/Classic 双风格与 10+9 项深度自定义，保留 `release/v0.2.x` 维护分支 | accepted | `docs/adr/0002-v03-ui-architecture-and-dual-statusbar.md` |
 | 0001 | （待填：一句话结论） | accepted | `docs/adr/0001-xxx.md` |
 
 ## 草稿（成文后搬进 ADR，这里只留一行）

@@ -1,16 +1,48 @@
-export type StatusBarPreset = 'compact' | 'minimal' | 'detailed' | 'hud' | 'custom';
+export type StatusBarPreset = 'compact' | 'minimal' | 'speed' | 'detailed' | 'hud' | 'custom';
 export type StatusBarContextFormat = 'percent' | 'tokens' | 'both';
 export type StatusBarPosition = 'right' | 'left';
+export type StatusBarStyle = 'modern' | 'classic';
+export type StatusBarSeparator = 'dot' | 'pipe';
+
+export interface StatusBarTooltipSections {
+  context: boolean;
+  speed: boolean;
+  modelBranch: boolean;
+  activityDur: boolean;
+  tokens: boolean;
+  todos: boolean;
+  agents: boolean;
+  quota: boolean;
+  actions: boolean;
+}
+
+export const DEFAULT_TOOLTIP_SECTIONS: StatusBarTooltipSections = {
+  context: true,
+  speed: true,
+  modelBranch: true,
+  activityDur: true,
+  tokens: true,
+  todos: true,
+  agents: true,
+  quota: true,
+  actions: true,
+};
 
 export interface StatusBarRenderOptions {
   preset: StatusBarPreset;
+  style?: StatusBarStyle;
+  separator?: StatusBarSeparator;
   contextFormat: StatusBarContextFormat;
+  showContext?: boolean;
   showProgressBar: boolean;
+  showSpeed?: boolean;
   showModel: boolean;
   showCost: boolean;
   showGitBranch: boolean;
   showTodos: boolean;
   showTools: boolean;
+  showDuration?: boolean;
+  showAgents?: boolean;
 }
 
 export interface StatusBarFormatInput {
@@ -25,11 +57,32 @@ export interface StatusBarFormatInput {
   outputTokensPerSecond?: number;
   gitBranch?: string;
   todos?: Array<{ status?: string }>;
+  durationMs?: number;
+  agentsRunning?: number;
+  agentsTotal?: number;
   options: StatusBarRenderOptions;
 }
 
 export interface ConfigGetter {
   get<T>(key: string, defaultValue?: T): T | undefined;
+}
+
+export function resolveTooltipSections(config: ConfigGetter): StatusBarTooltipSections {
+  const raw = config.get<Partial<StatusBarTooltipSections>>('statusBar.tooltipSections', DEFAULT_TOOLTIP_SECTIONS);
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_TOOLTIP_SECTIONS };
+  }
+  return {
+    context: raw.context !== false,
+    speed: raw.speed !== false,
+    modelBranch: raw.modelBranch !== false,
+    activityDur: raw.activityDur !== false,
+    tokens: raw.tokens !== false,
+    todos: raw.todos !== false,
+    agents: raw.agents !== false,
+    quota: raw.quota !== false,
+    actions: raw.actions !== false,
+  };
 }
 
 export function formatProgressBar(percentage: number, length = 6): string {
@@ -108,71 +161,126 @@ export function shouldHideStatusBar(
   if (!session.isIdle) return false;
   return !(session.backgroundJobs || []).some((job) => job.status === 'running');
 }
+
 export function resolveRenderOptions(config: ConfigGetter): StatusBarRenderOptions {
   const preset = (config.get<StatusBarPreset>('statusBar.preset', 'compact') as StatusBarPreset) || 'compact';
+  const rawStyle = config.get<string>('statusBar.style', 'modern');
+  const style: StatusBarStyle = rawStyle === 'classic' ? 'classic' : 'modern';
+  const rawSep = config.get<string>('statusBar.separator', 'dot');
+  const separator: StatusBarSeparator = rawSep === 'pipe' ? 'pipe' : 'dot';
+  const showSpeed = config.get<boolean>('statusBar.showSpeed', true) ?? true;
 
   if (preset === 'minimal') {
     return {
       preset,
+      style,
+      separator,
       contextFormat: 'percent',
+      showContext: true,
       showProgressBar: false,
+      showSpeed: false,
       showModel: false,
       showCost: false,
       showGitBranch: false,
       showTodos: false,
       showTools: false,
+      showDuration: false,
+      showAgents: false,
+    };
+  }
+
+  if (preset === 'speed') {
+    return {
+      preset,
+      style,
+      separator,
+      contextFormat: 'percent',
+      showContext: false,
+      showProgressBar: false,
+      showSpeed: true,
+      showModel: true,
+      showCost: false,
+      showGitBranch: false,
+      showTodos: false,
+      showTools: true,
+      showDuration: false,
+      showAgents: false,
     };
   }
 
   if (preset === 'compact') {
     return {
       preset,
+      style,
+      separator,
       contextFormat: 'percent',
+      showContext: true,
       showProgressBar: false,
+      showSpeed,
       showModel: true,
       showCost: false,
       showGitBranch: false,
       showTodos: false,
       showTools: true,
+      showDuration: false,
+      showAgents: false,
     };
   }
 
   if (preset === 'detailed') {
     return {
       preset,
+      style,
+      separator,
       contextFormat: 'both',
+      showContext: true,
       showProgressBar: true,
+      showSpeed,
       showModel: true,
       showCost: true,
       showGitBranch: true,
       showTodos: true,
       showTools: true,
+      showDuration: false,
+      showAgents: false,
     };
   }
 
   if (preset === 'hud') {
     return {
       preset,
+      style,
+      separator: 'pipe',
       contextFormat: 'percent',
+      showContext: true,
       showProgressBar: true,
+      showSpeed,
       showModel: true,
       showCost: true,
       showGitBranch: false,
       showTodos: false,
       showTools: true,
+      showDuration: false,
+      showAgents: false,
     };
   }
 
   // Custom mode: read individual user configurations
   return {
     preset: 'custom',
+    style,
+    separator,
     contextFormat: (config.get<StatusBarContextFormat>('statusBar.contextFormat', 'percent') as StatusBarContextFormat) || 'percent',
+    showContext: config.get<boolean>('statusBar.showContext', true) ?? true,
     showProgressBar: config.get<boolean>('statusBar.showProgressBar', false) ?? false,
+    showSpeed,
     showModel: config.get<boolean>('statusBar.showModel', true) ?? true,
     showCost: config.get<boolean>('statusBar.showCost', false) ?? false,
     showGitBranch: config.get<boolean>('statusBar.showGitBranch', false) ?? false,
     showTodos: config.get<boolean>('statusBar.showTodos', false) ?? false,
     showTools: config.get<boolean>('statusBar.showTools', true) ?? true,
+    showDuration: config.get<boolean>('statusBar.showDuration', false) ?? false,
+    showAgents: config.get<boolean>('statusBar.showAgents', false) ?? false,
   };
 }
 
@@ -189,15 +297,20 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
     outputTokensPerSecond,
     gitBranch,
     todos,
+    durationMs,
+    agentsRunning = 0,
+    agentsTotal = 0,
     options,
   } = input;
 
+  const isModern = options.style === 'modern';
+  const sep = options.separator === 'pipe' ? ' │ ' : ' · ';
   const icon = hasRunningTool ? '$(sync~spin)' : '$(sparkle)';
   const pctStr = `${percentage}%`;
   const tokensStr = `${formatK(totalTokens)}/${formatK(contextLimit)}`;
   const speedText = formatOutputSpeed(outputTokensPerSecond);
-  // Minimal preset stays glanceable and intentionally omits optional extras.
-  const speedSuffix = options.preset !== 'minimal' && speedText !== '—' ? ` · ${speedText}` : '';
+  const speedEnabled = options.preset !== 'minimal' && options.showSpeed !== false;
+  const speedSuffix = speedEnabled && speedText !== '—' ? `${sep}${speedText}` : '';
 
   let contextValueStr = pctStr;
   if (options.contextFormat === 'tokens') {
@@ -214,18 +327,18 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
 
     const extraParts: string[] = [];
     if (hasRunningTool && activeToolName && options.showTools) {
-      extraParts.push(`◐ ${activeToolName} (${elapsedSec}s)`);
+      extraParts.push(isModern ? `${activeToolName} (${elapsedSec}s)` : `◐ ${activeToolName} (${elapsedSec}s)`);
     } else if (options.showCost && cost) {
       extraParts.push(cost);
     }
     if (options.showGitBranch && gitBranch) {
-      extraParts.push(`git:(${gitBranch})`);
+      extraParts.push(isModern ? `$(git-branch) ${gitBranch}` : `git:(${gitBranch})`);
     }
 
     if (extraParts.length > 0) {
       statusPart += ` │ ${extraParts.join(' │ ')}`;
     }
-    return statusPart + speedSuffix;
+    return statusPart + (speedEnabled && speedText !== '—' ? ` · ${speedText}` : '');
   }
 
   // 2. Minimal Preset: $(sparkle) 7%
@@ -233,21 +346,36 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
     return `${icon} ${pctStr}`;
   }
 
-  // 3. Compact Preset: $(sparkle) 7% · Sonnet 3.7 OR $(sync~spin) 7% · Tool (3s)
+  // 3. Speed-first Preset (Copilot Speedometer style): $(sparkle) 58.4 tok/s · Opus 5.5
+  if (options.preset === 'speed') {
+    const segs: string[] = [];
+    if (speedText !== '—') {
+      segs.push(speedText);
+    } else {
+      segs.push(pctStr);
+    }
+    if (hasRunningTool && activeToolName && options.showTools) {
+      segs.push(`${activeToolName} (${elapsedSec}s)`);
+    } else if (options.showModel && modelDisplay) {
+      segs.push(modelDisplay);
+    }
+    return `${icon} ${segs.join(sep)}`;
+  }
+
+  // 4. Compact Preset: $(sparkle) 7% · Sonnet 3.7 OR $(sync~spin) 7% · Tool (3s)
   if (options.preset === 'compact') {
     if (hasRunningTool && activeToolName && options.showTools) {
-      return `${icon} ${pctStr} · ${activeToolName} (${elapsedSec}s)` + speedSuffix;
+      return `${icon} ${pctStr}${sep}${activeToolName} (${elapsedSec}s)` + speedSuffix;
     }
     if (options.showModel && modelDisplay) {
-      return `${icon} ${pctStr} · ${modelDisplay}` + speedSuffix;
+      return `${icon} ${pctStr}${sep}${modelDisplay}` + speedSuffix;
     }
     return `${icon} ${pctStr}` + speedSuffix;
   }
 
-  // 4. Detailed or Custom Presets: build modularly
+  // 5. Detailed or Custom Presets: build modularly across all 10 toggles
   const parts: string[] = [];
 
-  // Running tool activity takes front seat if enabled
   if (hasRunningTool && activeToolName && options.showTools) {
     parts.push(`${activeToolName} (${elapsedSec}s)`);
   }
@@ -260,20 +388,41 @@ export function formatStatusBarText(input: StatusBarFormatInput): string {
     parts.push(cost);
   }
 
+  if (options.showDuration && typeof durationMs === 'number' && durationMs > 0) {
+    parts.push(formatDuration(durationMs, false));
+  }
+
   if (options.showTodos && todos && todos.length > 0) {
     const completed = todos.filter((td) => td && td.status === 'completed').length;
-    parts.push(`☑ ${completed}/${todos.length}`);
+    parts.push(isModern ? `$(check) ${completed}/${todos.length}` : `☑ ${completed}/${todos.length}`);
+  }
+
+  if (options.showAgents && agentsTotal > 0) {
+    const agLabel = agentsRunning > 0 ? `${agentsRunning}/${agentsTotal}` : `${agentsTotal}`;
+    parts.push(isModern ? `$(hubot) ${agLabel}` : `🤖 ${agLabel}`);
   }
 
   if (options.showGitBranch && gitBranch) {
-    parts.push(`🌿 ${gitBranch}`);
+    parts.push(isModern ? `$(git-branch) ${gitBranch}` : `🌿 ${gitBranch}`);
   }
 
+  const showContext = options.showContext !== false;
   const barPrefix = options.showProgressBar ? `${formatProgressBar(percentage, 5)} ` : '';
-  const mainPart = `${icon} ${barPrefix}${contextValueStr}`;
+  const contextSeg = showContext ? `${barPrefix}${contextValueStr}` : barPrefix.trim();
 
-  if (parts.length > 0) {
-    return `${mainPart} · ${parts.join(' · ')}` + speedSuffix;
+  if (contextSeg) {
+    const mainPart = `${icon} ${contextSeg}`;
+    if (parts.length > 0) {
+      return `${mainPart}${sep}${parts.join(sep)}` + speedSuffix;
+    }
+    return mainPart + speedSuffix;
   }
-  return mainPart + speedSuffix;
+
+  if (speedEnabled && speedText !== '—') {
+    parts.push(speedText);
+  }
+  if (parts.length > 0) {
+    return `${icon} ${parts.join(sep)}`;
+  }
+  return `${icon} Claude Hub`;
 }

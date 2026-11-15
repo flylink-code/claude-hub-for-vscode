@@ -13,14 +13,14 @@ Monitor, manage, and visualize **Claude Code** sessions inside VS Code. Claude H
 > **Todo source:** Setting `claudeHub.todo.preferSource` defaults to `auto` (dual: Task and/or Checklist when present; Task primary if both) (official Task tools + `~/.claude/tasks`). Checklist/markdown fill is off unless you choose `checklist` or set project-doc `plan_checklist` to `required`.
 
 
-- **Dashboard.** A vertical accordion replaces a tab bar. The live panel stays open and shows the session indicator, context-window progress, input / cache / write / output tokens, estimated cost, and the Git branch. Tool activity and the todo list expand only while they are in use.
+- **Dashboard.** Sticky 4-tab navigation (`Monitor / Sessions / Extensions / Settings`) with an adaptive **Open in Editor Tab** view (`claudeHub.openDashboardTab`). Narrow sidebars drill down cleanly, while wide editor tabs show a Master-Detail session reader alongside the session list. The Monitor tab features a Hero context/speed card, 4-column adaptive KPI grid, live tool/loop banners, and full-bleed collapsible panes.
 - **Todo & Task Workflows.** Automatically parses live task checklists from `TodoWrite`, `TaskCreate`/`TaskUpdate`, or assistant Markdown task lists (`- [ ]`, `- [/]`, `- [x]`). Displays progress ratios, status indicators, and safely clears tasks on `/clear`. Hub dashboard todos track TaskCreate/Update/List and `~/.claude/tasks` — not the slash `/tasks` background-jobs view. Clear only hides dashboard items.
-- **Subagent Map.** Visualizes subagents launched by Claude Code with live execution status, duration chips, token usage, tool invocations, and git worktrees. Automatically keeps open when running and collapses when finished.
-- **Sessions.** Filter by all sessions, the current workspace, or active sessions. Search by project, title, or Git branch, and page through long histories. Fork copies a session’s full transcript into a new UUID so you can open it or resume it with `claude --resume`. Delete removes a session record.
+- **Subagent Map.** Visualizes subagents launched by Claude Code with live execution status, duration chips, token usage, tool invocations, and overflow-proof git worktree chips. Automatically keeps open when running and collapses when finished.
+- **Sessions.** Grouped by recency (`Pinned`, `Active`, `Today`, `Yesterday`, `This Week`, `Earlier`) with workspace/pinned/active filters, search, and pagination. Selecting a session opens the rich detail reader with resume, focus, fork, JSONL log, timeline, tags, export, and delete actions.
 - **Workspace scope.** Current-workspace mode follows the folder open in VS Code. All-sessions mode lists every Claude Code session on the machine.
-- **MCP and skills.** Claude Hub lists configured MCP servers and can enable or disable them. Installed skills are listed, and `SKILL.md` opens in the editor.
-- **Environment.** Open the global `~/.claude/settings.json`, and open or generate the project `AGENTS.md` / `CLAUDE.md` from the dashboard.
-- **Status bar.** Highly customizable status-bar HUD with presets (`compact`, `minimal`, `detailed`, `hud`, or `custom`) and fine-grained toggles for mini progress bar, model name, tokens format, cost estimation, git branch, todos, running tool timing, and alignment. Optimized hover tooltip ensures zero flicker during live countdowns.
+- **MCP, Plugins, Skills & Memory.** Manage Auto Memory (`MEMORY.md` + inline structured entry editor), toggle MCP servers and plugins with accessible switch controls, browse custom agents, and open `SKILL.md` files.
+- **Settings & Visual Customizer.** Configure `claudeHub.statusBar.*` directly inside the **Settings** tab, toggle official Task tools (`CLAUDE_CODE_ENABLE_TASKS`), and open `~/.claude/settings.json`, `AGENTS.md`, or `CLAUDE.md`.
+- **Status bar & Hover Tooltip.** Supports `modern` (borderless HTML tables + Codicons, default) and `classic` (0.2 Claude Hub layout) styles, 6 presets (`compact`, `minimal`, `speed`, `hud`, `detailed`, `custom`), 10 bottom-bar field toggles, and 9 independent hover-tooltip section toggles (`claudeHub.statusBar.tooltipSections`). Zero-flicker 1-second live ticking for active tools.
 
 ### Commands
 
@@ -28,6 +28,7 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
 
 | Command | Action |
 | --- | --- |
+| `Claude Hub: Open Dashboard in Editor Tab` | Open the wide Master-Detail dashboard in an editor tab |
 | `Claude Hub: Refresh Claude Code Status` | Rescan sessions and subscription usage |
 | `Claude Hub: Toggle Workspace / All Sessions Filter` | Switch between the current workspace and all sessions |
 | `Claude Hub: Switch Focused Claude Session` | Pick the session shown in the dashboard |
@@ -49,22 +50,48 @@ Open the Command Palette with `Ctrl+Shift+P` / `Cmd+Shift+P`.
   // Hide the status bar item while no Claude Code conversation is active
   "claudeHub.statusBar.hideWhenInactive": true,
 
-  // Status bar display presets: "compact" | "minimal" | "detailed" | "hud" | "custom"
+  // Status bar & tooltip visual style: "modern" (v0.3) | "classic" (v0.2)
+  "claudeHub.statusBar.style": "modern",
+
+  // Status bar display presets: "compact" | "minimal" | "speed" | "detailed" | "hud" | "custom"
   "claudeHub.statusBar.preset": "compact",
+
+  // Separator between status bar items: "dot" | "pipe"
+  "claudeHub.statusBar.separator": "dot",
 
   // Status bar position: "right" or "left"
   "claudeHub.statusBar.position": "right",
+
+  // Click action: "openDashboard" | "openDashboardTab" | "switchSession"
+  "claudeHub.statusBar.clickAction": "openDashboard",
 
   // Context format in custom mode: "percent" | "tokens" | "both"
   "claudeHub.statusBar.contextFormat": "percent",
 
   // Fine-grained toggles for custom mode
+  "claudeHub.statusBar.showContext": true,
   "claudeHub.statusBar.showProgressBar": false,
+  "claudeHub.statusBar.showSpeed": true,
   "claudeHub.statusBar.showModel": true,
   "claudeHub.statusBar.showCost": false,
   "claudeHub.statusBar.showGitBranch": false,
   "claudeHub.statusBar.showTodos": false,
   "claudeHub.statusBar.showTools": true,
+  "claudeHub.statusBar.showDuration": false,
+  "claudeHub.statusBar.showAgents": false,
+
+  // Hover tooltip section visibility toggles
+  "claudeHub.statusBar.tooltipSections": {
+    "context": true,
+    "speed": true,
+    "modelBranch": true,
+    "activityDur": true,
+    "tokens": true,
+    "todos": true,
+    "agents": true,
+    "quota": true,
+    "actions": true
+  },
 
   // Seconds without activity before a session is idle. 0 never marks a session idle.
   "claudeHub.idleTimeout": 180,
@@ -149,14 +176,14 @@ npm test
 
 > **待办来源：** 设置 `claudeHub.todo.preferSource` 默认为 `auto`（双模式：有 Task 和/或 Checklist 则显示；两者都有时以 Task 为主）。Checklist/markdown 填充仅在选择 `checklist` 或项目文档 `plan_checklist` 为 `required` 时启用。
 
-- **仪表盘。** 用纵向手风琴代替横向标签。实时面板保持展开，显示会话指示、上下文进度、输入 / 缓存命中 / 写入 / 输出 Token、预估费用和 Git 分支。工具耗时和待办清单只在有内容时展开。
+- **四分栏双宿主仪表盘。** 采用吸顶四分栏导航（`监控 / 会话 / 扩展 / 设置`），顶栏提供刷新与**在编辑器标签页打开**（`claudeHub.openDashboardTab`）入口：窄侧边栏单列钻取，宽屏编辑器自动切换为主从双栏（Master-Detail）。监控页展示 Hero 上下文与速率卡、自适应 4 列 KPI 网格、实时工具与 Loop 横幅及通栏可折叠面板。
 - **待办任务工作流 (Todo)。** 自动实时捕获与解析 `TodoWrite`、`TaskCreate`/`TaskUpdate` 以及 Assistant Markdown 任务清单（待办 `[ ]`、进行中 `[/]`、已完成 `[x]`），实时呈现进度百分比与状态指示，并在 `/clear` 时自动重置清空。仪表盘待办跟踪 TaskCreate/Update/List 与 `~/.claude/tasks`，不是斜杠 `/tasks` 后台任务视图；Clear 仅隐藏仪表盘项。
-- **子代理拓扑图谱 (Agent Map)。** 深度追踪与呈现 Claude Code 启动的 Subagent（子代理），展示执行状态、实时运行时长、Token 开销、工具调用次数与 Git Worktree 分支，支持运行期间智能自动展开、全部完成后自动收起归档。
-- **会话。** 可按全部、当前工作区或活跃中过滤，并按项目名、标题或 Git 分支搜索，长列表分页浏览。分叉会把会话的完整记录复制为新的 UUID，可直接打开，或在终端用 `claude --resume` 继续。删除会移除一条会话记录。
+- **子代理拓扑图谱 (Agent Map)。** 深度追踪与呈现 Claude Code 启动的 Subagent（子代理），展示执行状态、实时运行时长、Token 开销、工具调用次数与防溢出 Git Worktree 分支徽章，支持运行期间自动展开、全部完成后自动收起。
+- **会话。** 按置顶 / 活跃中 / 今天 / 昨天 / 本周 / 更早分组展示，支持工作区 / 置顶 / 活跃过滤、关键词与全文搜索及分页浏览；点击卡片在详情阅读器中完成恢复、聚焦、分叉、日志查看、时间线、标签与删除。
 - **工作区范围。** 当前工作区模式跟随 VS Code 正在打开的文件夹。全部会话模式列出本机所有 Claude Code 会话。
-- **MCP 与技能。** 列出已配置的 MCP 服务，并可启停。已安装技能会列出来，`SKILL.md` 可在编辑器中打开。
-- **环境。** 从仪表盘打开全局 `~/.claude/settings.json`，并打开或生成项目里的 `AGENTS.md` / `CLAUDE.md`。
-- **状态栏。** 高度可定制的状态栏 HUD，支持多种预设风格（紧凑 `compact`、极简 `minimal`、详细 `detailed`、经典 HUD `hud`、自定义 `custom`），并提供微型进度条、模型名称、Token 格式、费用预估、Git 分支、待办进度、工具耗时及左右对齐等细粒度开关。经过深度防抖优化，任务执行走秒期间悬浮卡片绝对稳定、零闪烁。
+- **扩展与记忆。** 管理项目 Auto Memory（`MEMORY.md` 索引同步与内联新建/编辑）、用无障碍拨动开关启停 MCP 服务与已安装插件、浏览自定义代理与本地/插件技能（`SKILL.md`）。
+- **设置与可视化定制器。** 在「设置」Tab 内实时定制右下角状态栏与悬浮窗内容，开关官方 Task 模式（`CLAUDE_CODE_ENABLE_TASKS`），并快捷打开 `~/.claude/settings.json`、`AGENTS.md` 或 `CLAUDE.md`。
+- **状态栏与悬浮窗。** 支持 `modern`（默认无边框对齐表格 + Codicon）与 `classic`（0.2 经典 Claude Hub 风格）双风格、6 档预设（`compact` / `minimal` / `speed` / `hud` / `detailed` / `custom`）、10 项底栏字段芯片开关及悬浮窗 9 大区块独立裁剪（`claudeHub.statusBar.tooltipSections`）。经过防抖优化，工具走秒期间悬浮窗稳定无闪烁。
 
 ### 命令
 
@@ -164,6 +191,7 @@ npm test
 
 | 命令 | 作用 |
 | --- | --- |
+| `Claude Hub: 在编辑器标签页打开仪表盘` | 在编辑器宽屏标签页打开主从双栏仪表盘 |
 | `Claude Hub: 刷新 Claude Code 状态` | 重新扫描会话和订阅额度 |
 | `Claude Hub: 切换当前工作区 / 全局所有会话过滤` | 在当前工作区与全部会话之间切换 |
 | `Claude Hub: 切换聚焦查看的 Claude 会话` | 选择仪表盘当前显示的会话 |
@@ -186,22 +214,48 @@ npm test
   // 没有 Claude Code 对话在进行时隐藏状态栏
   "claudeHub.statusBar.hideWhenInactive": true,
 
-  // 状态栏预设风格："compact"（紧凑） | "minimal"（极简） | "detailed"（详细） | "hud"（经典 HUD） | "custom"（自定义）
+  // 状态栏与悬浮窗视觉风格："modern"（0.3 表格对齐）| "classic"（0.2 经典风格）
+  "claudeHub.statusBar.style": "modern",
+
+  // 状态栏预设风格："compact"（紧凑） | "minimal"（极简） | "speed"（速率） | "detailed"（详细） | "hud"（经典 HUD） | "custom"（自定义）
   "claudeHub.statusBar.preset": "compact",
+
+  // 状态栏分段连接符："dot"（圆点 ·）| "pipe"（竖线 │）
+  "claudeHub.statusBar.separator": "dot",
 
   // 状态栏对齐位置："right"（右侧）或 "left"（左侧）
   "claudeHub.statusBar.position": "right",
+
+  // 单击状态栏默认动作："openDashboard" | "openDashboardTab" | "switchSession"
+  "claudeHub.statusBar.clickAction": "openDashboard",
 
   // 自定义模式下上下文使用率格式："percent" | "tokens" | "both"
   "claudeHub.statusBar.contextFormat": "percent",
 
   // 自定义模式细粒度开关
+  "claudeHub.statusBar.showContext": true,
   "claudeHub.statusBar.showProgressBar": false,
+  "claudeHub.statusBar.showSpeed": true,
   "claudeHub.statusBar.showModel": true,
   "claudeHub.statusBar.showCost": false,
   "claudeHub.statusBar.showGitBranch": false,
   "claudeHub.statusBar.showTodos": false,
   "claudeHub.statusBar.showTools": true,
+  "claudeHub.statusBar.showDuration": false,
+  "claudeHub.statusBar.showAgents": false,
+
+  // 悬浮窗 9 大区块独立显隐控制
+  "claudeHub.statusBar.tooltipSections": {
+    "context": true,
+    "speed": true,
+    "modelBranch": true,
+    "activityDur": true,
+    "tokens": true,
+    "todos": true,
+    "agents": true,
+    "quota": true,
+    "actions": true
+  },
 
   // 闲置判定秒数，默认 180。设为 0 表示永不标为闲置。
   "claudeHub.idleTimeout": 180,

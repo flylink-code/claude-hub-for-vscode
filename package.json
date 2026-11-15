@@ -2,7 +2,7 @@
   "name": "claude-hub-vscode",
   "displayName": "Claude Hub - Sessions, Models & Usage",
   "description": "%extension.description%",
-  "version": "0.2.26",
+  "version": "0.3.0",
   "publisher": "claude-hub",
   "license": "MIT",
   "repository": {
@@ -64,6 +64,12 @@
         "command": "claudeHub.openDashboard",
         "title": "%command.openDashboard%",
         "icon": "$(dashboard)",
+        "category": "Claude Hub"
+      },
+      {
+        "command": "claudeHub.openDashboardTab",
+        "title": "%command.openDashboardTab%",
+        "icon": "$(link-external)",
         "category": "Claude Hub"
       },
       {
@@ -185,14 +191,19 @@
           "group": "navigation@1"
         },
         {
-          "command": "claudeHub.toggleFilter",
+          "command": "claudeHub.openDashboardTab",
           "when": "view == claudeHub.dashboardView",
           "group": "navigation@2"
         },
         {
-          "command": "claudeHub.openSettings",
+          "command": "claudeHub.toggleFilter",
           "when": "view == claudeHub.dashboardView",
           "group": "navigation@3"
+        },
+        {
+          "command": "claudeHub.openSettings",
+          "when": "view == claudeHub.dashboardView",
+          "group": "navigation@4"
         }
       ]
     },
@@ -237,11 +248,25 @@
           "default": true,
           "description": "%config.statusBar.hideWhenInactive.desc%"
         },
+        "claudeHub.statusBar.style": {
+          "type": "string",
+          "enum": [
+            "modern",
+            "classic"
+          ],
+          "enumDescriptions": [
+            "%config.statusBar.style.modern%",
+            "%config.statusBar.style.classic%"
+          ],
+          "default": "modern",
+          "description": "%config.statusBar.style.desc%"
+        },
         "claudeHub.statusBar.preset": {
           "type": "string",
           "enum": [
             "compact",
             "minimal",
+            "speed",
             "detailed",
             "hud",
             "custom"
@@ -249,12 +274,26 @@
           "enumDescriptions": [
             "%config.statusBar.preset.compact%",
             "%config.statusBar.preset.minimal%",
+            "%config.statusBar.preset.speed%",
             "%config.statusBar.preset.detailed%",
             "%config.statusBar.preset.hud%",
             "%config.statusBar.preset.custom%"
           ],
           "default": "compact",
           "description": "%config.statusBar.preset.desc%"
+        },
+        "claudeHub.statusBar.separator": {
+          "type": "string",
+          "enum": [
+            "dot",
+            "pipe"
+          ],
+          "enumDescriptions": [
+            "%config.statusBar.separator.dot%",
+            "%config.statusBar.separator.pipe%"
+          ],
+          "default": "dot",
+          "description": "%config.statusBar.separator.desc%"
         },
         "claudeHub.statusBar.contextFormat": {
           "type": "string",
@@ -271,10 +310,20 @@
           "default": "percent",
           "description": "%config.statusBar.contextFormat.desc%"
         },
+        "claudeHub.statusBar.showContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.statusBar.showContext.desc%"
+        },
         "claudeHub.statusBar.showProgressBar": {
           "type": "boolean",
           "default": false,
           "description": "%config.statusBar.showProgressBar.desc%"
+        },
+        "claudeHub.statusBar.showSpeed": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.statusBar.showSpeed.desc%"
         },
         "claudeHub.statusBar.showModel": {
           "type": "boolean",
@@ -301,6 +350,42 @@
           "default": true,
           "description": "%config.statusBar.showTools.desc%"
         },
+        "claudeHub.statusBar.showDuration": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.statusBar.showDuration.desc%"
+        },
+        "claudeHub.statusBar.showAgents": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.statusBar.showAgents.desc%"
+        },
+        "claudeHub.statusBar.tooltipSections": {
+          "type": "object",
+          "default": {
+            "context": true,
+            "speed": true,
+            "modelBranch": true,
+            "activityDur": true,
+            "tokens": true,
+            "todos": true,
+            "agents": true,
+            "quota": true,
+            "actions": true
+          },
+          "description": "%config.statusBar.tooltipSections.desc%",
+          "properties": {
+            "context": { "type": "boolean", "default": true },
+            "speed": { "type": "boolean", "default": true },
+            "modelBranch": { "type": "boolean", "default": true },
+            "activityDur": { "type": "boolean", "default": true },
+            "tokens": { "type": "boolean", "default": true },
+            "todos": { "type": "boolean", "default": true },
+            "agents": { "type": "boolean", "default": true },
+            "quota": { "type": "boolean", "default": true },
+            "actions": { "type": "boolean", "default": true }
+          }
+        },
         "claudeHub.statusBar.position": {
           "type": "string",
           "enum": [
@@ -318,10 +403,12 @@
           "type": "string",
           "enum": [
             "openDashboard",
+            "openDashboardTab",
             "switchSession"
           ],
           "enumDescriptions": [
             "%config.statusBar.clickAction.openDashboard%",
+            "%config.statusBar.clickAction.openDashboardTab%",
             "%config.statusBar.clickAction.switchSession%"
           ],
           "default": "openDashboard",
@@ -466,6 +553,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "tsc -p ./tsconfig.test.json && node --test out-test/test/*.test.js",
+    "preview": "npm run compile && node scripts/preview.mjs",
     "package": "vsce package --no-dependencies --out dist/"
   },
   "devDependencies": {
